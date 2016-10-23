@@ -1,6 +1,6 @@
 Skyrim Spell Learning Mod
 =========================
-
+The continuation of the Skyrim mod originally created by /u/bepo
 
 Summary
 -------
