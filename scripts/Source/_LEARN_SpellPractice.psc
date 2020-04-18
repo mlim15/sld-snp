@@ -37,65 +37,37 @@ function OnSpellCast(Form akForm)
     MagicEffect eff = akSpell.GetNthEffectMagicEffect(0)
     String magicSchool = eff.GetAssociatedSkill()
     ; Debug.Notification(magicSchool)
-    if magicSchool == ControlScript.getSchools()[1]
+    if magicSchool == "Alteration"
         _LEARN_CountAlteration.Mod(1)
         return
-    elseIf magicSchool == ControlScript.getSchools()[2]
+    elseIf magicSchool == "Conjuration"
         _LEARN_CountConjuration.Mod(1)
         return
-    elseIf magicSchool == ControlScript.getSchools()[3]
+    elseIf magicSchool == "Destruction"
         _LEARN_CountDestruction.Mod(1)
         return 
-    elseIf magicSchool == ControlScript.getSchools()[4]
+    elseIf magicSchool == "Illusion"
         _LEARN_CountIllusion.Mod(1)
         return 
-    elseIf magicSchool == ControlScript.getSchools()[5]
+    elseIf magicSchool == "Restoration"
         _LEARN_CountRestoration.Mod(1)
         return 
     endIf
-    return
 endFunction
 
-
-function OnEffectStart(actor akTarget, actor akCaster)
-    ; AddInventoryEventFilter(Book)
-
-    ; _SFAU_ReloadVersionHitCheck.SetValue(1.00000)
+;/
+string function __l(string keyName, string defaultValue = "")
+    return ControlScript.__l(keyName, defaultValue);
 endFunction
-
-
+/;
 function OnItemAdded(Form akBaseItem, Int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
     Book akBook = akBaseItem as Book
     if (! akBook)
         Return
     EndIf
     Spell sp = akBook.GetSpell()
-    if (sp && (! PlayerRef.HasSpell(sp)) && _LEARN_RemoveSpellBooks.GetValue() != 0)
-        PlayerRef.removeItem(akBook, aiItemCount)
-    EndIf
-    
-    if ((! akBook.isRead()) && sp && (! PlayerRef.HasSpell(sp)) && _LEARN_CollectNotes.GetValue() != 0)
-        Int value = akBook.GetGoldValue()
-        
-        MagicEffect eff = sp.GetNthEffectMagicEffect(0)
-        String magicSchool = eff.GetAssociatedSkill() 
-        ; Debug.Notification(magicSchool) 
-        if magicSchool == ControlScript.getSchools()[1]
-            PlayerRef.addItem(_LEARN_SpellNotesAlteration, value) 
-        elseIf magicSchool == ControlScript.getSchools()[2] 
-            PlayerRef.addItem(_LEARN_SpellNotesConjuration, value)
-        elseIf magicSchool == ControlScript.getSchools()[3] 
-            PlayerRef.addItem(_LEARN_SpellNotesDestruction, value) 
-        elseIf magicSchool == ControlScript.getSchools()[4]
-            PlayerRef.addItem(_LEARN_SpellNotesIllusion, value)
-        elseIf magicSchool == ControlScript.getSchools()[5] 
-            PlayerRef.addItem(_LEARN_SpellNotesRestoration, value)
-        endIf
-    endIf
-
-    if ((! akBook.isRead()) && sp && (! PlayerRef.HasSpell(sp)))
-        ControlScript.spell_fifo_push(sp)
-        ; Lament at the fact that you can't set a book as read from this script
-    EndIf
-    
+    if (! sp)
+        Return
+    endif
+    ControlScript.TryAddSpellBook(akBook, sp, aiItemCount); single call to ControlScript is much more faster
 EndFunction

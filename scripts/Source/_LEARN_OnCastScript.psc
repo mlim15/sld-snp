@@ -8,21 +8,23 @@ Bool modDisabled = false
 
 ;-- Functions ---------------------------------------
 
-;function OnUpdate()
-;    globalMult = 1.00000
-;endFunction
-
 function OnInit()
     ; Debug.Notification("LEARN Oncastscript init")
-    Actor learningme = Self.getActorRef()
+    Actor learningme = Self.GetActorReference()
     if (learningme)
         learningme.addspell(PracticeSpell, true)
     endif
 endFunction
 
-;function OnPlayerLoadGame()
-    ;if EnableGameSettingsMod == true && modDisabled == false
-    ;    utility.wait(5.00000)
-    ;    game.SetGameSettingFloat("fCombatMagickaRegenRateMult", CustomGameSettingsVal)
-    ;endIf
-;endFunction
+event OnPlayerLoadGame()
+    _LEARN_ControlScript cs = self.GetOwningQuest() as _LEARN_ControlScript
+    Debug.Trace("[Spell Learning] ======== Initializing Spell Learning (Please ignore any warning(s)/error(s) below) ========")
+    cs.CanUseLocalizationLib = (PapyrusUtil.GetScriptVersion() as Int) >= 34;
+    if !cs.CanUseLocalizationLib
+        Debug.Trace("[Spell Learning] You need to install PapyrusUtil version >= 3.4 for localization support. Localization support disabled.")
+    else
+        Debug.Trace("[Spell Learning] Localization support enabled.")
+    endIf
+    Debug.Trace("[Spell Learning] ======== Spell Learning Initialized ========")
+    cs.InternalPrepare()
+endEvent

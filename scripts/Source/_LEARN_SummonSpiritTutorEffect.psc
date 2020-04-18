@@ -1,6 +1,5 @@
 Scriptname _LEARN_SummonSpiritTutorEffect extends ActiveMagicEffect  
 
-
 ;======================================================================================;
 ;               PROPERTIES  /
 ;=============/
@@ -23,45 +22,35 @@ _LEARN_ControlScript Property ControlScript  Auto
 ;=============/
 
 Event OnEffectStart(Actor Target, Actor Caster)
-
     GlobalVariable GameHour = Game.GetForm(0x00000038) as GlobalVariable
     Float Time = GameHour.GetValue()
     Int Std = math.Floor(Time)
     
-    if (Std != 0)
-        Debug.notification("The summoning can only work at midnight")
+    if ! (Std <= 3 || Std == 23)
+        Debug.notification(ControlScript.__l("spirit_summon only at midnight", "The summoning can only work at midnight"))
         Return
     EndIf
 
-    Int PassedTime = 1 ; 1 hour
+    Float PassedTime = 1.0 ; 1 hour it was 3?
 
-    Time -= Std as Float
+    ;Time -= Std as Float
     Time += PassedTime
-    Time += Std as Float
-    Int Hours = math.Floor(PassedTime)
-    Int Minutes = math.Floor((PassedTime - Hours as Float) * 100 as Float * 3 as Float / 5 as Float)
-    
-
-    Actor pl = Game.GetPlayer()
-
+    ;Time += Std as Float
+ 
     int instanceID = IntroSoundFX.play((target as objectReference))          ; play IntroSoundFX sound from my self
     introFX.apply()                                  ; apply isMod at full strength
     
     
     game.DisablePlayerControls()
-    Utility.wait(2)
+    Utility.waitmenumode(2)
     game.FadeOutGame(false, true, 2.00000, 4.0000)
 
     introFX.remove()                             ; remove initial FX
     mainFX.apply()
 
-    Utility.wait(5)
-    if (ControlScript._LEARN_CountBonus.GetValue() <= 30)
-        ControlScript._LEARN_CountBonus.Mod(40)
-        debug.notification("Learned something very insightful")
-    Else
-        Debug.notification("Interesting")
-    EndIf    
+    Utility.waitmenumode(5)
+    ControlScript._LEARN_CountBonus.Mod(100)
+    debug.notification(ControlScript.__l("spirit_glimpsed", "Glimpsed at the unfathomable"))
     game.EnablePlayerControls()
     
 
@@ -70,8 +59,6 @@ EndEvent
 
 Event OnEffectFinish(Actor Target, Actor Caster)
 
-    Actor pl = Game.GetPlayer()
-    
     int instanceID = OutroSoundFX.play((target as objectReference))         ; play OutroSoundFX sound from my self
     introFX.remove()
     mainFX.remove()

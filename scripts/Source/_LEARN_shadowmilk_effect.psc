@@ -14,19 +14,17 @@ Event OnEffectStart(Actor Target, Actor Caster)
         Return
     EndIf
     
+    float fRand
     ; Don't do (too much) drugs, kids.
     if (PlayerRef.HasMagicEffect(AlchDreadmilkEffect))
-        if (PlayerRef.HasSpell(Dreadstare) || PlayerRef.HasMagicEffect(AlchShadowmilkEffect))
+        fRand = Utility.RandomFloat(0.0, 1.0)
+        if (fRand > 0.5)
             Utility.wait(4)
-            Debug.Notification("Overdosed")
+            Debug.Notification(ControlScript.__l("dreadmilk_overdosed", "Overdosed"))
             Utility.wait(2)
             PlayerRef.kill()
+            Return
         endif
-        PlayerRef.AddSpell(Dreadstare)
     endif
 
 EndEvent
-
-; Event OnEffectFinish(Actor Target, Actor Caster)
-;    Actor pl = Game.GetPlayer()
-; endEvent
