@@ -16,6 +16,20 @@ globalvariable property _LEARN_RemoveSpellBooks auto
 globalvariable property _LEARN_CollectNotes auto
 globalvariable property _LEARN_ForceDiscoverSchool auto
 globalvariable property _LEARN_StudyInterval auto
+globalvariable property _LEARN_AutoNoviceLearningEnabled auto
+globalvariable property _LEARN_AutoNoviceLearning auto
+globalvariable property _LEARN_ParallelLearning auto
+globalvariable property _LEARN_HarderParallel auto
+globalvariable property _LEARN_DreadstareLethality auto
+globalvariable property _LEARN_EffortScaling auto
+globalvariable property _LEARN_AutoSuccessBypassesLimit auto
+globalvariable property _LEARN_TooDifficultEnabled auto
+globalvariable property _LEARN_TooDifficultDelta auto
+globalvariable property _LEARN_SpawnItems auto
+globalvariable property _LEARN_PotionBypass auto
+globalvariable property _LEARN_IntervalCDR auto
+globalvariable property _LEARN_IntervalCDREnabled auto
+String[] effortLabels
 
 keyword property LocTypeTemple auto
 location property WinterholdCollegeLocation auto
@@ -29,9 +43,12 @@ Book property _LEARN_SpellNotesIllusion auto
 Book property _LEARN_SpellNotesRestoration auto
 MagicEffect Property AlchDreadmilkEffect Auto
 MagicEffect Property AlchShadowmilkEffect Auto
+MagicEffect Property _LEARN_PracticeEffect auto
 Spell Property Dreadstare Auto
 Spell property dreadstareJustAdded auto
-Book Property _LEARN_SpiritTutorSpell Auto
+Spell property _LEARN_PracticeAbility auto
+Spell property _LEARN_SummonSpiritTutor auto
+Book Property _LEARN_SpellTomeSummonSpiritTutor Auto
 
 leveleditem property LitemSpellTomes00Alteration Auto
 leveleditem property LitemSpellTomes00Conjuration Auto
@@ -54,9 +71,7 @@ leveleditem property LitemSpellTomes75Destruction Auto
 leveleditem property LitemSpellTomes75Illusion Auto
 leveleditem property LitemSpellTomes75Restoration Auto
 
-
 Float LastSleepTime
-FormList AlterationSpells
 int iFailuresToLearn
 String[] aSchools
 
@@ -66,7 +81,6 @@ LeveledItem[] aDestructionLL
 LeveledItem[] aIllusionLL
 LeveledItem[] aRestorationLL
 LeveledItem[] aInventSpellsPtr
-
 
 Spell[] aSpells
 int iHead
@@ -90,17 +104,36 @@ int property NOTIFICATION_ADD_SPELL_NOTE = 1 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
+function disableModEffects()
+	if (PlayerRef.HasMagicEffect(Dreadstare))
+		PlayerRef.RemoveSpell(Dreadstare)
+	EndIf
+	if (PlayerRef.HasMagicEffect(_LEARN_PracticeEffect))
+		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
+	EndIf
+	if (PlayerRef.HasSpell(_LEARN_SummonSpiritTutor))
+		PlayerRef.RemoveSpell(_LEARN_SummonSpiritTutor)
+	EndIf
+endFunction
+
 int function GetVersion()
-    return 172; v 1.7.2
+    return 173; v 1.7.3
+endFunction
+
+String[] function getEffortLabels()
+	return effortLabels
 endFunction
 
 function UpgradeVersion()
+	if (currentVersion < 173)
+		; not sure if anything needs to be done here.
+	endIf
     if (currentVersion < 172)
         VisibleNotifications = new int[2]
         VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
         VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 1
         UpgradeSpellList()
-        string msg = "[Spell Learning] " + formatString1(__l("version_upgrade", "Installed version {0}"), "1.7.2")
+        string msg = "[Spell Learning] " + formatString1(__l("version_upgrade", "Installed version {0}"), "1.7.3")
         Debug.Notification(msg)
         Debug.Trace(msg)
     endIf
@@ -206,7 +239,6 @@ bool function EnableNotification(int id, bool v)
     return v
 endFunction
 
-
 int function spell_fifo_get_count()
     return iCount
 EndFunction
@@ -215,11 +247,18 @@ bool function spell_fifo_has_ref(Spell sp)
     return iCount > 0 && _spells.Find(sp as Form) >= 0
 EndFunction
 
+int function spell_fifo_get_ref(Spell sp)
+	if (iCount > 0 && _spells.Find(sp as Form) >= 0)
+		return _spells.Find(sp as Form)
+	Else
+		return 0
+	EndIf
+EndFunction
+
 Spell function spell_fifo_peek(int idx = 0)
     if idx < 0 || iCount <= idx
         return None
     endIf
-
     return _spells[iHead + idx] as Spell
 EndFunction
 
@@ -228,12 +267,6 @@ Bool function spell_fifo_poke(int idx, Spell spx)
         return false
     endIf
     _spells[iHead + idx] = spx
-EndFunction
-
-Spell function spell_fifo_squeeze(Spell s)
-{Obsolete}
-    ; insert to the top. we don't use it. if implementation needed just add and movetotop
-    return None
 EndFunction
 
 Spell function spell_fifo_remove_last()
@@ -314,7 +347,7 @@ Spell function spell_list_removeAt(int index)
     return tmp
 endFunction
 
-bool function TryLearnSpellAt(int index)
+bool function forceLearnSpellAt(int index)
     Spell spellToLearn = spell_list_removeAt(index)
     if spellToLearn
         if !PlayerRef.HasSpell(spellToLearn)
@@ -561,41 +594,96 @@ Bool Function toggleCollect()
     return True
 EndFunction
 
+Bool Function toggleHarderParallel()
+    if (_LEARN_HarderParallel.GetValue())
+        _LEARN_HarderParallel.SetValue(0)
+        return false
+    endif
+    _LEARN_HarderParallel.SetValue(1)
+    return True
+EndFunction
+
+Bool Function toggleAutoSuccessBypassesLimit()
+    if (_LEARN_AutoSuccessBypassesLimit.GetValue())
+        _LEARN_AutoSuccessBypassesLimit.SetValue(0)
+        return false
+    endif
+    _LEARN_AutoSuccessBypassesLimit.SetValue(1)
+    return True
+EndFunction
+
+Bool Function toggleNoviceLearningEnabled()
+    if (_LEARN_AutoNoviceLearningEnabled.GetValue())
+        _LEARN_AutoNoviceLearningEnabled.SetValue(0)
+        return false
+    endif
+    _LEARN_AutoNoviceLearningEnabled.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleTooDifficultEnabled()
+    if (_LEARN_TooDifficultEnabled.GetValue())
+        _LEARN_TooDifficultEnabled.SetValue(0)
+        return false
+    endif
+    _LEARN_TooDifficultEnabled.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleSpawnItems()
+    if (_LEARN_SpawnItems.GetValue())
+        _LEARN_SpawnItems.SetValue(0)
+        return false
+    endif
+    _LEARN_SpawnItems.SetValue(1)
+    return True
+EndFunction
+
+bool function togglePotionBypass()
+    if (_LEARN_PotionBypass.GetValue())
+        _LEARN_PotionBypass.SetValue(0)
+        return false
+    endif
+    _LEARN_PotionBypass.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleIntervalCDREnabled()
+    if (_LEARN_IntervalCDREnabled.GetValue())
+        _LEARN_IntervalCDREnabled.SetValue(0)
+        return false
+    endif
+    _LEARN_IntervalCDREnabled.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleDynamicDifficulty()
+
+
 String[] function getSchools()
     return aSchools
 EndFunction
 
-
-function AddSpellsToLists()
-    Book x
-    int i = LitemSpellTomes00Conjuration.GetNumForms()
-    While (i > 0)
-        x = LitemSpellTomes00Conjuration.GetNthForm(i) as Book
-        if (x == _LEARN_SpiritTutorSpell)
-            Return
-        EndIf
-        i = i - 1
-    EndWhile
-    
-    LitemSpellTomes00Conjuration.addform(_LEARN_SpiritTutorSpell, 1, 1)
-    
+function SpawnItemsInWorld(); TODO Fix. Needs to pass a form, is passing a book?
+	if (_LEARN_SpawnItems.GetValue() == 1)
+	    Book x
+		int i = LitemSpellTomes00Conjuration.GetNumForms()
+		While (i > 0)
+			x = LitemSpellTomes00Conjuration.GetNthForm(i) as Book
+			if (x == _LEARN_SpellTomeSummonSpiritTutor)
+				Return
+			EndIf
+			i = i - 1
+		EndWhile
+		LitemSpellTomes00Conjuration.addform(_LEARN_SpellTomeSummonSpiritTutor, 1, 1)
+	EndIf
 EndFunction
-
 
 function OnInit()
     
     GlobalVariable GameHour = Game.GetForm(0x00000038) as GlobalVariable
-    ;customLocation = None
-    ;dreadstareJustAdded = None
-    ;aSpells = new Spell[128]
-    ;iHead = 0
-    ;iTail = 0
-    ;iMaxSize = 128
-    ;iCount = 0
-    ;LastSleepTime = 0
-    ;iFailuresToLearn = 0
     
-    AddSpellsToLists()
+    SpawnItemsInWorld()
     
     aSchools = new String[6]
     aSchools[0] = __l("Automatic")
@@ -630,6 +718,11 @@ function OnInit()
     aRestorationLL[1] = LitemSpellTomes25Restoration
     aRestorationLL[2] = LitemSpellTomes50Restoration
     aRestorationLL[3] = LitemSpellTomes75Restoration
+	
+	effortLabels = new String[3]
+	effortLabels[0] = "Tough Start"
+	effortLabels[1] = "Diminishing Returns"
+	effortLabels[2] = "Linear"
     
     aInventSpellsPtr = aRestorationLL
     
@@ -637,29 +730,41 @@ function OnInit()
     UpgradeVersion()
 endFunction
 
-float function scurve(float x, float minchance, float maxchance)
-    ; returns a nice s-shaped learning curve between x = y = 1
-    ; https://www.desmos.com/calculator
-    ; \left(1-\frac{1}{\left(\left(2x\right)^3+1\right)}\right)\cdot 0.98+0.01
-    float y = (minchance + (maxchance - minchance) * (1 - (1 / (1 + (8*x*x*x)))))
-    if (y < minchance)
-        return minchance
-    ElseIf (y > maxchance)
-        return maxchance
-    Else
-        return y
-    EndIf 
+float function scaleEffort(float effort, float minchance, float maxchance)
+	float scaledEffort
+	; This function optionally scales effort to be non-linear. 
+	; In the original, an s-curve was used. I'm not sure why and I don't prefer it.
+	; Here is a cleaned up s-curve if you want the option.
+	; At effort=0 it returns the minimum chance, and at effort=1 (max effort)
+	; it returns the maximum chance. Values in between are scaled to 
+	; provide a harder start (low total effort is more punished).
+	; There are no diminishing returns with effort - above about 60%
+	; the relationship between effort in and scaled effort is relatively linear.
+    if (_LEARN_EffortScaling.GetValue() == 0) ; If preference set to scurve
+		scaledEffort = (minchance + (maxchance - minchance) * (2 - 2 / (1 + (effort*effort*effort))))
+	; Alternatively, you can use a square root. This provides the opposite effect.
+	; Low effort values are scaled up, while higher values have diminishing returns.
+    ElseIf(_LEARN_EffortScaling.GetValue() == 1) ; If preference set to square root
+		scaledEffort = ((maxchance - minchance) * Math.sqrt(effort) + minchance)
+	; Finally, linear 1:1 is an option.
+    ElseIf(_LEARN_EffortScaling.GetValue() == 2) ; If preference set to linear
+		scaledEffort = effort
+	Else ; This should never happen. But let's at least ensure things are happening if it does.
+		return maxchance
+	EndIf
+    return scaledEffort 
 EndFunction
 
-float function capFormula(float skill, float casts, float notes)
-    float result
+float function calcEffort(float skill, float casts, float notes)
+    float effort
+	; result is on a scale of 0-1ish.
+	; with enough bonus it can go above 1.
+	; it's made of three things:
+	; myskill (considering magic skill levels)
+	; mycasts (spell casts of same school)
+	; mybonus (other roleplaying bonus)
 
-    ; so normalize the accumulated learning notes
-    ; some mods alter the spell tome values. Let's try to be consistent across load orders
-    Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
-    float priceFactor = refCandleLight.GetGoldValue() / 44
-    notes = notes / pricefactor
-
+	; calculate myskill
     float myskill = 0 ; out of 100
     int i = 1
     ; Calculate the mean skill over all magic schools
@@ -672,57 +777,72 @@ float function capFormula(float skill, float casts, float notes)
     ; specific magic school skill will count for 2/3rds
     myskill += skill * 2 / 3
 
+	; cap the passed mycasts at 100 casts.
     float mycasts = casts ; maximum 100
     if (mycasts > 100)
         mycasts = 100
     endif
  
-    float mybonus = 0 ; out of 100
-    ; Count in the bonus added by other scripts
+    ; calculate mybonus
+    float mybonus = 0 ; no cap. enough bonus can make up for lacking in other two.
+	; the CountBonus variable is accessed by other scripts to add more to the bonus.
+	; For example, the deprecated dialogue option used this variable.
+	; The random "dream" bonus/penalty and the Daedric Tutor also use this value, though I may disable 
+	; them by default or make them an optional components for pure lorefriendliness and less debug message spam.
+	; It is kept for posterity and can be extended in the future.
     mybonus += _LEARN_CountBonus.GetValue()
-    
-    ; Amount of spell learning notes in inventory provide bonus (diminishing returns)
+    ; Amount of spell learning notes in inventory provide bonus (diminishing returns, 
+	; up to asymptote of 33% of 33% of final effort).
+	; The number of notes possessed by the player is related to the value of the spells they have read.
+	; So this value is normalized by comparing the value of a core spellbook 
+	; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
+	; Let's try to be consistent across load orders.
+    Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
+    float priceFactor = refCandleLight.GetGoldValue() / 44
+    notes = notes / pricefactor
     float bnot
     bnot = Math.sqrt(notes)
-    if (bnot > 30)
-        bnot = 30
+	; With a cap of 33, the max number of notes that give benefit to the player is 1089 (33 squared).
+	; It accounts for a max of 33% of 33% of the final total effort.
+	; This value could be configurable in a future update.
+    if (bnot > 33)
+        bnot = 33
     EndIf
     mybonus += bnot
-    
-    ; Check for alchemical drugs
+    ; Check for drug bonus
     if (PlayerRef.HasMagicEffect(AlchDreadmilkEffect)) ; dreadmilk
-        mybonus += 105
+        mybonus += 300 ; Dreadmilk gives automatic max total effort, and therefore automatic max roll.
     elseif (PlayerRef.HasMagicEffect(AlchShadowmilkEffect)) ; shadowmilk
-        mybonus += 70
+        mybonus += 100 ; Shadowmilk provides 33% of total effort all by itself. This can help bypass the "tough start" hump.
     endif
-    
     ; Check for inspiring location
     Location locationX = PlayerRef.GetCurrentLocation()
     ; Cell myCell = PlayerRef.GetParentCell()
     if (locationX)
         if (locationX.haskeyword(LocTypeTemple) || (customLocation && locationX.isSameLocation(customLocation)))
-            mybonus += 55
+            mybonus += 22
         elseif (locationX.isSameLocation(WinterholdCollegeLocation) || WinterholdCollegeLocation.ischild(locationX))
-            mybonus += 85
+            mybonus += 33
         endif
     endIf
-    ; Failing to learn also counts as progress, but only if some role playing effort is being made
-    if (mybonus >= 10)
-        mybonus += iFailuresToLearn * 5
+    ; Failing to learn also counts as progress for rng roll, 
+    ; but only if some role playing is already happening
+    if (mybonus >= 77)
+        mybonus += iFailuresToLearn * 11
     endif
-    ; put a ceiling on that groovy bonus
-    ; update: gameplay testing shows a cap is counter intuitive and unfriendly
-    ;if (mybonus > 100)
-    ;    mybonus = 100
-    ;endif
+	; scale mybonus using the configurable BonusScale parameter (default 1, max 3)
     mybonus = mybonus * _LEARN_BonusScale.GetValue()
-    
-    
-    result = ((myskill - 15) + mycasts + mybonus) / 300
-    if (result < 0)
-        result = 0
+	
+    effort = ((myskill + mycasts + mybonus) / 3 / 100)
+	; cap effort at 1
+	; this ensures the bonus value can only make up for lost effort from myskill and mycast.
+	; gives cleaner math for scaling, as effort scales exactly from 0 to 1.
+    if (effort < 0)
+        effort = 0
+	ElseIf (effort > 1)
+		effort = 1
     EndIf
-    return result
+    return effort
 EndFunction
 
 float function baseChanceBySchool(string magicSchool, float minchance, float maxchance)
@@ -748,11 +868,10 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         fcasts = _LEARN_CountRestoration.GetValue()
         fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration)
     endIf    
-    fChance = scurve(capFormula(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
+    fChance = scaleEffort(calcEffort(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
     ; Debug.Notification("baseChance = " + fChance)
     return fChance
 EndFunction
-
 
 float Function baseChanceToStudy(string magicSchool = "")
     if (magicSchool == "")
@@ -775,7 +894,6 @@ float Function baseChanceToStudy(string magicSchool = "")
     return baseChanceBySchool(magicSchool, _LEARN_MinChanceStudy.GetValue(), _LEARN_MaxChanceStudy.GetValue()) 
 EndFunction
 
-
 float Function baseChanceToDiscover(string magicSchool = "")
     if (magicSchool == "")
         magicSchool = topSchoolToday()
@@ -783,14 +901,40 @@ float Function baseChanceToDiscover(string magicSchool = "")
     return baseChanceBySchool(magicSchool, _LEARN_MinChanceDiscover.GetValue(), _LEARN_MaxChanceDiscover.GetValue()) 
 EndFunction
 
+float function getTotalCasts()
+	return (_LEARN_CountAlteration.GetValue() + _LEARN_CountDestruction.GetValue() + _LEARN_CountConjuration.GetValue() + _LEARN_CountRestoration.GetValue() + _LEARN_CountIllusion.GetValue())
+endFunction
+
+float function calcCDReffort()
+	;float mybonus = 0
+	;mybonus += _LEARN_CountBonus.GetValue() ; Get value from script counter - e.g. demonic tutor, dreams.
+	;mybonus = mybonus
+	; cap at 100
+	;if (mybonus > 100)
+	;	mybonus = 100
+	;endIf
+	float mycasts = getTotalCasts()
+	; mycasts max of 500 - 100 of each school counted.
+	; we will cap it at 100 because 500 spell casts per rest is not realistic?
+	if (mycasts > 100)
+		mycasts = 100
+	endIf
+	; weighting is here and not configurable atm.
+	return ((mycasts)/100*_LEARN_BonusScale.GetValue()) 
+endFunction
 
 float Function hours_before_next_ok_to_learn()
     GlobalVariable GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
-
     float now = GameDaysPassed.GetValue()
-    float nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue();
-    ; default is 0.65
-    
+	float nextOK = LastSleepTime + 1
+	if (_LEARN_IntervalCDREnabled.GetValue() == 1)
+		float actualCDR = 0
+		actualCDR = scaleEffort(calcCDReffort(), 0, (_LEARN_IntervalCDR.GetValue() / 100))
+		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue()*(1-actualCDR)
+	Else
+		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue() ; default is 0.65
+	EndIf
+
     if now >= nextOK
         return 0
     Else
@@ -798,76 +942,230 @@ float Function hours_before_next_ok_to_learn()
     endif
 EndFunction
 
+bool function rollToLearn(float fChance)
+	Float fRand
+	if (_LEARN_HarderParallel.GetValue() != 0) ; ...check to see if HarderParallel is enabled. If it is, divide chance by number of spells being learned.
+		fRand = Utility.RandomFloat(0.0, 1.0)
+		fRand = fRand * _LEARN_ParallelLearning.GetValue()
+	Else ; Otherwise, roll as normal.
+		fRand = Utility.RandomFloat(0.0, 1.0)
+	EndIf
+	; Check to see if dynamic difficulty is enabled.
+	; If it is, then adjust the fChance accordingly to make it more/less likely to learn the spell.
+	if ()
+		
+	endIf
+	
+	; Once you have the roll, compare it to the passed chance. If it passes, return a True boolean.
+	if (fRand < fChance)
+		return True
+	Else
+		return False
+	EndIf
+EndFunction
+
+bool function debugCheck(Spell sp, int fifoindex)
+	MagicEffect eff
+	; Debug checks - make sure spell and spell effect exists, get spell school
+	if (! sp)
+		Debug.MessageBox(__l("message_spell learning bad reference", "[Spell Learning] Error learning spell, removing entry from list."))
+		spell_list_removeAt(fifoindex) ; TODO something better to handle spell mod disappearance ?
+		return false
+	endif
+	eff = sp.GetNthEffectMagicEffect(0)
+	if (!eff)
+		Debug.Notification(__l("notification_unknown spell", "[Spell Learning] Unknown spell in learning list - other spell mod removed?"))
+		return false
+	else
+		return true
+	endIf
+endFunction
+
+bool function canAutoLearn(Spell sp, int fifoindex)
+    ; Initialize variables
+	MagicEffect eff
+	String magicSchool = SPELL_SCHOOL_DESTRUCTION
+	int magicLevel = 100
+	float fskill = 0
+	float pskill = 0
+	; debug check to ensure everything still exists
+	if (!debugCheck(sp, fifoindex))
+		return False
+	endif
+	; If debug checks are passed, compare spell's level to player's skill and auto learn if eligible.
+	; initialize more variables now that we know they really exist
+	eff = sp.GetNthEffectMagicEffect(0)
+	magicSchool = eff.GetAssociatedSkill()
+	magicLevel = (eff.GetSkillLevel())
+	fskill = PlayerRef.GetActorValue(magicSchool)
+	if ((pskill - _LEARN_AutoNoviceLearning.GetValue()) >= magicLevel)
+		return True
+	Else
+		return False
+	EndIf
+EndFunction
+
+bool function cannotLearn(Spell sp, int fifoindex)
+	; First things first: if configured to allow dreadmilk to bypass autofail,
+	; and under the effects of dreadmilk, then just return False.
+	if ((PlayerRef.HasMagicEffect(AlchDreadmilkEffect)) && _LEARN_PotionBypass.GetValue() == 1)
+		return False
+	EndIf
+    ; Initialize variables
+	MagicEffect eff
+	String magicSchool = SPELL_SCHOOL_DESTRUCTION
+	int magicLevel = 100
+	float fskill = 0
+	float pskill = 0
+	; debug check to ensure everything still exists
+	if (!debugCheck(sp, fifoindex))
+		return True
+	endif
+	; If debug checks are passed, compare spell's level to player's skill and auto learn if eligible.
+	; initialize more variables now that we know they really exist
+	eff = sp.GetNthEffectMagicEffect(0)
+	magicSchool = eff.GetAssociatedSkill()
+	magicLevel = (eff.GetSkillLevel())
+	fskill = PlayerRef.GetActorValue(magicSchool)
+	if (pskill > (_LEARN_TooDifficultDelta.GetValue() - magicLevel))
+		return True
+	Else
+		return False
+	EndIf
+EndFunction
+
+function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
+    ; Initialize variables
+	float fChance
+	MagicEffect eff
+	String magicSchool = SPELL_SCHOOL_DESTRUCTION
+	; debug check to ensure everything still exists
+	if (!debugCheck(sp, fifoindex))
+		return ; break if debug check fails
+	else
+		eff = sp.GetNthEffectMagicEffect(0)
+		magicSchool = eff.GetAssociatedSkill()
+	endif
+
+	; if passed bool forceSuccess is true, just succeed
+	if (forceSuccess)
+		Debug.Notification(formatString1(__l("notification_learn spell", "{0} came effortlessly to you."), sp.GetName()))
+		forceLearnSpellAt(fifoindex)
+		iFailuresToLearn = 0
+		return
+	EndIf
+	
+	; if passed bool forceSuccess is false, roll for it under some conditions...
+	if (_LEARN_MaxFailsBeforeCycle.GetValue() != 0) ; If Max Failures is not disabled...
+		if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue()) ; ...and you have reached the max failure threshold...
+			; ...then automatically learn the spell.
+			Debug.Notification(formatString1(__l("notification_fail upwards learn spell", "It's finally coming together! Learned {0}."), sp.GetName()))
+			forceLearnSpellAt(fifoindex)
+			iFailuresToLearn = 0
+		Else ; If Max Failures is enabled but you haven't reached the max fail threshold yet, roll randomly to learn it.
+			if ((rollToLearn(baseChanceToStudy(magicSchool))) || PlayerRef.HasSpell(sp)) 
+				Debug.Notification(formatString1(__l("notification_learn spell", "It all makes sense now! Learned {0}."), sp.GetName()))
+				forceLearnSpellAt(fifoindex)
+				iFailuresToLearn = 0 
+			Else 
+				iFailuresToLearn = iFailuresToLearn + 1
+				Debug.Notification(formatString1(__l("notification_fail spell", "{0} still makes no sense..."), sp.GetName()))
+			EndIf
+		EndIf
+	Else ; if Max Consecutive Failures is disabled, do the process normally. 
+		if ((rollToLearn(baseChanceToStudy(magicSchool))) || PlayerRef.HasSpell(sp)) 
+			Debug.Notification(formatString1(__l("notification_learn spell", "It all makes sense now! Learned {0}."), sp.GetName()))
+			forceLearnSpellAt(fifoindex)
+			iFailuresToLearn = 0 
+		Else 
+			iFailuresToLearn = iFailuresToLearn + 1
+			Debug.Notification(formatString1(__l("notification_fail spell", "{0} still makes no sense..."), sp.GetName()))
+		EndIf
+	EndIf
+EndFunction
+
 Event OnSleepStop(Bool abInterrupted)
-    
-    ; Do nothing if was already called too recently. 
+	; initialize variables
+	Spell sp
+	bool emergencyBreaks = false
+	
+	; Do nothing if sleep was interrupted. 
+	if (abInterrupted)
+        Debug.Notification(__l("notification_spell learning interrupted", "Your sleep was interrupted."))
+        return
+    endIf
+
+	; First things first: If auto-successes bypass the daily limit, then process them all first.
+	if (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1 && _LEARN_AutoSuccessBypassesLimit.GetValue() == 1)
+		int currentSpell = 0
+		while (currentSpell < spell_fifo_get_count())
+			sp = spell_fifo_peek(currentSpell)
+			if(canAutoLearn(sp, currentSpell))
+				tryLearnSpell(sp, currentSpell, true)
+			endIf
+			currentSpell = currentSpell + 1
+		endWhile
+	endIf
+   
+    ; Do not roll for other spells if was already called too recently. 
     if (hours_before_next_ok_to_learn() > 0)
-        Return
-    EndIf
-
-
-    if (abInterrupted)
-        Debug.Notification(__l("notification_spell learning interrupted", "Interrupted spell learning"))
-        Return
-    endif
+        Debug.Notification(__l("notification_spell slept too soon", "It seems your mind isn't settled enough yet to learn any spells..."))
+		return
+    endIf
 
     GlobalVariable GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
-    LastSleepTime = GameDaysPassed.GetValue()
-
-
+    LastSleepTime = GameDaysPassed.GetValue()	
     
-    AddSpellsToLists()
-    
-
-    Float fRand
-    float fChance
-    Spell sp
-    MagicEffect eff
-    
-    if (iCount > 0)
-        ; Try to learn the player's first "todo list" spell
-        sp = spell_fifo_peek()
-        if (! sp)
-            Debug.MessageBox(__l("message_spell learning bad reference", "[Spell learning] Bad reference in spell list, dropped"))
-            spell_fifo_pop() ; TODO something better to handle spell mod disappearance ?
-            return
-        endif
-        Debug.Notification(formatString1(__l("notification_studying spell", "Studying {0}..."), sp.GetName()))
-        String magicSchool = SPELL_SCHOOL_DESTRUCTION
-        eff = sp.GetNthEffectMagicEffect(0) 
-        if (!eff)
-            Debug.Notification(__l("notification_unknown spell", "Strange spell in learning list, assuming Destruction school"))
-        else
-            magicSchool = eff.GetAssociatedSkill()  
-        endif
-        fChance = baseChanceToStudy(magicSchool)
-        fRand = Utility.RandomFloat(0.0, 1.0) 
-        if ((fRand < fChance) || PlayerRef.HasSpell(sp)) 
-            ; Spell learning success ! 
-            PlayerRef.AddSpell(sp) 
-            spell_fifo_pop() 
-            iFailuresToLearn = 0 
-        Else 
-            iFailuresToLearn = iFailuresToLearn + 1
-
-            ; rotate the spell to learn not to be stuck on a failure 
-            ; (later) I'm removing this "feature" that is confusing and unnecessary since the implementation of
-            ; a complete and user-controlled toto list management system in the MCM
-            ; if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue())
-            ;     Debug.Notification("Learning " + sp.GetName() + " is too difficult")
-            ;     sp = spell_fifo_pop() 
-            ;     spell_fifo_push(sp)
-            ;     sp = spell_fifo_peek()
-            ;     Debug.Notification("Let's try " + sp.GetName())
-            ; EndIf 
-        EndIf     
-    EndIf
-    
-    ; self discovery of spells
+    SpawnItemsInWorld()
+	
+	if (true)
+		int currentSpell = 0
+		while (currentSpell < _LEARN_ParallelLearning.GetValue() && currentSpell < spell_fifo_get_count() && !emergencyBreaks) ; while below max daily limit AND not yet at end of list...
+			sp = spell_fifo_peek(currentSpell)
+			if(canAutoLearn(sp, currentSpell) && _LEARN_AutoNoviceLearningEnabled.GetValue() == 1)
+				; by definition, if it can be autolearned then it's not a cannotlearn. so no need to
+				; check for that here.
+				tryLearnSpell(sp, currentSpell, true)
+			else ; if it can't be autolearned...
+				bool unbroken = true
+				int insideCount = 0
+				; Loop to repeatedly check to see if top spell is unlearnable.
+				; If it is, move it to the bottom of the list and keep checking
+				; until it is learnable or we have exhausted the list.
+				While (unbroken)
+					bool foundLearnableSpell = false
+					sp = spell_fifo_peek(currentSpell)
+					if(cannotLearn(sp, currentSpell) && _LEARN_TooDifficultEnabled.GetValue() == 1)
+						MoveSpellToBottom(currentSpell)
+						Debug.Notification(formatString1(__l("notification_learn spell", "{0} is too difficult. Trying other spells first."), sp.GetName()))
+						insideCount = insideCount + 1
+						; test to see if we've iterated through the whole list, meaning all spells are too hard.
+						if ((currentSpell+insideCount) >= spell_fifo_get_count())
+							; if we have, then break the loop to prevent an endless loop.
+							unbroken = false
+						EndIf
+					else
+						; If we find one that is learnable, learn it and break the loop.
+						unbroken = false
+						foundLearnableSpell = true
+					endIf
+					if (!foundLearnableSpell && ((currentSpell+insideCount) >= spell_fifo_get_count()))
+						; if we didn't find a learnable spell in the entire list,
+						; put on the emergency breaks to prevent outer loop from going again
+						; which would spam failure messages exponentially
+						emergencyBreaks = true
+					elseIf(foundLearnableSpell)
+						tryLearnSpell(sp, currentSpell, false)
+					endIf
+				endWhile
+			endIf
+			currentSpell = currentSpell + 1
+		endWhile
+    endIf
+    ; random discovery
     if (True)
         tryInventSpell()
     endif
-    
     
     ; reset counters for the day
     if (True)
@@ -881,15 +1179,16 @@ Event OnSleepStop(Bool abInterrupted)
 
     ; dreams
     if (true)
+		float fRand = 1
         fRand = Utility.RandomFloat(0.0, 1.0)
         if (fRand < 0.01)
-            Debug.Notification(__l("notification_dreamt Julianos", "Dreamt that Julianos was watching me."))
+            Debug.Notification(__l("notification_dreamt Julianos", "You dreamt that Julianos was watching over you."))
             _LEARN_CountBonus.SetValue(100)
         ElseIf (fRand < 0.02)
-            Debug.Notification(__l("notification_dreamt flying", "Dreamt that I was flying over the landscape."))
+            Debug.Notification(__l("notification_dreamt flying", "You dreamt that you were flying over Solstheim."))
             _LEARN_CountBonus.SetValue(30)
         ElseIf (fRand < 0.03)
-            Debug.Notification(__l("notification_dreamt exam", "Dreamt of an exam at the College of Winterhold."))
+            Debug.Notification(__l("notification_dreamt exam", "You had a nightmare about being lost forever in a plane of Oblivion."))
             _LEARN_CountBonus.SetValue(-40)
         endif
     endif
@@ -899,18 +1198,17 @@ Event OnSleepStop(Bool abInterrupted)
         if (dreadstareJustAdded != None)
             dreadstareJustAdded = None
         else
+			float fRand = 0
             fRand = Utility.RandomFloat(0.0, 1.0)
             if (fRand > 0.9)
-                Debug.Notification(__l("notification_no more dreadmik addiction", "I no longer feel a Dreadmilk addiction"))
+                Debug.Notification(__l("notification_no more dreadmilk addiction", "You're finally starting to feel your dreadmilk craving wane."))
                 PlayerRef.RemoveSpell(Dreadstare)
             else
-                Debug.Notification(__l("notification_need a sip of dreadmilk", "I need a sip of Dreadmilk"))
+                ;Debug.Notification(__l("notification_need a sip of dreadmilk", "You feel a deep yearning for dreadmilk..."))
             endif
         endif
     endif
-
 EndEvent
-
 
 String function topSchoolToday()
     string magicSchool
@@ -950,7 +1248,6 @@ String function topSchoolToday()
     return magicSchool
 EndFunction
 
-
 Spell function tryInventSpell()
         String sSchool = topSchoolToday()
         float fSkill = PlayerRef.GetActorValue(sSchool)
@@ -982,7 +1279,7 @@ Spell function tryInventSpell()
         Spell inventedsp = inventedbook.getspell()
         
         if inventedsp == None
-            Debug.Notification(__l("notification_spell invention bug", "Bug in spell invention, boy"))
+            ;Debug.Notification(__l("notification_spell invention bug", "Bug in spell invention, boy"))
             return None
         endif
         
@@ -994,7 +1291,7 @@ Spell function tryInventSpell()
         EndWhile
         
         if (inventedsp && (! (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp))))
-            Debug.Notification(__l("notification_new spell idea", "Had an idea for a new spell"))
+            Debug.Notification(__l("notification_new spell idea", "An idea for a new spell came to you in a dream..."))
             Debug.Notification(inventedsp.GetName())
             spell_fifo_push(inventedsp)
             Bookextension.setreadWFB(inventedbook, true)
@@ -1003,44 +1300,42 @@ Spell function tryInventSpell()
 EndFunction
 
 function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
-    if spell_fifo_has_ref(sp)
-        return
-    endIf
-    ;bool knowsSpell = PlayerRef.HasSpell(sp) 
-    if PlayerRef.HasSpell(sp)
-        return
-    endIf
-    
-    bool isRead = akBook.isRead()
     ; maybe remove book
     if (_LEARN_RemoveSpellBooks.GetValue() != 0)
         PlayerRef.removeItem(akBook, aiItemCount, !VisibleNotifications[NOTIFICATION_REMOVE_BOOK])
     EndIf
-    
-    ; maybe add notes
-    if (!isRead && _LEARN_CollectNotes.GetValue() != 0)
-        Int value = akBook.GetGoldValue()
-        
-        MagicEffect eff = sp.GetNthEffectMagicEffect(0)
-        String magicSchool = eff.GetAssociatedSkill() 
-        ; Debug.Notification(magicSchool) 
-        if magicSchool == SPELL_SCHOOL_ALTERATION
-            PlayerRef.addItem(_LEARN_SpellNotesAlteration, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
-        elseIf magicSchool == SPELL_SCHOOL_CONJURATION
-            PlayerRef.addItem(_LEARN_SpellNotesConjuration, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
-        elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
-            PlayerRef.addItem(_LEARN_SpellNotesDestruction, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
-        elseIf magicSchool == SPELL_SCHOOL_ILLUSION
-            PlayerRef.addItem(_LEARN_SpellNotesIllusion, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
-        elseIf magicSchool == SPELL_SCHOOL_RESTORATION
-            PlayerRef.addItem(_LEARN_SpellNotesRestoration, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
-        endIf
+	; maybe add notes
+	if (_LEARN_CollectNotes.GetValue() != 0)
+		Int value = akBook.GetGoldValue()
+		MagicEffect eff = sp.GetNthEffectMagicEffect(0)
+		String magicSchool = eff.GetAssociatedSkill() 
+		if magicSchool == SPELL_SCHOOL_ALTERATION
+			PlayerRef.addItem(_LEARN_SpellNotesAlteration, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
+		elseIf magicSchool == SPELL_SCHOOL_CONJURATION
+			PlayerRef.addItem(_LEARN_SpellNotesConjuration, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+		elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
+			PlayerRef.addItem(_LEARN_SpellNotesDestruction, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
+		elseIf magicSchool == SPELL_SCHOOL_ILLUSION
+			PlayerRef.addItem(_LEARN_SpellNotesIllusion, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+		elseIf magicSchool == SPELL_SCHOOL_RESTORATION
+			PlayerRef.addItem(_LEARN_SpellNotesRestoration, value, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+		endIf
+	endIf
+	
+    ; add spell to the todo list if not already known or in list
+	if (!PlayerRef.HasSpell(sp) && !spell_fifo_has_ref(sp))
+		spell_fifo_push(sp)
+		if (canAutoLearn(sp, spell_fifo_get_ref(sp)) && _LEARN_AutoNoviceLearningEnabled.GetValue() == 1)
+			; if the spell is eligible for automatic success, move it to the top of the list.
+			MoveSpellToTop(spell_fifo_get_ref(sp))
+		EndIf
     endIf
-
-    ; add spell to the todo list
-    spell_fifo_push(sp)
+	; note that setting books as read does not work in SSE,
+	; as the skse extension used in LE has not been ported.
+	; this is unfortunate but it's not a loss in comparison with vanilla,
+	; only with a default skyui setup.
+	bool isRead = akBook.isRead()
     if _canSetBookAsRead && !isRead
-        Bookextension.SetReadWFB(akBook, true)
+        BookExtension.SetReadWFB(akBook, true)
     endIf
-
-endFunction
+endFunction 

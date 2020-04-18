@@ -20,18 +20,18 @@ Actor akSpeaker = akSpeakerRef as Actor
         Time += PassedTime
         Time += Std as Float
         GameHour.SetValue(Time)
-        Debug.notification(__l("An hour passes"))
+        Debug.notification(__l("You spend an hour discussing."))
         ControlScript._LEARN_CountBonus.Mod(40)
-        debug.notification(__l("Learned something very insightful"))
+        debug.notification(__l("You feel this conversation has given you some insight!"))
     Else
         PassedTime = 4 ; 4 hours
         Time -= Std as Float
         Time += PassedTime
         Time += Std as Float
         GameHour.SetValue(Time)
-        Debug.notification(__l("Half a day passes"))
+        Debug.notification(__l("They spend half a day tutoring you."))
         ControlScript._LEARN_CountBonus.Mod(40)
-        Debug.notification(__l("Learned something practical"))
+        Debug.notification(__l("Your tutor has shared some of their practical knowledge."))
         ; remove gold for the service
         Game.Getplayer().removeitem(Game.getform(0xF), 150)
     EndIf

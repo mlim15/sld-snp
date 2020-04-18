@@ -17,10 +17,10 @@ Event OnEffectStart(Actor Target, Actor Caster)
     float fRand
     ; Don't do (too much) drugs, kids.
     if (PlayerRef.HasMagicEffect(AlchDreadmilkEffect))
-        fRand = Utility.RandomFloat(0.0, 1.0)
-        if (fRand > 0.5)
+        fRand = Utility.RandomFloat(0, 1.0)
+        if ((fRand / 4) < (ControlScript._LEARN_DreadstareLethality.GetValue() / 100))
             Utility.wait(4)
-            Debug.Notification(ControlScript.__l("dreadmilk_overdosed", "Overdosed"))
+            Debug.Notification(ControlScript.__l("dreadmilk_overdosed", "You have overdosed on dreadmilk."))
             Utility.wait(2)
             PlayerRef.kill()
             Return

@@ -15,7 +15,9 @@ sound property OutroSoundFX auto ; create a sound property we'll point to in the
 
 _LEARN_ControlScript Property ControlScript  Auto  
 
-
+string function __l(string keyName, string defaultValue = "")
+    return ControlScript.__l(keyName, defaultValue);
+endFunction
 
 ;======================================================================================;
 ;               EVENTS                     /
@@ -27,19 +29,12 @@ Event OnEffectStart(Actor Target, Actor Caster)
     Int Std = math.Floor(Time)
     
     if ! (Std <= 3 || Std == 23)
-        Debug.notification(ControlScript.__l("spirit_summon only at midnight", "The summoning can only work at midnight"))
+        Debug.Notification(__l("spirit_summon only at midnight", "The ritual only has effect around midnight..."))
         Return
     EndIf
 
-    Float PassedTime = 1.0 ; 1 hour it was 3?
-
-    ;Time -= Std as Float
-    Time += PassedTime
-    ;Time += Std as Float
- 
     int instanceID = IntroSoundFX.play((target as objectReference))          ; play IntroSoundFX sound from my self
     introFX.apply()                                  ; apply isMod at full strength
-    
     
     game.DisablePlayerControls()
     Utility.waitmenumode(2)
@@ -49,12 +44,10 @@ Event OnEffectStart(Actor Target, Actor Caster)
     mainFX.apply()
 
     Utility.waitmenumode(5)
-    ControlScript._LEARN_CountBonus.Mod(100)
-    debug.notification(ControlScript.__l("spirit_glimpsed", "Glimpsed at the unfathomable"))
+    ControlScript._LEARN_CountBonus.Mod(100) ; same bonus as shadowmilk
+    debug.notification(__l("spirit_glimpsed", "The dark whispers give a glimpse of the unfathomable..."))
     game.EnablePlayerControls()
     
-
-    GameHour.SetValue(Time)
 EndEvent
 
 Event OnEffectFinish(Actor Target, Actor Caster)
@@ -63,6 +56,5 @@ Event OnEffectFinish(Actor Target, Actor Caster)
     introFX.remove()
     mainFX.remove()
     OutroFX.apply()
-
 
 endEvent

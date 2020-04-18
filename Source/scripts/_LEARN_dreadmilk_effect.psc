@@ -21,16 +21,16 @@ Event OnEffectStart(Actor Target, Actor Caster)
     ; Immediate relief of withdrawal symptoms
     if (PlayerRef.HasSpell(Dreadstare))
         PlayerRef.RemoveSpell(Dreadstare)
-        Debug.Notification(__l("dreadmilk_feels good", "Feels good..."))
+        Debug.Notification(__l("dreadmilk_feels good", "Your withdrawal symptoms are relieved - for now..."))
     endif
     
     float fRand
     ; Don't do (too much) drugs, kids.
     if (ControlScript.DreadstareJustAdded != None || PlayerRef.HasMagicEffect(AlchShadowmilkEffect))
-        fRand = Utility.RandomFloat(0.0, 1.0)
-        if (fRand > 0.5)
+        fRand = Utility.RandomFloat(0, 1.0)
+        if (fRand < (ControlScript._LEARN_DreadstareLethality.getValue() / 100))
             Utility.wait(4)
-            Debug.Notification(__l("dreadmilk_overdosed", "Overdosed"))
+            Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed on dreadmilk."))
             Utility.wait(2)
             PlayerRef.kill()
             Return
@@ -53,15 +53,15 @@ Event OnEffectFinish(Actor Target, Actor Caster)
     fRand = Utility.RandomFloat(0.0, 1.0)
     if (fRand > 0.3)
         if ! (PlayerRef.HasSpell(Dreadstare))
-            Debug.Notification(__l("dreadmilk_need more", "I need more Dreadmilk"))
-            PlayerRef.AddSpell(Dreadstare)
+            Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk."))
+			PlayerRef.AddSpell(Dreadstare)
             ; just in case... set the variable again.
             ControlScript.DreadstareJustAdded = Dreadstare
         endif
     else
         if (PlayerRef.HasSpell(Dreadstare))
             PlayerRef.RemoveSpell(Dreadstare)
-            Debug.Notification(__l("dreadmilk_craving passed", "My Dreadmilk craving has passed"))
+            Debug.Notification(__l("dreadmilk_craving passed", "You're finally starting to feel your dreadmilk craving wane."))
         endif
     endif
 endEvent
