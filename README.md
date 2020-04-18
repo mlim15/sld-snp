@@ -5,7 +5,7 @@ A continuation of the Skyrim mod originally created by /u/bepo from Reddit. This
 Summary
 -------
 
-Isn't it weird that in vanilla Skyrim, you learn spells *instantly* by *destroying books*? This mod seeks to create a more immersive, realistic, and slow way of learning spells that is relatively lightweight, compatible with most spell mods without patching, and (mostly) lore-friendly. 
+Isn't it weird that in vanilla Skyrim, you learn spells *instantly* by *destroying books*? This mod seeks to create a more immersive, realistic, and slow way of learning spells that is relatively lightweight, compatible with most spell mods without patching, and (mostly) lore-friendly. It aims to remain simple enough that you can install it and set it up, and it will keep working in the background in an understandable and non-immersion-breaking way without you ever having to reenter its MCM.
 
 Instead of the vanilla system, with this mod any books you buy or pick up are automatically added to a list of spells your character is studying. Each time they sleep (with a configurable time limit), they will attempt to learn a spell from this list. Their chances to learn the spell successfully depend on their overall magical skill, their skill in the spell's specific school, the amount of spells of that school they have cast since last learning a spell, whether they have slept in a location that is "suited" for studying magic (like a temple or the College), and more.
 
