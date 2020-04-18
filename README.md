@@ -31,7 +31,7 @@ What's New
 ----------
 
 * Removed the NPC dialogue option because it was the only thing that really made me say "ew" when installing the mod, and I don't think it adds much to the experience
-* Changed the spell notes in inventory to be pages containing runes, instead of having 300 identical "notes" in your inventory that all have the same words on them. Also expanded the explainer at the top of the note slightly.
+* Changed the spell notes in inventory to be pages containing runes, instead of having 300 identical "notes" in your inventory that all have the same words on them. Also added a short explainer to the top of the note.
 * Tightened up in-game descriptions like the Spell Study effect, capitals on the mod title, changed "Spirit Tutor" to "Daedric Tutor", and many more little fixes and tweaks that make the experience feel less immersion-breaking - e.g. messages related to Dreadmilk used to just show "I need more Dreadmilk" or "Overdosed" at the top of the screen, now it displays something like "You have overdosed on Dreadmilk."
 * Enthir now sells items related to the mod, including its potions, recipes, and (singular) spell.
 * Messages that let you know what's going on with the mod at each sleep in what I hope will be considered a non-immersion-breaking way - e.g. "It seems your mind isn't settled enough yet to learn any spells..." or "Lightning Bolt still makes no sense..." or "It makes sense now! Learned Lightning Bolt." This way you don't have to constantly look at the MCM pane to know what's happening with the mod.
