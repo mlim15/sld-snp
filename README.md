@@ -23,9 +23,29 @@ When I was looking for mods that solve the problems of the vanilla game's spell 
 
 Then I found this mod. It was perfectly suited to my preferences... but it felt unfinished. A lot of things seemed unpolished - for example, the dialogue option with mages was pretty unintuitive, and for some NPCs like Mirabelle, was missing voicing. Much of the mod's functionality was relatively opaque to the end-user - how was I supposed to know that the dialogue option costs money once you've already passed a certain percentage chance? And on top of that, I felt it could be a little more configurable. If I could have just disabled all the parts of the mod I didn't like, I would have done that and called it a day. But those options weren't exposed to the user.
 
-So I decided to roll up my sleeves and fix it up, because bless all the people who have worked on this mod, they have *all* provided the sources (and under a great copyleft license, no less). Initially I just wanted to remove the immersion-breaking parts, like some of the debug messages and the NPC dialogue. Then I started adding a couple little features and config settings... and another... and another... and now we're here. The original mod had a ton of promise, and it provided a great robust base to work from. All I've done is added a little SnP. What's SnP? I don't know. Maybe the base mod was a great meal that just needed a little salt and pepper. Maybe it was a nice pair of boots that needed a little spit and polish. It's SnP.
+So I decided to roll up my sleeves and fix it up, because bless all the people who have worked on this mod, they have *all* provided the sources (and under a great copyleft license, no less). Initially I just wanted to remove the immersion-breaking parts, like some of the debug messages and the NPC dialogue. Then I started adding a couple little features and config settings... and another... and another... and now we're here. The original mod had a ton of promise, and it provided a great robust base to work from.  All I've done is added a little SnP. What's SnP? I don't know. Maybe the base mod was a great meal that just needed a little salt and pepper. Maybe it was a nice pair of boots that needed a little spit and polish. It's SnP.
 
 So here is Spell Learning and Discovery for Skyrim Special Edition... with a little SnP.
+
+What's New
+----------
+
+* Removed the NPC dialogue option because it was the only thing that really made me say "ew" when installing the mod, and I don't think it adds much to the experience
+* Changed the spell notes in inventory to be pages containing runes, instead of having 300 identical "notes" in your inventory that all have the same words on them. Also expanded the explainer at the top of the note slightly.
+* Tightened up in-game descriptions like the Spell Study effect, capitals on the mod title, changed "Spirit Tutor" to "Daedric Tutor", and many more little fixes and tweaks that make the experience feel less immersion-breaking - e.g. messages related to Dreadmilk used to just show "I need more Dreadmilk" or "Overdosed" at the top of the screen, now it displays something like "You have overdosed on Dreadmilk."
+* Enthir now sells items related to the mod, including its potions, recipes, and (singular) spell.
+* Messages that let you know what's going on with the mod at each sleep in what I hope will be considered a non-immersion-breaking way - e.g. "It seems your mind isn't settled enough yet to learn any spells..." or "Lightning Bolt still makes no sense..." or "It makes sense now! Learned Lightning Bolt." This way you don't have to constantly look at the MCM pane to know what's happening with the mod.
+* Configurable option to limit consecutive failures when learning spells - e.g. after failing 3 times, you learn it automagically(TM) on the next sleep. Alternatively, option to move spells to the bottom of the list after this amount of failures.
+* Option to try and learn multiple spells (amount configurable) on each sleep
+* Option when learning multiple spells to divide chance to learn by spells being learned (to approximate speed of learning one spell at a time, but still with the chance to get lucky and learn multiple spells on a sleep)
+* Configurable option to automatically fail spells based on skill difference (e.g. novice can't learn master spells)
+* Configurable option to let Dreadmilk (the potion added by the mod) to bypass this automatic failure (e.g. with Dreadmilk, a novice can still have the chance to learn master spells)
+* Configurable option to automatically succeed when learning spells based on skill difference (e.g. master always succeeds at learning novice spells)
+* Configurable option to let automatic successes not count towards the max amount of spells learned per sleep
+* Chance of potion addiction to kill you is now configurable
+* Configurable option for the chance to learn a spell to scale with its difficulty
+* Configurable option for casting spells to not only make you more likely to learn spells, but reduce the amount of time you have to wait before learning again on sleep
+* A massively expanded MCM menu to support all these new options
 
 Development Status
 ----------
@@ -35,6 +55,9 @@ Known bugs
 * Currently, this mod's items will not spawn by themselves in the world. I am trying to work on a script-side way to add the items to loot lists so that it is configurable from the MCM without the need for separate ESPs.
 * Dreadmilk's addiction function is currently broken. The debuff does not actually apply to the player when it should. Its functions related to enhancing spell learning still work, however.
 * Disabling the mod does not currently remove its effects properly. This shouldn't cause any issues, but is not ideal. This should be solvable by somehow removing or retargeting the alias added by the mod's tracking quest which points to the player.
+* I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
+* If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
+* Preferably, adding randomized messages instead of the same message every time would be nice.
 
 Requirements
 ------------
