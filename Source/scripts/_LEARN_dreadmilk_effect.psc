@@ -17,6 +17,8 @@ Event OnEffectStart(Actor Target, Actor Caster)
     if (Target != PlayerRef)
         Return
     EndIf
+	
+	ControlScript._LEARN_consecutiveDreadmilk.SetValue(ControlScript._LEARN_consecutiveDreadmilk.GetValue() + 1)
     
     ; Immediate relief of withdrawal symptoms
     if (PlayerRef.HasSpell(Dreadstare))
@@ -26,20 +28,17 @@ Event OnEffectStart(Actor Target, Actor Caster)
     
     float fRand
     ; Don't do (too much) drugs, kids.
-    if (ControlScript.DreadstareJustAdded != None || PlayerRef.HasMagicEffect(AlchShadowmilkEffect))
+    if (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 0)
         fRand = Utility.RandomFloat(0, 1.0)
-        if (fRand < (ControlScript._LEARN_DreadstareLethality.getValue() / 100))
+        if (fRand < (ControlScript._LEARN_DreadstareLethality.getValue() / 100) - (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue()/10))
             Utility.wait(4)
-            Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed on dreadmilk."))
+            Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed on Dreadmilk."))
             Utility.wait(2)
             PlayerRef.kill()
             Return
         endif
     endif
-
-    ; Use this variable immediately to track possible overdosing
-    ControlScript.DreadstareJustAdded = Dreadstare
-
+	
 EndEvent
 
 Event OnEffectFinish(Actor Target, Actor Caster)
@@ -52,13 +51,11 @@ Event OnEffectFinish(Actor Target, Actor Caster)
     float fRand
     fRand = Utility.RandomFloat(0.0, 1.0)
     if (fRand > 0.5)
-        if (!PlayerRef.HasSpell(Dreadstare))
+        if (!PlayerRef.HasSpell(Dreadstare) || ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 0)
             Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."))
 			PlayerRef.AddSpell(Dreadstare)
-            ; just in case... set the variable again.
-            ControlScript.DreadstareJustAdded = Dreadstare
         endif
     else
-		Debug.Notification(__l("dreadmilk_craving passed", "You're finally starting to feel your dreadmilk craving wane."))
+
     endif
 endEvent

@@ -210,8 +210,8 @@ event OnPageReset(string page)
                 n = ControlScript.customLocation.GetName()
             endif
             CustomLocationOID = AddTextOption(__l("Set Custom Study Location"), n, OPTION_FLAG_NONE)
+			infoStudyOID = AddTextOption(__l("Current Bloodstream Toxicity: "), _LEARN_Strings.formatString1("{0}%", ((ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() * 10) as String)), OPTION_FLAG_NONE)
 			dreadstareLethalityOID = AddSliderOption(__l("Potion Toxicity"), ControlScript._LEARN_DreadstareLethality.GetValue(), "{1}", OPTION_FLAG_NONE)
-			AddEmptyOption()
 			AddHeaderOption(__l("Notifications"))
 			AddToggleOptionST("ShowRemoveBookNotification", __l("notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
 			AddToggleOptionST("ShowAddSpellNoteNotification", __l("notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
@@ -220,8 +220,8 @@ event OnPageReset(string page)
         SetCursorPosition(1) ; Move cursor to top right position
 		If(isEnabled)
 			AddHeaderOption(__l("Current Spell Learning Status"), 0)
-			; current chance to study
-			infoStudyOID = AddTextOption(__l("% Chance to Successfully Learn"), ((100 * ControlScript.baseChanceToStudy()) as String), OPTION_FLAG_NONE)
+			; current chance to study 
+			infoStudyOID = AddTextOption(__l("% Chance to Successfully Learn"), _LEARN_Strings.formatString1("{0}%", (ControlScript.baseChanceToStudy() * 100 as String)), OPTION_FLAG_NONE)
 			int t = (controlscript.hours_before_next_ok_to_learn() as int)
 			if t == 0
 				AddTextOption(__l("You can sleep now to try learning!"), "", OPTION_FLAG_NONE)
@@ -235,7 +235,7 @@ event OnPageReset(string page)
         If(isEnabled)   
 		    AddHeaderOption(__l("Current Spell Discovery Status"), 0)
             ; current chance to discover
-            infoDiscoverOID = AddTextOption(__l("% Chance for Random Discovery"), ((100 * ControlScript.baseChanceToDiscover()) as String), OPTION_FLAG_NONE)
+            infoDiscoverOID = AddTextOption(__l("% Chance for Random Discovery"), _LEARN_Strings.formatString1("{0}%", (ControlScript.baseChanceToDiscover() * 100 as String)), OPTION_FLAG_NONE)
             ; school of magic
             infoSchoolOID = AddTextOption(__l("Current School of Interest"), ControlScript.topSchoolToday(), OPTION_FLAG_NONE) 
 			AddEmptyOption()
@@ -406,8 +406,8 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
 	
 	If (a_option == dreadstareLethalityOID)
         SetSliderDialogStartValue(ControlScript._LEARN_DreadstareLethality.GetValue())
-        SetSliderDialogDefaultValue(75)
-        SetSliderDialogRange(0, 100)
+        SetSliderDialogDefaultValue(10)
+        SetSliderDialogRange(0, 90)
         SetSliderDialogInterval(1)
         return
     EndIf

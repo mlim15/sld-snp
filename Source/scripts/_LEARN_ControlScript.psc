@@ -31,6 +31,7 @@ globalvariable property _LEARN_IntervalCDR auto
 globalvariable property _LEARN_IntervalCDREnabled auto
 globalvariable property _LEARN_MaxFailsAutoSucceeds auto
 globalvariable property _LEARN_DynamicDifficulty auto
+globalvariable property _LEARN_ConsecutiveDreadmilk auto
 String[] effortLabels
 
 keyword property LocTypeTemple auto
@@ -46,9 +47,7 @@ Book property _LEARN_SpellNotesRestoration auto
 MagicEffect Property AlchDreadmilkEffect Auto
 MagicEffect Property AlchShadowmilkEffect Auto
 MagicEffect Property _LEARN_PracticeEffect auto
-MagicEffect Property DreadstareEffect auto
 Spell Property Dreadstare Auto
-Spell property dreadstareJustAdded auto
 Spell property _LEARN_PracticeAbility auto
 Spell property _LEARN_SummonSpiritTutor auto
 Book Property _LEARN_SpellTomeSummonSpiritTutor Auto
@@ -108,10 +107,10 @@ int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
 function disableModEffects()
-	if (PlayerRef.HasMagicEffect(DreadstareEffect))
+	if (PlayerRef.HasSpell(Dreadstare))
 		PlayerRef.RemoveSpell(Dreadstare)
 	EndIf
-	if (PlayerRef.HasMagicEffect(_LEARN_PracticeEffect))
+	if (PlayerRef.HasSpell(_LEARN_PracticeAbility))
 		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
 	EndIf
 	if (PlayerRef.HasSpell(_LEARN_SummonSpiritTutor))
@@ -1253,20 +1252,21 @@ Event OnSleepStop(Bool abInterrupted)
         endif
     endif
     
-    ; low chance to heal Dreadstare disease
+	; Lower blood toxicity
+	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
+		_LEARN_consecutiveDreadmilk.SetValue(_LEARN_consecutiveDreadmilk.GetValue() - 1)
+	endIf
+	
+	; chance to heal Dreadstare disease
     if (PlayerRef.HasSpell(Dreadstare))
-        if (dreadstareJustAdded != None)
-            dreadstareJustAdded = None
-        else
-			float fRand = 0
-            fRand = Utility.RandomFloat(0.0, 1.0)
-            if (fRand > 0.9)
-                Debug.Notification(__l("notification_no more dreadmilk addiction", "You're finally starting to feel your dreadmilk craving wane."))
-                PlayerRef.RemoveSpell(Dreadstare)
-            else
-                Debug.Notification(__l("notification_need a sip of dreadmilk", "You feel an excruciating yearning for dreadmilk..."))
-            endif
-        endif
+		float fRand = 0
+		fRand = Utility.RandomFloat(0.0, 1.0)
+		if (fRand > 0.75)
+			Debug.Notification(__l("notification_no more dreadmilk addiction", "You're finally starting to feel your dreadmilk craving wane."))
+			PlayerRef.RemoveSpell(Dreadstare)
+		else
+			Debug.Notification(__l("notification_need a sip of dreadmilk", "You feel an excruciating yearning for dreadmilk..."))
+		endif
     endif
 EndEvent
 
