@@ -46,6 +46,7 @@ Book property _LEARN_SpellNotesRestoration auto
 MagicEffect Property AlchDreadmilkEffect Auto
 MagicEffect Property AlchShadowmilkEffect Auto
 MagicEffect Property _LEARN_PracticeEffect auto
+MagicEffect Property DreadstareEffect auto
 Spell Property Dreadstare Auto
 Spell property dreadstareJustAdded auto
 Spell property _LEARN_PracticeAbility auto
@@ -107,7 +108,7 @@ int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
 function disableModEffects()
-	if (PlayerRef.HasMagicEffect(Dreadstare))
+	if (PlayerRef.HasMagicEffect(DreadstareEffect))
 		PlayerRef.RemoveSpell(Dreadstare)
 	EndIf
 	if (PlayerRef.HasMagicEffect(_LEARN_PracticeEffect))
@@ -868,7 +869,7 @@ float function calcEffort(float skill, float casts, float notes)
     return effort
 EndFunction
 
-float function baseChanceBySchool(string magicSchool, float minchance, float maxchance)
+float function baseChanceBySchool(string magicSchool, float minchance, float maxchance, MagicEffect eff, bool discovering)
     float fskill
     float fcasts
     float fnotes
@@ -893,14 +894,13 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
     endIf    
 	; Check to see if dynamic difficulty is enabled.
 	; If it is, then adjust the fChance accordingly to make it more/less likely to learn the spell.
-	if (_LEARN_DynamicDifficulty.GetValue() == 1)
-		MagicEffect eff
-		eff = sp.GetNthEffectMagicEffect(0)
-		magicSchool = eff.GetAssociatedSkill()
+	if (_LEARN_DynamicDifficulty.GetValue() == 1 && !discovering)
+		int magicLevel = 0
 		magicLevel = eff.GetSkillLevel()
 		fskill = PlayerRef.GetActorValue(magicSchool)
+		float skillDiff = 0
 		skillDiff = fskill/magicLevel
-		if (skillDiff = 0)
+		if (skillDiff == 0)
 			; do nothing. leave fChance alone!
 		else
 			; else divide fChance by skillDiff.
@@ -915,7 +915,8 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
 EndFunction
 
 float Function baseChanceToStudy(string magicSchool = "")
-    if (magicSchool == "")
+    Magiceffect me
+	if (magicSchool == "")
         if iCount == 0
             return 0
         endif
@@ -923,7 +924,7 @@ float Function baseChanceToStudy(string magicSchool = "")
         if (sp == None)
             return 1
         endif
-        Magiceffect me = sp.GetNthEffectMagicEffect(0)
+        me = sp.GetNthEffectMagicEffect(0)
         if (me == None)
             return 1
         endif
@@ -932,14 +933,15 @@ float Function baseChanceToStudy(string magicSchool = "")
             return 1
         endif
     endif
-    return baseChanceBySchool(magicSchool, _LEARN_MinChanceStudy.GetValue(), _LEARN_MaxChanceStudy.GetValue()) 
+    return baseChanceBySchool(magicSchool, _LEARN_MinChanceStudy.GetValue(), _LEARN_MaxChanceStudy.GetValue(), me, false) 
 EndFunction
 
 float Function baseChanceToDiscover(string magicSchool = "")
-    if (magicSchool == "")
+	if (magicSchool == "")
         magicSchool = topSchoolToday()
     EndIf
-    return baseChanceBySchool(magicSchool, _LEARN_MinChanceDiscover.GetValue(), _LEARN_MaxChanceDiscover.GetValue()) 
+	; Pass an arbitrary magiceffect. It won't be used thanks to the boolean.
+    return baseChanceBySchool(magicSchool, _LEARN_MinChanceDiscover.GetValue(), _LEARN_MaxChanceDiscover.GetValue(), _LEARN_PracticeEffect, true) 
 EndFunction
 
 float function getTotalCasts()
@@ -1094,7 +1096,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	EndIf
 	
 	; Otherwise, roll to learn the spell
-	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp)) 
+	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp))) 
 		Debug.Notification(formatString1(__l("notification_learn spell", "It all makes sense now! Learned {0}."), sp.GetName()))
 		forceLearnSpellAt(fifoindex)
 		iFailuresToLearn = 0 
@@ -1141,9 +1143,10 @@ Event OnSleepStop(Bool abInterrupted)
 	
 	; Before the main spell learning cycle, if we've reached the max amount of failures, we'll handle that here first.
 	; As long as the setting is enabled, obviously.
-	if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue() && _LEARN_MaxFailsBeforeCycle != 0)
+	if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue() && _LEARN_MaxFailsBeforeCycle.GetValue() != 0)
 		sp = spell_fifo_peek()
-		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp))) ; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
+		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp, 0))) 
+		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
 			; ...then automatically learn the spell.
 			Debug.Notification(formatString1(__l("notification_fail upwards learn spell", "It's finally coming together! Learned {0}."), sp.GetName()))
 			forceLearnSpellAt(0)
@@ -1160,9 +1163,9 @@ Event OnSleepStop(Bool abInterrupted)
 	if (true)
 		; initialize variables only used in this loop
 		int currentSpell = 0
-		int spellLimit = 1
+		float spellLimit = 1
 		; set the spell limit
-		if (_LEARN_AutoSuccessBypassesLimit.GetValue() == 1 && _LEARN_MaxFailsAutoSucceeds == 0)
+		if (_LEARN_AutoSuccessBypassesLimit.GetValue() == 1 && _LEARN_MaxFailsAutoSucceeds.GetValue() == 0)
 			; if all the ways spells could be learned before are off or are set
 			; to not count towards the limit, then the limit is just the amount of spells per
 			; day to learn
