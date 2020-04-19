@@ -69,3 +69,5 @@ Compatibility
 The Spell Learning features should be compatible with any spell. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds is spells to these lists will be compatible. Most spell mods do so, but Witchhunter Prayers & Spells, for example, doesn't.
 
 This mod does currently add its items to Enthir's merchant inventory using an alias. This does not edit his merchant chest record itself, but it may be incompatible with mods that do.
+
+The durations of the potions added by this mod that can help you learn faster are set to 1 in-game day, but this depends on the clock running at a standard speed. If you have mods that somehow change the flow of in-game time, it could imbalance the potions by making them last far too long or making them run out before you finish sleeping.
