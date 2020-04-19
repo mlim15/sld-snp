@@ -4,7 +4,7 @@ _LEARN_ControlScript Property ControlScript  Auto
 MagicEffect Property AlchDreadmilkEffect Auto
 MagicEffect Property AlchShadowmilkEffect Auto
 Spell Property Dreadstare Auto
-Spell Property _LEARN_ShadowmilkOverdose auto
+Spell Property ShadowmilkOverdose auto
 
 string function __l(string keyName, string defaultValue = "")
     return ControlScript.__l(keyName, defaultValue);
@@ -22,7 +22,6 @@ Event OnEffectStart(Actor Target, Actor Caster)
     float fRand
 	bool overdose = false
     ; Don't do (too much) drugs, kids.
-	Spell ShadowmilkOverdose = Game.GetFormFromFile(0x045E64, "Spell Learning.esp") as Spell
     if (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 5)
         fRand = Utility.RandomFloat(0, 1.0)
         if ((fRand / 4) < ((ControlScript._LEARN_DreadstareLethality.GetValue() / 100) + (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() / 40)))

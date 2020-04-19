@@ -32,6 +32,7 @@ globalvariable property _LEARN_IntervalCDREnabled auto
 globalvariable property _LEARN_MaxFailsAutoSucceeds auto
 globalvariable property _LEARN_DynamicDifficulty auto
 globalvariable property _LEARN_ConsecutiveDreadmilk auto
+globalvariable property _LEARN_AlreadyUsedTutor auto
 String[] effortLabels
 
 keyword property LocTypeTemple auto
@@ -1152,14 +1153,14 @@ Event OnSleepStop(Bool abInterrupted)
 		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp, 0))) 
 		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
 			; ...then automatically learn the spell.
-			Debug.Notification(formatString1(__l("notification_fail upwards learn spell", "It's finally coming together! Learned {0}."), sp.GetName()))
+			Debug.Notification(formatString1(__l("notification_fail upwards", "It's finally coming together! Learned {0}."), sp.GetName()))
 			forceLearnSpellAt(0)
 			iFailuresToLearn = 0
 			alreadyLearnedSpells = alreadyLearnedSpells + 1
 		else ; Otherwise it's supposed to just move the spell to the bottom of the list.
 			MoveSpellToBottom(0)
 			iFailuresToLearn = 0
-			Debug.Notification(formatString1(__l("notification_learn spell", "You just can't understand {0}... moving on to other spells."), sp.GetName()))
+			Debug.Notification(formatString1(__l("notification_moving on", "Not making any progress on {0}... trying other spells."), sp.GetName()))
 		endIf
 	endIf
 	
@@ -1196,7 +1197,7 @@ Event OnSleepStop(Bool abInterrupted)
 				sp = spell_fifo_peek(currentSpell)
 				if(cannotLearn(sp, currentSpell) && _LEARN_TooDifficultEnabled.GetValue() == 1)
 					MoveSpellToBottom(currentSpell)
-					Debug.Notification(formatString1(__l("notification_learn spell", "{0} is too difficult. Trying other spells first."), sp.GetName()))
+					Debug.Notification(formatString1(__l("notification_impossible spell", "{0} is too difficult. Trying other spells first."), sp.GetName()))
 					insideCount = insideCount + 1
 					; test to see if we've iterated through the whole list, meaning all spells are too hard.
 					if ((currentSpell+insideCount) >= spell_fifo_get_count())
@@ -1275,6 +1276,8 @@ Event OnSleepStop(Bool abInterrupted)
 			endIf
 		endIf
 	endIf
+	
+	_LEARN_AlreadyUsedTutor.SetValue(0)
 	
 EndEvent
 

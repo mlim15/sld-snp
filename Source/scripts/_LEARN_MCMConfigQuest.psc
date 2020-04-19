@@ -144,6 +144,7 @@ Event OnConfigClose()
     If(!isEnabled && !wasDisabled)
         wasDisabled = True
 		; then disable things cleanly
+		ControlScript.disableModEffects()
     EndIf
     
     ;======== RESET ========
