@@ -32,6 +32,7 @@ globalvariable property _LEARN_IntervalCDREnabled auto
 globalvariable property _LEARN_MaxFailsAutoSucceeds auto
 globalvariable property _LEARN_DynamicDifficulty auto
 globalvariable property _LEARN_ConsecutiveDreadmilk auto
+globalvariable property _LEARN_WaitForEffectFinish auto
 String[] effortLabels
 
 keyword property LocTypeTemple auto
@@ -1256,7 +1257,7 @@ Event OnSleepStop(Bool abInterrupted)
     if (PlayerRef.HasSpell(Dreadstare))
 		float fRand = 0
 		fRand = Utility.RandomFloat(0.0, 1.0)
-		if (fRand > (0.7 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
+		if (fRand > (0.3 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
 			Debug.Notification(__l("notification_no more dreadmilk addiction", "You're finally starting to feel your dreadmilk craving wane."))
 			PlayerRef.RemoveSpell(Dreadstare)
 		else
@@ -1267,6 +1268,13 @@ Event OnSleepStop(Bool abInterrupted)
 	; Lower blood toxicity
 	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
 		_LEARN_consecutiveDreadmilk.SetValue(_LEARN_consecutiveDreadmilk.GetValue() - 1)
+		if (_LEARN_consecutiveDreadmilk.GetValue() <= 0)
+			_LEARN_consecutiveDreadmilk.SetValue(0)
+			Debug.Notification(__l("notification_blood non toxic", "All the Dreadmilk is finally out of your system..."))
+			if (PlayerRef.HasSpell(Dreadstare))
+				PlayerRef.RemoveSpell(Dreadstare)
+			endIf
+		endIf
 	endIf
 	
 EndEvent

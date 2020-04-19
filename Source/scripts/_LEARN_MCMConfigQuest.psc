@@ -221,7 +221,7 @@ event OnPageReset(string page)
 		If(isEnabled)
 			AddHeaderOption(__l("Current Spell Learning Status"), 0)
 			; current chance to study 
-			infoStudyOID = AddTextOption(__l("% Chance to Successfully Learn"), _LEARN_Strings.formatString1("{0}%", ((ControlScript.baseChanceToStudy() * 100) as String)), OPTION_FLAG_NONE)
+			infoStudyOID = AddTextOption(__l("Chance to Successfully Learn"), _LEARN_Strings.formatString1("{0}%", ((ControlScript.baseChanceToStudy() * 100) as String)), OPTION_FLAG_NONE)
 			int t = (controlscript.hours_before_next_ok_to_learn() as int)
 			if t == 0
 				AddTextOption(__l("You can sleep now to try learning!"), "", OPTION_FLAG_NONE)
@@ -235,7 +235,7 @@ event OnPageReset(string page)
         If(isEnabled)   
 		    AddHeaderOption(__l("Current Spell Discovery Status"), 0)
             ; current chance to discover
-            infoDiscoverOID = AddTextOption(__l("% Chance for Random Discovery"), _LEARN_Strings.formatString1("{0}%", ((ControlScript.baseChanceToDiscover() * 100) as String)), OPTION_FLAG_NONE)
+            infoDiscoverOID = AddTextOption(__l("Chance for Random Discovery"), _LEARN_Strings.formatString1("{0}%", ((ControlScript.baseChanceToDiscover() * 100) as String)), OPTION_FLAG_NONE)
             ; school of magic
             infoSchoolOID = AddTextOption(__l("Current School of Interest"), ControlScript.topSchoolToday(), OPTION_FLAG_NONE) 
 			AddEmptyOption()
