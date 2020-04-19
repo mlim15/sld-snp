@@ -45,6 +45,7 @@ What's New
 * Chance of potion addiction to kill you is now configurable
 * Configurable option for the chance to learn a spell to scale with its difficulty
 * Configurable option for casting spells to not only make you more likely to learn spells, but reduce the amount of time you have to wait before learning again on sleep
+* Revamped potion addiction and tutor spell changes, with a lot of little polish tweaks like health draining quickly when overdosing instead of getting killed directly by the script, or the demonic tutor now having random chances to exact a "price" for his services
 * A massively expanded MCM menu to support all these new options
 
 Development Status
