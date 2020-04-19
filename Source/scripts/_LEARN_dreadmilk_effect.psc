@@ -18,6 +18,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
         Return
     EndIf
 	
+	; Increase blood toxicity
 	ControlScript._LEARN_consecutiveDreadmilk.SetValue(ControlScript._LEARN_consecutiveDreadmilk.GetValue() + 1)
     
     ; Immediate relief of withdrawal symptoms
@@ -50,12 +51,9 @@ Event OnEffectFinish(Actor Target, Actor Caster)
     
     float fRand
     fRand = Utility.RandomFloat(0.0, 1.0)
-    if (fRand > 0.5)
-        if (!PlayerRef.HasSpell(Dreadstare) || ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 0)
-            Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."))
-			PlayerRef.AddSpell(Dreadstare)
-        endif
-    else
+	if ((!PlayerRef.HasSpell(Dreadstare) && (fRand > 0.5)) || ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 0)
+		Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."))
+		PlayerRef.AddSpell(Dreadstare)
+	endif
 
-    endif
 endEvent

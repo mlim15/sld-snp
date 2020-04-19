@@ -1252,22 +1252,23 @@ Event OnSleepStop(Bool abInterrupted)
         endif
     endif
     
-	; Lower blood toxicity
-	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
-		_LEARN_consecutiveDreadmilk.SetValue(_LEARN_consecutiveDreadmilk.GetValue() - 1)
-	endIf
-	
 	; chance to heal Dreadstare disease
     if (PlayerRef.HasSpell(Dreadstare))
 		float fRand = 0
 		fRand = Utility.RandomFloat(0.0, 1.0)
-		if (fRand > 0.75)
+		if (fRand > (0.7 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
 			Debug.Notification(__l("notification_no more dreadmilk addiction", "You're finally starting to feel your dreadmilk craving wane."))
 			PlayerRef.RemoveSpell(Dreadstare)
 		else
 			Debug.Notification(__l("notification_need a sip of dreadmilk", "You feel an excruciating yearning for dreadmilk..."))
 		endif
     endif
+	
+	; Lower blood toxicity
+	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
+		_LEARN_consecutiveDreadmilk.SetValue(_LEARN_consecutiveDreadmilk.GetValue() - 1)
+	endIf
+	
 EndEvent
 
 String function topSchoolToday()
