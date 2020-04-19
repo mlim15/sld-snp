@@ -57,6 +57,7 @@ Development Status
 * If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
 * Preferably, adding randomized messages instead of the same message every time would be nice.
 * Adding a spell to set the player-defined bonus location would be nice if it's possible, so that you don't have to do it through the MCM.
+* For some reason, it can literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but at least it's a one-time issue. Just be aware.
 
 Requirements
 ------------
