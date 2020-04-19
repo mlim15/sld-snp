@@ -897,13 +897,18 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
 	if (_LEARN_DynamicDifficulty.GetValue() == 1 && !discovering)
 		int magicLevel = 0
 		magicLevel = eff.GetSkillLevel()
+		if (magicLevel == 0)
+			; so that we don't crash the game with novice spells by dividing by zero
+			magicLevel = 1
+		endIf
 		fskill = PlayerRef.GetActorValue(magicSchool)
 		float skillDiff = 0
 		skillDiff = fskill/magicLevel
 		if (skillDiff == 0)
-			; do nothing. leave fChance alone!
+			; this won't (shouldn't?) happen but it's not a good situation so let's fix that
+			fChance = fChance/0.01
 		else
-			; else divide fChance by skillDiff.
+			; divide fChance by skillDiff.
 			; when your skill is higher than spell level, skillDiff is >1 so division increases the number, making learning easier
 			; when your skill is lower, skillDiff is <1 so division decreases the number, making learning harder
 			fChance = fChance/skillDiff
