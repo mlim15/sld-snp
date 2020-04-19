@@ -17,9 +17,6 @@ Event OnEffectStart(Actor Target, Actor Caster)
     if (Target != PlayerRef)
         Return
     EndIf
-	
-	; Increase blood toxicity
-	ControlScript._LEARN_consecutiveDreadmilk.SetValue(ControlScript._LEARN_consecutiveDreadmilk.GetValue() + 1)
     
     ; Immediate relief of withdrawal symptoms
     if (PlayerRef.HasSpell(Dreadstare))
@@ -39,6 +36,9 @@ Event OnEffectStart(Actor Target, Actor Caster)
             Return
         endif
     endif
+	
+	; Increase blood toxicity
+	ControlScript._LEARN_consecutiveDreadmilk.SetValue(ControlScript._LEARN_consecutiveDreadmilk.GetValue() + 1)
 	
 EndEvent
 
