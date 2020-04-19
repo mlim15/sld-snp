@@ -18,15 +18,6 @@ int minChanceStudyOID
 int maxChanceStudyOID
 int minChanceDiscoverOID
 int maxChanceDiscoverOID
-int maxConsecutiveFailuresOID
-int autoNoviceLearningOID
-int autoSuccessBypassesLimitOID
-int noviceLearningEnabledOID
-int dreadstareLethalityOID
-int parallelLearningOID
-int harderParallelOID
-int tooDifficultEnabledOID
-int tooDifficultDeltaOID
 float bonusScaleOID
 int collectOID
 int removeOID
@@ -47,10 +38,21 @@ int PushBackSpellOID
 int BringSpellOID
 int CustomLocationOID
 int StudyIntervalOID
-int shutUpOID
+int maxConsecutiveFailuresOID
+int autoNoviceLearningOID
+int autoSuccessBypassesLimitOID
+int noviceLearningEnabledOID
+int dreadstareLethalityOID
+int parallelLearningOID
+int harderParallelOID
+int tooDifficultEnabledOID
+int tooDifficultDeltaOID
 int potionBypassOID
 int intervalCDRenabledOID
 float intervalCdrOID
+int dynamicDiffOID
+int maxFailsAutoSucceedsOID
+int shutUpOID ; unused
 int spawnItemsOID ; unused
 int enthirSellsOID ; unused
 
@@ -251,8 +253,9 @@ event OnPageReset(string page)
 			intervalCdrOID = AddSliderOption(__l("Maximum Interval CDR"), ControlScript._LEARN_IntervalCDR.GetValue(), "{0}", OPTION_FLAG_NONE)
             minChanceStudyOID = AddSliderOption(__l("Min Learn Chance"), ControlScript._LEARN_MinChanceStudy.GetValue(), "{0}", OPTION_FLAG_NONE)
             maxChanceStudyOID = AddSliderOption(__l("Max Learn Chance"), ControlScript._LEARN_MaxChanceStudy.GetValue(), "{0}", OPTION_FLAG_NONE)
+			dynamicDiffOID = AddToggleOption(__l("Chance Scales w/Spell Level"), ControlScript._LEARN_DynamicDifficulty.GetValue(), OPTION_FLAG_NONE)
 			maxConsecutiveFailuresOID = AddSliderOption(__l("Limit Consecutive Failures To..."), ControlScript._LEARN_MaxFailsBeforeCycle.GetValue(), "{0}", OPTION_FLAG_NONE)
-
+			maxFailsAutoSucceedsOID = AddToggleOption(__l("Auto Succeed When Max Failures Reached"), ControlScript._LEARN_MaxFailsAutoSucceeds.GetValue(), OPTION_FLAG_NONE)
 		Else
 			AddTextOption(__l("Mod is disabled."), "", OPTION_FLAG_NONE)
 		EndIf
@@ -603,6 +606,10 @@ event OnOptionSelect(int option)
 		SetToggleOptionValue(option, ControlScript.toggleTooDifficultEnabled(), False)
 	ElseIf (Option == intervalCDRenabledOID)
 		SetToggleOptionValue(option, ControlScript.toggleIntervalCDREnabled(), False)
+	ElseIf (Option == dynamicDiffOID)
+		SetToggleOptionValue(option, ControlScript.toggleDynamicDifficulty(), False)
+	ElseIf (Option == maxFailsAutoSucceedsOID)
+		SetToggleOptionValue(option, ControlScript.toggleMaxFailsAutoSucceeds(), False)
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -720,6 +727,10 @@ Event OnOptionHighlight(int option)
 		setInfoText(__l("hint_cdrEnabled", "When enabling this, casting spells etc will not only increase your chance to learn spells, but will also reduce the cooldown between learnings. Defaults to on."))
 	ElseIf (Option == intervalCdrOID)
 		setInfoText(__l("hint_cdr", "The maximum percentage by which the cooldown can be reduced through practice by casting up to 100 spells. Defaults to 25%."))
+	ElseIf (Option == maxFailsAutoSucceedsOID)
+		setInfoText(__l("hint_maxFailsSucceeds", "When enabled, reaching the maximum failure limit will cause you to succeed as long as it isn't prevented by something like the skill difference option. When off, the spell will be moved to the bottom of your list instead. Defaults to on."))
+	ElseIf (Option == dynamicDiffOID)
+		setInfoText(__l("hint_dynamicDiff", "When enabled, the chance to learn a spell also depends on its own difficulty relative to your skill. Defaults to on."))
 	EndIf
 EndEvent
 

@@ -29,6 +29,8 @@ globalvariable property _LEARN_SpawnItems auto
 globalvariable property _LEARN_PotionBypass auto
 globalvariable property _LEARN_IntervalCDR auto
 globalvariable property _LEARN_IntervalCDREnabled auto
+globalvariable property _LEARN_MaxFailsAutoSucceeds auto
+globalvariable property _LEARN_DynamicDifficulty auto
 String[] effortLabels
 
 keyword property LocTypeTemple auto
@@ -658,7 +660,22 @@ bool function toggleIntervalCDREnabled()
 EndFunction
 
 bool function toggleDynamicDifficulty()
+    if (_LEARN_DynamicDifficulty.GetValue())
+        _LEARN_DynamicDifficulty.SetValue(0)
+        return false
+    endif
+    _LEARN_DynamicDifficulty.SetValue(1)
+    return True
+EndFunction
 
+bool function toggleMaxFailsAutoSucceeds()
+    if (_LEARN_MaxFailsAutoSucceeds.GetValue())
+        _LEARN_MaxFailsAutoSucceeds.SetValue(0)
+        return false
+    endif
+    _LEARN_MaxFailsAutoSucceeds.SetValue(1)
+    return True
+EndFunction
 
 String[] function getSchools()
     return aSchools
@@ -827,7 +844,7 @@ float function calcEffort(float skill, float casts, float notes)
     endIf
     ; Failing to learn also counts as progress for rng roll, 
     ; but only if some role playing is already happening
-    if (mybonus >= 77)
+    if (mybonus >= 33)
         mybonus += iFailuresToLearn * 11
     endif
 	; scale mybonus using the configurable BonusScale parameter (default 1, max 3)
@@ -868,6 +885,24 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         fcasts = _LEARN_CountRestoration.GetValue()
         fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration)
     endIf    
+	; Check to see if dynamic difficulty is enabled.
+	; If it is, then adjust the fChance accordingly to make it more/less likely to learn the spell.
+	if (_LEARN_DynamicDifficulty.GetValue() == 1)
+		MagicEffect eff
+		eff = sp.GetNthEffectMagicEffect(0)
+		magicSchool = eff.GetAssociatedSkill()
+		magicLevel = eff.GetSkillLevel()
+		fskill = PlayerRef.GetActorValue(magicSchool)
+		skillDiff = fskill/magicLevel
+		if (skillDiff = 0)
+			; do nothing. leave fChance alone!
+		else
+			; else divide fChance by skillDiff.
+			; when your skill is higher than spell level, skillDiff is >1 so division increases the number, making learning easier
+			; when your skill is lower, skillDiff is <1 so division decreases the number, making learning harder
+			fChance = fChance/skillDiff
+		endIf
+	endIf
     fChance = scaleEffort(calcEffort(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
     ; Debug.Notification("baseChance = " + fChance)
     return fChance
@@ -927,6 +962,7 @@ float Function hours_before_next_ok_to_learn()
     GlobalVariable GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
     float now = GameDaysPassed.GetValue()
 	float nextOK = LastSleepTime + 1
+	; If cooldown reduction is enabled, then reduce the required wait time accordingly.
 	if (_LEARN_IntervalCDREnabled.GetValue() == 1)
 		float actualCDR = 0
 		actualCDR = scaleEffort(calcCDReffort(), 0, (_LEARN_IntervalCDR.GetValue() / 100))
@@ -942,21 +978,17 @@ float Function hours_before_next_ok_to_learn()
     endif
 EndFunction
 
-bool function rollToLearn(float fChance)
+bool function rollToLearn(float fChance, Spell sp)
 	Float fRand
-	if (_LEARN_HarderParallel.GetValue() != 0) ; ...check to see if HarderParallel is enabled. If it is, divide chance by number of spells being learned.
+	; ...check to see if HarderParallel is enabled. If it is, divide chance by number of spells being learned.
+	if (_LEARN_HarderParallel.GetValue() != 0) 
 		fRand = Utility.RandomFloat(0.0, 1.0)
 		fRand = fRand * _LEARN_ParallelLearning.GetValue()
 	Else ; Otherwise, roll as normal.
 		fRand = Utility.RandomFloat(0.0, 1.0)
 	EndIf
-	; Check to see if dynamic difficulty is enabled.
-	; If it is, then adjust the fChance accordingly to make it more/less likely to learn the spell.
-	if ()
-		
-	endIf
 	
-	; Once you have the roll, compare it to the passed chance. If it passes, return a True boolean.
+	; Once you have the roll, compare it to the chance. If it passes, return a True boolean.
 	if (fRand < fChance)
 		return True
 	Else
@@ -996,7 +1028,7 @@ bool function canAutoLearn(Spell sp, int fifoindex)
 	; initialize more variables now that we know they really exist
 	eff = sp.GetNthEffectMagicEffect(0)
 	magicSchool = eff.GetAssociatedSkill()
-	magicLevel = (eff.GetSkillLevel())
+	magicLevel = eff.GetSkillLevel()
 	fskill = PlayerRef.GetActorValue(magicSchool)
 	if ((pskill - _LEARN_AutoNoviceLearning.GetValue()) >= magicLevel)
 		return True
@@ -1055,32 +1087,14 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 		return
 	EndIf
 	
-	; if passed bool forceSuccess is false, roll for it under some conditions...
-	if (_LEARN_MaxFailsBeforeCycle.GetValue() != 0) ; If Max Failures is not disabled...
-		if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue()) ; ...and you have reached the max failure threshold...
-			; ...then automatically learn the spell.
-			Debug.Notification(formatString1(__l("notification_fail upwards learn spell", "It's finally coming together! Learned {0}."), sp.GetName()))
-			forceLearnSpellAt(fifoindex)
-			iFailuresToLearn = 0
-		Else ; If Max Failures is enabled but you haven't reached the max fail threshold yet, roll randomly to learn it.
-			if ((rollToLearn(baseChanceToStudy(magicSchool))) || PlayerRef.HasSpell(sp)) 
-				Debug.Notification(formatString1(__l("notification_learn spell", "It all makes sense now! Learned {0}."), sp.GetName()))
-				forceLearnSpellAt(fifoindex)
-				iFailuresToLearn = 0 
-			Else 
-				iFailuresToLearn = iFailuresToLearn + 1
-				Debug.Notification(formatString1(__l("notification_fail spell", "{0} still makes no sense..."), sp.GetName()))
-			EndIf
-		EndIf
-	Else ; if Max Consecutive Failures is disabled, do the process normally. 
-		if ((rollToLearn(baseChanceToStudy(magicSchool))) || PlayerRef.HasSpell(sp)) 
-			Debug.Notification(formatString1(__l("notification_learn spell", "It all makes sense now! Learned {0}."), sp.GetName()))
-			forceLearnSpellAt(fifoindex)
-			iFailuresToLearn = 0 
-		Else 
-			iFailuresToLearn = iFailuresToLearn + 1
-			Debug.Notification(formatString1(__l("notification_fail spell", "{0} still makes no sense..."), sp.GetName()))
-		EndIf
+	; Otherwise, roll to learn the spell
+	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp)) 
+		Debug.Notification(formatString1(__l("notification_learn spell", "It all makes sense now! Learned {0}."), sp.GetName()))
+		forceLearnSpellAt(fifoindex)
+		iFailuresToLearn = 0 
+	Else 
+		iFailuresToLearn = iFailuresToLearn + 1
+		Debug.Notification(formatString1(__l("notification_fail spell", "{0} still makes no sense..."), sp.GetName()))
 	EndIf
 EndFunction
 
@@ -1088,6 +1102,7 @@ Event OnSleepStop(Bool abInterrupted)
 	; initialize variables
 	Spell sp
 	bool emergencyBreaks = false
+	int alreadyLearnedSpells = 0
 	
 	; Do nothing if sleep was interrupted. 
 	if (abInterrupted)
@@ -1118,51 +1133,81 @@ Event OnSleepStop(Bool abInterrupted)
     
     SpawnItemsInWorld()
 	
+	; Before the main spell learning cycle, if we've reached the max amount of failures, we'll handle that here first.
+	if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue())
+		sp = spell_fifo_peek()
+		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1) ; If reaching the max amount of fails is supposed to make you auto succeed...
+			; ...then automatically learn the spell.
+			Debug.Notification(formatString1(__l("notification_fail upwards learn spell", "It's finally coming together! Learned {0}."), sp.GetName()))
+			forceLearnSpellAt(0)
+			iFailuresToLearn = 0
+			alreadyLearnedSpells = alreadyLearnedSpells + 1
+		else ; Otherwise it's supposed to just move the spell to the bottom of the list.
+			MoveSpellToBottom(0)
+			iFailuresToLearn = 0
+			Debug.Notification(formatString1(__l("notification_learn spell", "You just can't understand {0}... moving on to other spells."), sp.GetName()))
+		endIf
+	endIf
+	
+	; main spell learning loop
 	if (true)
+		; initialize variables only used in this loop
 		int currentSpell = 0
-		while (currentSpell < _LEARN_ParallelLearning.GetValue() && currentSpell < spell_fifo_get_count() && !emergencyBreaks) ; while below max daily limit AND not yet at end of list...
+		int spellLimit = 1
+		; set the spell limit
+		if (_LEARN_AutoSuccessBypassesLimit.GetValue() == 1 && _LEARN_MaxFailsAutoSucceeds == 0)
+			; if all the ways spells could be learned before are off or are set
+			; to not count towards the limit, then the limit is just the amount of spells per
+			; day to learn
+			spellLimit = _LEARN_ParallelLearning.GetValue()
+		else
+			; otherwise, subtract the already learned spells counter from the amount of available spells to learn
+			spellLimit = _LEARN_ParallelLearning.GetValue()-alreadyLearnedSpells
+		endIf
+		; while below max daily limit AND not yet at end of list, iterate through and try to learn
+		while (currentSpell < spellLimit && currentSpell < spell_fifo_get_count() && !emergencyBreaks) 
+			; get the current spell
 			sp = spell_fifo_peek(currentSpell)
-			if(canAutoLearn(sp, currentSpell) && _LEARN_AutoNoviceLearningEnabled.GetValue() == 1)
-				; by definition, if it can be autolearned then it's not a cannotlearn. so no need to
-				; check for that here.
-				tryLearnSpell(sp, currentSpell, true)
-			else ; if it can't be autolearned...
-				bool unbroken = true
-				int insideCount = 0
-				; Loop to repeatedly check to see if top spell is unlearnable.
-				; If it is, move it to the bottom of the list and keep checking
-				; until it is learnable or we have exhausted the list.
-				While (unbroken)
-					bool foundLearnableSpell = false
-					sp = spell_fifo_peek(currentSpell)
-					if(cannotLearn(sp, currentSpell) && _LEARN_TooDifficultEnabled.GetValue() == 1)
-						MoveSpellToBottom(currentSpell)
-						Debug.Notification(formatString1(__l("notification_learn spell", "{0} is too difficult. Trying other spells first."), sp.GetName()))
-						insideCount = insideCount + 1
-						; test to see if we've iterated through the whole list, meaning all spells are too hard.
-						if ((currentSpell+insideCount) >= spell_fifo_get_count())
-							; if we have, then break the loop to prevent an endless loop.
-							unbroken = false
-						EndIf
-					else
-						; If we find one that is learnable, learn it and break the loop.
+			; initialize some variables here.
+			; they are only used in the loop below.
+			; if we initialize them in that loop they'll reset,
+			; so we do it here.
+			bool unbroken = true
+			int insideCount = 0
+			; Loop to repeatedly check to see if top spell is unlearnable.
+			; If it is, move it to the bottom of the list and keep checking
+			; until it is learnable or we have exhausted the list.
+			While (unbroken)
+				bool foundLearnableSpell = false
+				sp = spell_fifo_peek(currentSpell)
+				if(cannotLearn(sp, currentSpell) && _LEARN_TooDifficultEnabled.GetValue() == 1)
+					MoveSpellToBottom(currentSpell)
+					Debug.Notification(formatString1(__l("notification_learn spell", "{0} is too difficult. Trying other spells first."), sp.GetName()))
+					insideCount = insideCount + 1
+					; test to see if we've iterated through the whole list, meaning all spells are too hard.
+					if ((currentSpell+insideCount) >= spell_fifo_get_count())
+						; if we have, then break the loop to prevent an endless loop.
 						unbroken = false
-						foundLearnableSpell = true
 					endIf
-					if (!foundLearnableSpell && ((currentSpell+insideCount) >= spell_fifo_get_count()))
-						; if we didn't find a learnable spell in the entire list,
-						; put on the emergency breaks to prevent outer loop from going again
-						; which would spam failure messages exponentially
-						emergencyBreaks = true
-					elseIf(foundLearnableSpell)
-						tryLearnSpell(sp, currentSpell, false)
-					endIf
-				endWhile
-			endIf
+				else
+					; If we find one that is learnable, learn it and break the loop.
+					unbroken = false
+					foundLearnableSpell = true
+				endIf
+				if (!foundLearnableSpell && ((currentSpell+insideCount) >= spell_fifo_get_count()))
+					; if we didn't find a learnable spell in the entire list,
+					; put on the emergency breaks to prevent outer loop from going again
+					; which would spam failure messages exponentially
+					emergencyBreaks = true
+				elseIf(foundLearnableSpell)
+					tryLearnSpell(sp, currentSpell, false)
+				endIf
+			endWhile
 			currentSpell = currentSpell + 1
 		endWhile
     endIf
-    ; random discovery
+    
+	; random discovery
     if (True)
         tryInventSpell()
     endif
@@ -1330,10 +1375,12 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
 			MoveSpellToTop(spell_fifo_get_ref(sp))
 		EndIf
     endIf
+	
 	; note that setting books as read does not work in SSE,
 	; as the skse extension used in LE has not been ported.
 	; this is unfortunate but it's not a loss in comparison with vanilla,
-	; only with a default skyui setup.
+	; which doesn't display which books are read in the menu anyway.
+	; sucks for those who got used to that convenience in SkyUI though.
 	bool isRead = akBook.isRead()
     if _canSetBookAsRead && !isRead
         BookExtension.SetReadWFB(akBook, true)

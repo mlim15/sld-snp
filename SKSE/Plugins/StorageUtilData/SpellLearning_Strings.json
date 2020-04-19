@@ -62,7 +62,7 @@
         "hint_studyinterval" : "How many days must pass between learning attempts. Smaller values mean you will be able to roll to learn spells when sleeping more often. Default is 0.65.",
         "automatic" : "Automatic",
         "notification_spell learning interrupted" : "Your sleep was interrupted.",
-        "message_spell learning bad reference" : "[Spell Learning] Error learning spell, removing from list.",
+        "message_spell learning bad reference" : "[Spell Learning] Error learning spell, removing entry from list.",
         "notification_studying spell" : "Studying {0}...",
         "notification_unknown spell" : "[Spell Learning] ERROR Unknown spell in learning list - other spell mod removed?",
         "notification_dreamt Julianos" : "You dreamt that Julianos was watching over you.",
