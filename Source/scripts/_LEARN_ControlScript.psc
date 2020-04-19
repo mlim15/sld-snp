@@ -1264,7 +1264,7 @@ Event OnSleepStop(Bool abInterrupted)
                 Debug.Notification(__l("notification_no more dreadmilk addiction", "You're finally starting to feel your dreadmilk craving wane."))
                 PlayerRef.RemoveSpell(Dreadstare)
             else
-                ;Debug.Notification(__l("notification_need a sip of dreadmilk", "You feel a deep yearning for dreadmilk..."))
+                Debug.Notification(__l("notification_need a sip of dreadmilk", "You feel an excruciating yearning for dreadmilk..."))
             endif
         endif
     endif

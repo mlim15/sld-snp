@@ -51,17 +51,14 @@ Event OnEffectFinish(Actor Target, Actor Caster)
     
     float fRand
     fRand = Utility.RandomFloat(0.0, 1.0)
-    if (fRand > 0.3)
-        if ! (PlayerRef.HasSpell(Dreadstare))
-            Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk."))
+    if (fRand > 0.5)
+        if (!PlayerRef.HasSpell(Dreadstare))
+            Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."))
 			PlayerRef.AddSpell(Dreadstare)
             ; just in case... set the variable again.
             ControlScript.DreadstareJustAdded = Dreadstare
         endif
     else
-        if (PlayerRef.HasSpell(Dreadstare))
-            PlayerRef.RemoveSpell(Dreadstare)
-            Debug.Notification(__l("dreadmilk_craving passed", "You're finally starting to feel your dreadmilk craving wane."))
-        endif
+		Debug.Notification(__l("dreadmilk_craving passed", "You're finally starting to feel your dreadmilk craving wane."))
     endif
 endEvent
