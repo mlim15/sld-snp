@@ -32,7 +32,6 @@ globalvariable property _LEARN_IntervalCDREnabled auto
 globalvariable property _LEARN_MaxFailsAutoSucceeds auto
 globalvariable property _LEARN_DynamicDifficulty auto
 globalvariable property _LEARN_ConsecutiveDreadmilk auto
-globalvariable property _LEARN_WaitForEffectFinish auto
 String[] effortLabels
 
 keyword property LocTypeTemple auto

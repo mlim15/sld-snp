@@ -22,12 +22,13 @@ Event OnEffectStart(Actor Target, Actor Caster)
     float fRand
 	bool overdose = false
     ; Don't do (too much) drugs, kids.
+	Spell ShadowmilkOverdose = Game.GetFormFromFile(0x045E64, "Spell Learning.esp") as Spell
     if (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 5)
         fRand = Utility.RandomFloat(0, 1.0)
         if ((fRand / 4) < ((ControlScript._LEARN_DreadstareLethality.GetValue() / 100) + (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() / 40)))
             Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed."))
 			overdose = true
-			_LEARN_ShadowmilkOverdose.Cast(PlayerRef)
+			ShadowmilkOverdose.Cast(PlayerRef, PlayerRef)
         endif
     endif
 
