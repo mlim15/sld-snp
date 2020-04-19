@@ -56,7 +56,7 @@ Development Status
 * I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
 * If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
 * Preferably, adding randomized messages instead of the same message every time would be nice.
-* Adding a spell to set the player-defined bonus location would be nice, so that you don't have to do it through the MCM.
+* Adding a spell to set the player-defined bonus location would be nice if it's possible, so that you don't have to do it through the MCM.
 
 Requirements
 ------------
