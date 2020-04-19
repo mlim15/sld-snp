@@ -765,7 +765,13 @@ float function scaleEffort(float effort, float minchance, float maxchance)
 		scaledEffort = ((maxchance - minchance) * Math.sqrt(effort) + minchance)
 	; Finally, linear 1:1 is an option.
     ElseIf(_LEARN_EffortScaling.GetValue() == 2) ; If preference set to linear
-		scaledEffort = effort
+		if (effort > maxchance)
+			scaledEffort = maxchance
+		elseIf (effort < minchance)
+			scaledEffort = minchance
+		else
+			scaledEffort = effort
+		endIf
 	Else ; This should never happen. But let's at least ensure things are happening if it does.
 		return maxchance
 	EndIf
@@ -1134,9 +1140,10 @@ Event OnSleepStop(Bool abInterrupted)
     SpawnItemsInWorld()
 	
 	; Before the main spell learning cycle, if we've reached the max amount of failures, we'll handle that here first.
-	if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue())
+	; As long as the setting is enabled, obviously.
+	if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue() && _LEARN_MaxFailsBeforeCycle != 0)
 		sp = spell_fifo_peek()
-		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1) ; If reaching the max amount of fails is supposed to make you auto succeed...
+		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp))) ; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
 			; ...then automatically learn the spell.
 			Debug.Notification(formatString1(__l("notification_fail upwards learn spell", "It's finally coming together! Learned {0}."), sp.GetName()))
 			forceLearnSpellAt(0)
