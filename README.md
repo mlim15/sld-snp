@@ -51,7 +51,6 @@ Development Status
 ----------
 
 * Currently, this mod's items will not spawn by themselves in the world. I am trying to work on a script-side way to add the items to loot lists so that it is configurable from the MCM without the need for separate ESPs.
-* Dreadmilk's addiction function is currently broken. The debuff does not actually apply to the player when it should. Its functions related to enhancing spell learning still work, however.
 * Disabling the mod does not currently remove its effects properly. This shouldn't cause any issues, but is not ideal. This should be solvable by somehow removing or retargeting the alias added by the mod's tracking quest which points to the player.
 * I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
 * If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
