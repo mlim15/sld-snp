@@ -35,7 +35,7 @@ The mod requires [SKSE](https://skse.silverlock.org/) to function. If you want t
 Compatibility
 -------------
 
-The Spell Learning features should be compatible with any spell. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds is spells to these lists will be compatible. Most spell mods do so, but Witchhunter Prayers & Spells, for example, doesn't.
+The Spell Learning features should be compatible with any spell. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds is spells to these lists will be compatible. Most spell mods do so.
 
 Installation
 -------------
