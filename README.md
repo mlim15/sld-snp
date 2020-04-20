@@ -46,6 +46,7 @@ What's New
 * Configurable option for the chance to learn a spell to scale with its difficulty
 * Configurable option for casting spells to not only make you more likely to learn spells, but reduce the amount of time you have to wait before learning again on sleep
 * Revamped potion addiction and tutor spell changes, with a lot of little polish tweaks like health draining quickly when overdosing instead of getting killed directly by the script, or the demonic tutor now having random chances to exact a "price" for his services
+* A new spell that lets you set the custom bonus location in-game without using the MCM
 * A massively expanded MCM menu to support all these new options
 
 Development Status
@@ -54,7 +55,6 @@ Development Status
 * I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
 * If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
 * Preferably, adding randomized messages instead of the same message every time would be nice.
-* Adding a spell to set the player-defined bonus location would be nice, so that you don't have to do it through the MCM.
 * For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but at least it's a one-time issue. Just be aware.
 
 Requirements
