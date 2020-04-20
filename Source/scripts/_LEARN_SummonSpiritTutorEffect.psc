@@ -45,6 +45,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
     debug.notification(__l("notification_spirit_glimpsed", "The dark whispers give a glimpse of the unfathomable..."))
     
     game.EnablePlayerControls()
+	
     ; Extract a price
 	float fRand
 	fRand = Utility.RandomFloat(0.0, 1.0)
@@ -72,7 +73,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		TutorPrice01.Cast(PlayerRef, PlayerRef)
 		Debug.Notification(__l("notification_spirit_weaker", "You suddenly feel very tired..."))
 	endIf
-	
+
 	; Prevent using tutor again until next spell learn attempt
 	ControlScript._LEARN_AlreadyUsedTutor.SetValue(1)
 	
