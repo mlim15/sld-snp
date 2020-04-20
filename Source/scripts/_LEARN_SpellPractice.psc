@@ -1,6 +1,5 @@
 scriptName _LEARN_SpellPractice extends ActiveMagicEffect
 
-;-- Properties --------------------------------------
 globalvariable property _LEARN_CountAlteration auto
 globalvariable property _LEARN_CountConjuration auto
 globalvariable property _LEARN_CountDestruction auto
@@ -18,15 +17,8 @@ Book property _LEARN_SpellNotesRestoration auto
 
 _LEARN_ControlScript property ControlScript auto
 
-
-
-;-- Variables ---------------------------------------
 float TimeWithoutEvent
 float PreviousMagicka
-
-;-- Functions ---------------------------------------
-
-; Skipped compiler generated GotoState
 
 function OnSpellCast(Form akForm)
     Spell akSpell = akForm as Spell
@@ -36,7 +28,6 @@ function OnSpellCast(Form akForm)
     
     MagicEffect eff = akSpell.GetNthEffectMagicEffect(0)
     String magicSchool = eff.GetAssociatedSkill()
-    ; Debug.Notification(magicSchool)
     if magicSchool == "Alteration"
         _LEARN_CountAlteration.Mod(1)
         return
@@ -55,11 +46,6 @@ function OnSpellCast(Form akForm)
     endIf
 endFunction
 
-;/
-string function __l(string keyName, string defaultValue = "")
-    return ControlScript.__l(keyName, defaultValue);
-endFunction
-/;
 function OnItemAdded(Form akBaseItem, Int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
     Book akBook = akBaseItem as Book
     if (! akBook)

@@ -1,6 +1,7 @@
 Scriptname _LEARN_shadowmilk_effect extends activemagiceffect  
 
-_LEARN_ControlScript Property ControlScript  Auto  
+_LEARN_ControlScript Property ControlScript  Auto 
+
 MagicEffect Property AlchDreadmilkEffect Auto
 MagicEffect Property AlchShadowmilkEffect Auto
 Spell Property Dreadstare Auto
@@ -25,7 +26,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
     if (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 5)
         fRand = Utility.RandomFloat(0, 1.0)
         if ((fRand / 4) < ((ControlScript._LEARN_DreadstareLethality.GetValue() / 100) + (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() / 40)))
-            Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed."))
+            Debug.Notification(__l("notification_dreadmilk_overdosed", "You have overdosed."))
 			overdose = true
 			ShadowmilkOverdose.Cast(PlayerRef, PlayerRef)
         endif
@@ -33,7 +34,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 
 	; Tell player it won't stave off dreadstare
     if (PlayerRef.HasSpell(Dreadstare) && !overdose)
-        Debug.Notification(__l("dreadmilk_feels bad man", "You feel a little better, but it's not enough..."))
+        Debug.Notification(__l("notification_dreadmilk_feels_bad_man", "You feel a little better, but it's not enough..."))
     endif
 	
 	; Increase blood toxicity if it's above 0.5 (i.e. dreadmilk has been used)

@@ -1,6 +1,6 @@
 Scriptname _LEARN_dreadmilk_effect extends activemagiceffect  
 
-_LEARN_ControlScript Property ControlScript  Auto  
+_LEARN_ControlScript Property ControlScript  Auto 
 MagicEffect Property AlchDreadmilkEffect Auto
 MagicEffect Property AlchShadowmilkEffect Auto
 Spell Property Dreadstare Auto

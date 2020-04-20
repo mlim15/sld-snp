@@ -1,121 +1,157 @@
 {
 	"string" : 
 	{
-		"abandon first spell" : "Abandon first spell",
-		"chance to discover" : "Chance to discover",
-		"chance to study" : "Chance to study",
-		"config" : "Configuration",
-		"current study list" : "Current Study List",
-		"don't misclick" : "Don't Misclick!",
-		"first spell becomes last" : "First spell becomes last",
-		"interest" : "Interest",
-		"last spell becomes first" : "Last spell becomes first",
-		"rotate first 3 spells" : "Rotate first 3 spells",
-		"safe click" : "Safe Click",
-		"spell discovery" : "Spell Discovery",
-		"spell study" : "Spell Study",
-		"status" : "Status",
-		"study list management" : "Study List Management",
-		"swap first 2 spells" : "Swap first 2 spells",
-		"you can sleep in ?h to try learning" : "You can sleep in {0}h to try learning",
-		"you can sleep in 1h to try learning" : "You can sleep in 1h to try learning",
-        "you can sleep now to try learning" : "You can sleep now to try learning",
-        "general" : "General",
-        "mod is enabled" : "Mod is Enabled",
-        "bonus scale" : "Bonus Scale",
-        "nothing" : "List Empty",
-        "location_none" : "Undefined",
-        "custom study location" : "Custom Study Location",
-        "maintenance" : "Maintenance",
-        "export to fiss" : "Export/Backup",
-        "import from fiss" : "Import/Restore",
-        "click" : "Click",
-        "min study chance": "Min study chance",
-        "max study chance" : "Max study chance",
-        "study interval" : "Study Interval",
-        "remove spell books" : "Remove spell tomes",
-        "collect study notes" : "Collect study notes",
-        "spell research" : "Spell Research",
-        "min discover chance" : "Min discover chance",
-        "max discover chance" : "Max discover chance",
-        "school" : "Spell School",
-        "message_fiss is not working" : "FISS is not working or installed",
-        "message_fiss wait" : "Please wait until the next message box. Do not quit this MCM menu yet.",
-        "message_fiss done" : "Done. You are free to leave this MCM menu.",
-		"hint_minchancestudy" : "Minimum percent chance per night to learn a spell from books. Default 5.",
-        "hint_maxchancestudy" : "Maximum percent chance per night to learn a spell from books. Default 95.",
-        "hint_minchancediscover" : "Minimum percent chance per night to discover a new spell by oneself. Default 0.",
-        "hint_maxchancediscover" : "Maximum percent chance per night to discover a new spell by oneself. Default 5.",
-		"hint_maxConsecutiveFailures" : "Maximum consecutive failures to learn before automatically succeeding. Default 3. Set to 0 for unlimited failures.",
-		"hint_freebieOnFailure" : "For faster progression: on each attempt where you fail to learn, this setting gives an instant and automatic free attempt at the second spell in your list. You are more likely (but not guaranteed) to learn at least one spell a night this way. Default off.",
-        "hint_bonusscale" : "Weight of the roleplaying bonus to chance of learning/discovering. This means speaking with mages, hoarding spell notes, sleeping at the College and temples, consuming shadowmilk, summoning spirit tutors, etc. Default 1.5.",
-        "hint_infostudy" : "Current percent chance to learn a spell from books (rolled after next night). Cast spells of the same school to improve. (Displays 0 if study list is empty)",
-        "hint_infodiscover" : "Current percent chance to discover a new spell by oneself (rolled after next night). Cast spells of the same school to improve.",
-        "hint_infoschool" : "Current magic school of interest.",
-        "hint_collectnotes" : "Whether or not to collect spell notes when acquiring spell tomes. A large collection of spell notes improves the roleplaying bonus for spell learning chance. Default is enabled.",
-        "hint_removebooks" : "Whether or not to remove unknown spell books from inventory when added, to prevent vanilla 'insta-learn'. Default is enabled.",
-        "hint_preferedschool" : "Set this to the school of magic you want to discover spells from. By default, it will choose the school you have cast most that day.",
-        "hint_export" : "Export/backup spell study list to FISS XML.",
-        "hint_import" : "Import/restore spell study list from FISS XML.",
-        "hint_abandonspell" : "Manage your spell learning list: Delete the current first spell from your learning list",
-        "hint_customlocation" : "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset.",
-        "hint_studyinterval" : "How many days must pass between learning attempts. Smaller values mean you will be able to roll to learn spells when sleeping more often. Default is 0.65.",
-        "automatic" : "Automatic",
-        "notification_spell learning interrupted" : "Your sleep was interrupted.",
-        "message_spell learning bad reference" : "[Spell Learning] Error learning spell, removing entry from list.",
-        "notification_studying spell" : "Studying {0}...",
-        "notification_unknown spell" : "[Spell Learning] ERROR Unknown spell in learning list - other spell mod removed?",
-        "notification_dreamt Julianos" : "You dreamt that Julianos was watching over you.",
-        "notification_dreamt flying" : "You dreamt that you were flying over Solstheim.",
-        "notification_dreamt exam" : "You had a nightmare about being lost forever in a plane of Oblivion.",
-        "notification_no more dreadmik addiction" : "You're finally starting to feel your Dreadmilk craving wane.",
-        "notification_need a sip of dreadmilk" : "You feel a deep yearning for Dreadmilk...",
-        "notification_spell invention bug" : "Bug in spell invention, boy",
-        "notification_new spell idea" : "An idea for a new spell came to you in a dream!",
-        "notification_spell slept too soon" : "It seems your mind isn't settled enough yet to learn any spells...",
-		"dreadmilk_feels good" : "Your withdrawal symptoms are relieved - for now...",
-        "dreadmilk_overdosed" : "You have overdosed on Dreadmilk.",
-        "dreadmilk_need more" : "You feel an excruciating yearning for more Dreadmilk.",
-        "dreadmilk_craving passed" : "You're finally starting to feel your dreadmilk craving wane.",
-        "learnlist_full" : "Learning list is full: Not processing this tome",
-        "learnlist_almost full" : "Learning list is quite full ({0}/128)",
-        "spirit_summon only at midnight" : "The ritual only has effect around midnight...",
-        "spirit_glimpsed" : "The dark whispers give a glimpse of the unfathomable...",
-        "an hour passes" : "An hour passes...",
-        "learned something very insightful" : "Your interlocutor shared some great insights.",
-        "half a day passes" : "Half a day passes...",
-        "learned something practical" : "You learned something practical from your tutor.",
-        "insightful" : "Insightful",
-        "interesting" : "Interesting",
-        "spell list" : "Spell List",
-        "footer_page" : "Current Page",
-        "list actions" : "List Actions",
-        "first page" : "First Page",
-        "previous page" : "Previous Page",
-        "next page" : "Next Page",
-        "last page" : "Last Page",
-        "selected spell" : "Selected Spell",
-        "execute command" : "Execute Command",
-        "choose_command" : "Choose",
-        "move to location" : "Move to Location",
-        "move to top" : "Move to Top",
-        "move up" : "Move Up",
-        "move down" : "Move Down",
-        "move to bottom" : "Move to Bottom",
-        "spell_command_none" : "No Operation",
-        "spell_command_remove" : "Remove",
-        "spell_command_learn" : "Learn (Instantly)",
-        "notifications" : "Notifications",
-        "notification_remove_book" : "When Consuming Spell Books",
-        "notification_add_spell_note" : "When Adding Spell Notes",
-        "hint_moveto_top" : "Moves the selected spell to the top of the list.",
-        "hint_move_up" : "Moves up the selected spell.",
-        "hint_move_down" : "Moves down the selected spell.",
-        "hint_moveto_bottom" : "Moves the selected spell to the bottom of the list.",
-        "hint_moveto_index" : "You can move the selected spell to any numbered spot in the list.",
-        "hint_spell_commands" : "Select a command from list to execute on selected spell. Please don't misclick. These commands are not reversible.",
-        "page_spells" : "Manage Spell List",
-        "version_upgrade" : "Installed Version: {0}"
+		"notification_version_upgrade" :  "Installed version {0}"
+		"mcm_automatic" :  "Automatic"
+		"message_spell_learning_bad_reference" :  "[Spell Learning] Error learning spell,  removing entry from list."
+		"notification_unknown_spell" :  "[Spell Learning] Unknown spell in learning list - other spell mod removed?"
+		"notification_effortless_learn" :  "{0} came effortlessly to you."
+		"notification_learn_spell" :  "It all makes sense now! Learned {0}."
+		"notification_fail_spell" :  "{0} still makes no sense..."
+		"notification_sleep_interrupted" :  "Your sleep was interrupted."
+		"notification_slept_too_soon" :  "It seems your mind isn't settled enough yet to learn any spells..."
+		"notification_fail_upwards" :  "It's finally coming together! Learned {0}."
+		"notification_moving_on" :  "Not making any progress on {0}... trying other spells."
+		"notification_impossible_spell" :  "{0} is too difficult. Trying other spells first."
+		"notification_dreamt_Julianos" :  "You dreamt that Julianos was watching over you."
+		"notification_dreamt_flying" :  "You dreamt that you were flying over Solstheim."
+		"notification_dreamt_exam" :  "You had a nightmare about being lost forever in a plane of Oblivion."
+		"notification_no_more_dreadmilk_addiction" :  "You're finally starting to feel your dreadmilk craving wane."
+		"notification_need_dreadmilk" :  "You feel an excruciating yearning for dreadmilk..."
+		"notification_dreadmilk_out_of_system" :  "All the Dreadmilk is finally out of your system..."
+		"notification_spell_invention_bug" :  "Bug in spell invention, boy"
+		"notification_new_spell_idea" :  "An idea for a new spell came to you in a dream: {0}"
+		"dreadmilk_overdosed" :  "You have overdosed."
+		"dreadmilk_feels good" :  "Your withdrawal symptoms are relieved - for now..."
+		"dreadmilk_need more" :  "You feel an excruciating yearning for more Dreadmilk..."
+		"mcm_tab_status" :  "Status"
+		"mcm_tab_learning" : "Learning and Discovery"
+		"mcm_tab_spell_list" :  "Manage Spell List"
+		"mcm_spell_command_none" :  "No Operation"
+		"mcm_spell_command_remove" :  "Remove"
+		"mcm_spell_command_learn" :  "Learn (Instantly)"
+		"mcm_header_general_settings" :  "General Settings"
+		"mcm_mod_enabled" :  "Mod is Enabled: "
+		"mcm_option_roleplaying_bonus" :  "Roleplaying Bonus Magnitude"
+		"mcm_option_scaling" :  "Bonus Scaling Type"
+		"mcm_current_location_none" :  "Undefined"
+		"mcm_option_set_home" :  "Set Custom Study Location"
+		"mcm_current_blood_toxicity" :  "Current Bloodstream Toxicity: "
+		"mcm_option_potion_toxicity" :  "Potion Toxicity"
+		"mcm_header_notifications" :  "Notifications"
+		"mcm_notification_remove_book" :  "When Consuming Spell Books"
+		"mcm_notification_add_spell_note" :  "When Adding Spell Notes"
+		"mcm_shut_up_notifications" :  "Quiet Mode"
+		"mcm_header_current_learning" :  "Current Spell Learning Status: "
+		"mcm_current_learning_chance" :  "Chance to Successfully Learn: "
+		"mcm_current_sleep_now" :  "You can sleep now to try learning!"
+		"mcm_current_sleep_1h" :  "You can sleep in 1h to try learning."
+		"mcm_current_sleep_Xh" :  "You can sleep in {0}h to try learning."
+		"mcm_header_sleep_current_discovery" :  "Current Spell Discovery Status: "
+		"mcm_current_discovery_chance" :  "Chance for Random Discovery: "
+		"mcm_current_school" :  "Current School of Interest: "
+		"mcm_header_backup_restore" :  "Backup/Restore Spell List"
+		"mcm_export_fiss" :  "Click"
+		"mcm_import_fiss" :  "Click"
+		"mcm_header_spell_learning_options" :  "Spell Learning Options"
+		"mcm_option_sleep_interval" :  "Days Between Chances"
+		"mcm_option_practice_gives_cdr" :  "Practice Reduces Interval"
+		"mcm_option_max_cdr" :  "Maximum Interval CDR"
+		"mcm_option_min_learn_chance" :  "Min Learn Chance"
+		"mcm_option_max_learn_chance" :  "Max Learn Chance"
+		"mcm_option_chance_scales_with_spell_level" :  "Chance Scales w/Spell Level"
+		"mcm_option_limit_failure" :  "Limit Consecutive Failures To..."
+		"mcm_option_limit_failure_always_succeeds" :  "Auto Succeed When Max Failures Reached"
+		"mcm_current_disabled" :  "Mod is disabled."
+		"mcm_header_spell_discovery_options" :  "Spell Discovery Options"
+		"mcm_option_min_discovery_chance" :  "Min Random Discovery Chance"
+		"mcm_option_max_discovery_chance" :  "Max Random Discovery Chance"
+		"mcm_option_spell_school" :  "Spell School"
+		"mcm_header_spell_book_options" :  "Spell Book Options"
+		"mcm_option_remove_books" :  "Auto-Remove Spell Books"
+		"mcm_option_collect_notes" :  "Create Study Notes from Books"
+		"mcm_header_adv_spell_options" :  "Advanced Spell Learning Options"
+		"mcm_option_number_spells" :  "Number of Spells per Sleep"
+		"mcm_option_harder_multiple" :  "Make Learning Multiple Spells Harder"
+		"mcm_option_auto_failure" :  "Skill-based Automatic Failure"
+		"mcm_option_auto_failure_diff" :  "Max Skill Difference Before Auto Fail"
+		"mcm_option_potion_bypass_auto_fail" :  "Potions Bypass Skill Requirement"
+		"mcm_option_auto_success" :  "Skill-based Automatic Success"
+		"mcm_option_auto_success_diff" :  "Req. Skill Difference for Auto Success"
+		"mcm_option_auto_success_bypass" :  "Auto Success Bypasses Daily Limit"
+		"mcm_header_spell_list" :  "Spell List"
+		"mcm_current_nothing" :  "Your list is empty."
+		"mcm_spell_list_current_page" :  "Current Page"
+		"mcm_spell_list_actions" :  "List Actions"
+		"mcm_spell_list_first_page" :  "First Page"
+		"mcm_spell_list_previous_page" :  "Previous Page"
+		"mcm_spell_list_next_page" :  "Next Page"
+		"mcm_spell_list_last_page" :  "Last Page"
+		"mcm_spell_list_selected" :  "Selected Spell"
+		"mcm_spell_list_choose_command" :  "Choose"
+		"mcm_spell_list_move_to_location" :  "Move to Location"
+		"mcm_spell_list_move_to_top" :  "Move to Top"
+		"mcm_spell_list_move_up" :  "Move Up"
+		"mcm_spell_list_move_down" :  "Move Down"
+		"mcm_spell_list_move_to_bottom" :  "Move to Bottom"
+		"mcm_message_fiss_not_working" :  "FISS is not working"
+		"mcm_message_fiss_wait" :  "Please wait until the next message box. Do not quit this MCM menu yet."
+		"mcm_message_fiss_done" :  "Done. You are free to leave this MCM menu."
+		"mcm_message_fiss_not_working" :  "FISS is not working"
+		"mcm_message_fiss_wait" :  "Please wait until the next message box. Do not quit this MCM menu yet."
+		"mcm_message_fiss_done" :  "Done. You are free to leave this MCM menu."
+		"hint_minChanceStudy" :  "Minimum percent chance per night to learn a spell from books. Default 5."
+		"hint_maxChanceStudy" :  "Maximum percent chance per night to learn a spell from books. Default 80."
+		"hint_minChanceDiscover" :  "Minimum percent chance per night to discover a new spell, adding it to the study list without the need for a book. Default 0."
+		"hint_maxChanceDiscover" :  "Maximum percent chance per night to discover a new spell, adding it to the study list without the need for a book. Default 5."
+		"hint_maxConsecutiveFailures" :  "Maximum consecutive failures before automatically succeeding. Default 3. Set to 0 for unlimited failures. Not recommended for use with option to learn multiple spells at once - script counts only total failures, not per-spell. Defaults to 3."
+		"hint_autoNoviceLearning" :  "Required skill difference to always succeed when learning spel_LEARN_Strings. At 0, no difference is required - e.g. Apprentice Destruction means you'll never fail at learning Apprentice and Novice spel_LEARN_Strings. At 25, an Apprentice of Destruction will only never fail at learning Novice spel_LEARN_Strings. Defaults to 50."
+		"hint_noviceLearningEnabled" :  "When enabled, the difference between your skill in a school and the level of the spell you're trying to learn can result in an automatic success. The required difference to ensure this success is configurable below. Defaults to on."
+		"hint_autoSuccessBypassesLimit" :  "Spells learned via the above option do not count towards the daily limit. Default off. This can result in learning many spells per sleep."
+		"hint_dreadstareLethality" :  "The percent chance to be killed when consuming Dreadmilk while addicted. Shadowmilk is 1/4 as lethal. Default is 10%. Also increases by your bloodstream toxicity,  which increases 10% every time you consume Dreadmilk and decreases with rest."
+		"hint_parallelLearning" :  "Choose how many spells from the top of your list you will attempt to learn on each sleep. Keep in mind that when combined with drugs and a high max learning chance,  learning multiple per sleep is overpowered. 1 is default."
+		"hint_harderParallel" :  "When learning multiple spells at once, divide the chance to learn by the amount of spells being learned to help preserve a similar speed. Recommended. Has no effect when learning 1 spell per sleep. Defaults to on."
+		"hint_bonusScale" :  "Multiplier applied to the roleplaying bonus to chance of learning/discovering. This means casting spells relevant to your study, hoarding relevant spell notes,  sleeping at the College and temples,  consuming shadowmilk,  etc. Default is 1.0. Raising this can make it unreasonably easy to learn spel_LEARN_Strings."
+		"hint_infoStudy" :  "Current percent chance to learn a spell from books (rolled after next night). Cast spells of the same school to improve. (Displays 0 if study list is empty.)"
+		"hint_infoDiscover" :  "Current percent chance to discover a new spell by oneself (rolled after next night). Cast spells of the same school to improve."
+		"hint_infoSchool" :  "Current magical school of interest."
+		"hint_collectNotes" :  "Whether or not to deconstruct removed books into scraps. Keeping a large collection of spell notes improves the roleplaying bonus for spell learning chance. Scraps are equal in value to the book. Default is enabled."
+		"hint_removeBooks" :  "Whether or not to remove spell books from inventory when added, to prevent vanilla 'insta-learn'. Default is enabled. Disabling this may cause errors if the mod tries to teach you a spell you learn with a second book."
+		"hint_preferedSchool" :  "Set this to the school of magic you want to discover spells from. Default is Automatic, which uses your most cast school from that day."
+		"hint_effortScaling" :  "The way effort scales when rolling for successful learning. Default is Tough Start, which is harsher to those with poorer magical skills and less roleplaying bonus."
+		"hint_export" :  "Export/backup spell study list to FISS XML."
+		"hint_import" :  "Import/restore spell study list from FISS XML."
+		"hint_abandonSpell" :  "Manage your spell learning list: Delete the current first spell from your learning list."
+		"hint_customLocation" :  "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples,  but not as much as the College. Click again to unset."
+		"hint_studyInterval" :  "How many days must pass between learning attempts on sleep. Default is 0.65."
+		"hint_enthir" :  "Whether or not Enthir will keep a stock of items related to this mod. Default is yes."
+		"hint_studyInterval" :  "Whether or not items are added to loot lists, causing them to spawn in random merchants and as loot. Defaults to no. Cannot be easily undone."
+		"hint_tooDifficultDiff" :  "The difference in skill tier required to automatically fail learning. Default is 75 - a novice will automatically fail to learn expert+ level spel_LEARN_Strings."
+		"hint_tooDiffEnabled" :  "When enabled,  you can automatically fail to learn a spell if it's significantly above your current skill level. In this case you will automatically move to the next possible spell without penalty."
+		"hint_deletionWarning" :  "WARNING: Disabling mod will clear your spell list! Use backups!"
+		"hint_potionBypass" :  "When enabled,  Dreadmilk will bypass enabled skill requirements. For example, with dreadmilk a novice can attempt to learn a Master spell even when they would otherwise be prevented from doing so. Defaults to on."
+		"hint_cdrEnabled" :  "When enabling this,  casting spells etc will not only increase your chance to learn spells,  but will also reduce the cooldown between learnings. Defaults to on."
+		"hint_cdr" :  "The maximum percentage by which the cooldown can be reduced through practice by casting up to 100 spel_LEARN_Strings. Defaults to 25%."
+		"hint_maxFailsSucceeds" :  "When enabled,  reaching the maximum failure limit will cause you to succeed as long as it isn't prevented by something like the skill difference option. When off, the spell will be moved to the bottom of your list instead. Defaults to on."
+		"hint_dynamicDiff" :  "When enabled,  the chance to learn a spell also depends on its own difficulty relative to your skill. Defaults to on."
+		"hint_moveto_top" :  "Moves the selected spell to the top of the list."
+		"hint_move_up" :  "Moves up the selected spell."
+		"hint_move_down" :  "Moves down the selected spell."
+		"hint_moveto_bottom" :  "Moves the selected spell to the bottom of the list."
+		"hint_moveto_index" :  "You can move the selected spell to any index that you choose."
+		"hint_spell_commands" :  "Select a command from list to execute on selected spell. Please don't misclick. These commands are not reversible."
+		"notification_cannot_attune" :  "You've attuned to a new environment too recently."
+		"notification_attune_success" :  "Successfully attuned to {0}"
+		"notification_already_attuned" :  "You've already attuned to this environment."
+		"notification_dreadmilk_overdosed" :  "You have overdosed."
+		"notification_dreadmilk_feels_bad_man" :  "You feel a little better, but it's not enough..."
+		"notification_spirit_summon only at midnight" :  "The ritual only has effect around midnight..."
+		"notification_spirit_glimpsed" :  "The dark whispers give a glimpse of the unfathomable..."
+		"notification_spirit_need_more_sudden" :  "You suddenly feel an excruciating yearning for Dreadmilk..."
+		"notification_spirit_forgot_spell" :  "You've forgotten something... but what?"
+		"notification_spirit_lost_money" :  "Your pockets suddenly feel lighter."
+		"notification_spirit_drained" :  "You suddenly feel very drained..."
+		"notification_spirit_weaker" :  "You suddenly feel very tired..."
     },
     "int" :{
         "menu_lang_id" : 0
