@@ -129,17 +129,42 @@ String[] function getEffortLabels()
 endFunction
 
 function UpgradeVersion()
+	bool displayedUpgradeNotice = false
 	if (currentVersion < 173)
-		; not sure if anything needs to be done here.
+		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
+		if (!displayedUpgradeNotice)
+			; don't display multiple upgrade messages
+			Debug.Notification(msg)
+			displayedUpgradeNotice = true
+		endIf
+		Debug.Trace(msg)
+		; Set up new list of scaling options
+		effortLabels = new String[3]
+		effortLabels[0] = "Tough Start"
+		effortLabels[1] = "Diminishing Returns"
+		effortLabels[2] = "Linear"
+		; If user is upgrading from an older version, disable new options to not disrupt
+		; existing functionality for users
+		if (currentVersion <= 172)
+			_LEARN_DynamicDifficulty.SetValue(0)
+			_LEARN_IntervalCDREnabled.SetValue(0)
+			_LEARN_AutoNoviceLearningEnabled.SetValue(0)
+			_LEARN_MaxFailsAutoSucceeds.SetValue(0)
+			_LEARN_TooDifficultEnabled.SetValue(0)
+		endIf
 	endIf
     if (currentVersion < 172)
         VisibleNotifications = new int[2]
         VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
         VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 1
         UpgradeSpellList()
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
-        Debug.Notification(msg)
-        Debug.Trace(msg)
+		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.2")
+		if (!displayedUpgradeNotice)
+			; don't display multiple upgrade messages
+			Debug.Notification(msg)
+			displayedUpgradeNotice = true
+		endIf
+		Debug.Trace(msg)
     endIf
     currentVersion = GetVersion()
 endFunction
@@ -737,11 +762,6 @@ function OnInit()
     aRestorationLL[1] = LitemSpellTomes25Restoration
     aRestorationLL[2] = LitemSpellTomes50Restoration
     aRestorationLL[3] = LitemSpellTomes75Restoration
-	
-	effortLabels = new String[3]
-	effortLabels[0] = "Tough Start"
-	effortLabels[1] = "Diminishing Returns"
-	effortLabels[2] = "Linear"
     
     aInventSpellsPtr = aRestorationLL
     
@@ -752,9 +772,8 @@ endFunction
 float function scaleEffort(float effort, float minchance, float maxchance)
 	float scaledEffort
 	; This function optionally scales effort to be non-linear. 
-	; In the original, an s-curve was used. I'm not sure why and I don't prefer it.
-	; Here is a cleaned up s-curve if you want the option.
-	; At effort=0 it returns the minimum chance, and at effort=1 (max effort)
+	; In the original, an s-curve was used. It has been changed here slightly so that
+	; at effort=0 it returns the minimum chance, and at effort=1 (max effort)
 	; it returns the maximum chance. Values in between are scaled to 
 	; provide a harder start (low total effort is more punished).
 	; There are no diminishing returns with effort - above about 60%
@@ -765,7 +784,9 @@ float function scaleEffort(float effort, float minchance, float maxchance)
 	; Low effort values are scaled up, while higher values have diminishing returns.
     ElseIf(_LEARN_EffortScaling.GetValue() == 1) ; If preference set to square root
 		scaledEffort = ((maxchance - minchance) * Math.sqrt(effort) + minchance)
-	; Finally, linear 1:1 is an option.
+	; Finally, linear 1:1 is an option. Warning that this often maxes out small discovery
+	; chances, as even reaching 5% of the total amount of effort you could generate
+	; (which is very easy) will result in a roll of 5%, for example.
     ElseIf(_LEARN_EffortScaling.GetValue() == 2) ; If preference set to linear
 		if (effort > maxchance)
 			scaledEffort = maxchance
