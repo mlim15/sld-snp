@@ -47,8 +47,8 @@ Event OnEffectStart(Actor Target, Actor Caster)
     game.EnablePlayerControls()
 	
     ; Extract a price
-	float fRand
-	fRand = Utility.RandomFloat(0.0, 1.0)
+    float fRand
+    fRand = Utility.RandomFloat(0.0, 1.0)
 	if (fRand > 0.95)
 		; 5% chance to become addicted to Dreadmilk
 		if (!PlayerRef.HasSpell(Dreadstare))
