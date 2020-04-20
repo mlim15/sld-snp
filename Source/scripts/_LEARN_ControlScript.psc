@@ -1280,7 +1280,7 @@ Event OnSleepStop(Bool abInterrupted)
 	
 	_LEARN_AlreadyUsedTutor.SetValue(0)
 	
-	if (_LEARN_SinceLastSetHome.GetValue() <= 5) ; don't blindly increment to prevent overflow for players who play 65535 in game days?!
+	if (_LEARN_SinceLastSetHome.GetValue() <= 6) ; don't blindly increment to prevent overflow for players who play 65535 in game days?!
 		_LEARN_SinceLastSetHome.SetValue(_LEARN_SinceLastSetHome.GetValue() + 1)
 	endIf
 

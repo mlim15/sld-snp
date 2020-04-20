@@ -13,7 +13,7 @@ endFunction
 event OnEffectStart(Actor Target, Actor Caster)
 
 	; Check to see if we've already changed it in the last 7 days. If so, return without doing anything.
-	if (ControlScript._LEARN_SinceLastSetHome.GetValue() < 6)
+	if (ControlScript._LEARN_SinceLastSetHome.GetValue() <= 6)
 		Debug.Notification(__l("notification_cannot_attune", "You've attuned to a new environment too recently."))
 		return
 	endIf
@@ -24,10 +24,10 @@ event OnEffectStart(Actor Target, Actor Caster)
 		; If location isn't the current custom location, change it to 
 		ControlScript.customLocation = l
 		ControlScript._LEARN_SinceLastSetHome.SetValue(0)
-		Debug.Notification(formatString1(__l("notification_attune_success", "Successfully attuned to {0}."), l))
+		Debug.Notification(formatString1(__l("notification_attune_success", "Successfully attuned to {0}."), l.GetName()))
 	else
-		; Already attuned to this environment
-		Debug.Notification(__l("notification_already_attuned", "You've already attuned to this environment."))
+		; Already attuned to this environment or outside (which is undefined)?
+		Debug.Notification(__l("notification_already_attuned", "You cannot attune to this environment or have already attuned here."))
 	endIf
 		
 endEvent
