@@ -19,12 +19,12 @@ endFunction
 Event OnEffectStart(Actor Target, Actor Caster)
 
     GlobalVariable GameHour = Game.GetForm(0x00000038) as GlobalVariable
-	Actor PlayerRef = Game.GetPlayer()
+    Actor PlayerRef = Game.GetPlayer()
     Float Time = GameHour.GetValue()
     Int Std = math.Floor(Time)
-	
-	; This debug message will never appear anyway because the spell has a built-in condition with the time,
-	; and if it fails that condition, the spell is never cast so this script doesn't ever start.
+    
+    ; This debug message will never appear anyway because the spell has a built-in condition with the time,
+    ; and if it fails that condition, the spell is never cast so this script doesn't ever start.
     ;if ! (Std <= 3 || Std == 23)
     ;    Debug.Notification(__l("notification_spirit_summon only at midnight", "The ritual only has effect around midnight..."))
     ;    Return
@@ -43,9 +43,9 @@ Event OnEffectStart(Actor Target, Actor Caster)
     Utility.waitmenumode(5)
     ControlScript._LEARN_CountBonus.Mod(100) ; same bonus as shadowmilk
     debug.notification(__l("notification_spirit_glimpsed", "The dark whispers give a glimpse of the unfathomable..."))
-	game.EnablePlayerControls()
-	
-	; Extract a price
+    
+    game.EnablePlayerControls()
+    ; Extract a price
 	float fRand
 	fRand = Utility.RandomFloat(0.0, 1.0)
 	if (fRand > 0.95)
