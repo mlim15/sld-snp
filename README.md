@@ -9,7 +9,7 @@ Isn't it weird that in vanilla Skyrim, you learn spells *instantly* by *destroyi
 
 Instead of the vanilla system, with this mod any books you buy or pick up are automatically added to a list of spells your character is studying. Each time they sleep (with a configurable time limit), they will attempt to learn a spell from this list. Their chances to learn the spell successfully depend on their overall magical skill, their skill in the spell's specific school, the amount of spells of that school they have cast since last learning a spell, whether they have slept in a location that is "suited" for studying magic (like a temple, the College, or a player-set location), and more.
 
-Optionally (and by default), the mod also deconstructs all books you recieve into notes on the spell's school of magic. The ideas is that these notes are used by mages in their research on similar spells. Keeping lots of Destruction notes on your character will help you learn new Destruction spells more effectively, for example. It also would make sense that if all mages use these notes, they are tradeable and in demand, and this preserves the value of spell tomes - the amount of notes generated is related to the value of the tome deconstructed, meaning you can still sell the notes for the same amount of gold if you wish. Alternatively, you can grow your collection and make learning new spells easier.
+Optionally (and by default), the mod also deconstructs all books you recieve into notes on the spell's school of magic. The idea is that these notes are used by mages in their research on similar spells. Keeping lots of Destruction notes on your character will help you learn new Destruction spells more effectively, for example. It also would make sense that if all mages use these notes, they are tradeable and in demand, and this preserves the value of spell tomes - the amount of notes generated is related to the value of the tome deconstructed, meaning you can still sell the notes for the same amount of gold if you wish. Alternatively, you can grow your collection and make learning new spells easier.
 
 The mod also provides a simple spell discovery system - shouldn't mages be able to come up with new ideas for spells by themselves, without learning from a book? If it is enabled, your character can come up with ideas for spells themselves when they sleep. The chance for this to happen is configurable. By default, if this happens, the spell will be of the school they have cast most often since their last rest. Spells "discovered" this way are pulled from level-appropriate lists (the same ones the game uses to generate loot). They are added to the list of spells your character will try to learn when sleeping, without the need to buy or find its spellbook. 
 
@@ -27,14 +27,6 @@ So I decided to roll up my sleeves and fix it up, because bless all the people w
 
 So here is Spell Learning and Discovery for Skyrim Special Edition... with a little SnP.
 
-Development Status
-----------
-
-* I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
-* If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
-* Adding randomized messages instead of the same message every time would be nice.
-* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
-
 Requirements
 ------------
 
@@ -44,3 +36,18 @@ Compatibility
 -------------
 
 The Spell Learning features should be compatible with any spell. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds is spells to these lists will be compatible. Most spell mods do so, but Witchhunter Prayers & Spells, for example, doesn't.
+
+Installation
+-------------
+
+You can install the mod by adding the zip file from GitHub's Releases page to Mod Organizer or whatever. Alternatively, drag its contents to your Data folder. Once you get in-game, the mod will set itself up without your intervention. Note that the mod only removes spellbooks when they enter your inventory. This means you can still read books that you already had in your inventory before you installed the mod to instantly learn the spells, as in vanilla. If you want to learn those spells with the mod instead, just drop the books on the floor and pick them up. Then the mod will process them according to your configuration. 
+
+Development Status
+----------
+
+* I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
+* If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
+* Adding randomized messages instead of the same message every time would be nice.
+* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
+
+
