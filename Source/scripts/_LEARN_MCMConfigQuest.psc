@@ -30,12 +30,6 @@ int effortScalingOID
 int effortScalingIndex = 0
 int fissExportOID
 int fissImportOID
-int restartModOID
-int RotateSpellOID
-int AbandonSpellOID
-int SwapSpellOID
-int PushBackSpellOID
-int BringSpellOID
 int CustomLocationOID
 int StudyIntervalOID
 int maxConsecutiveFailuresOID
@@ -703,8 +697,6 @@ Event OnOptionHighlight(int option)
         SetInfoText(__l("hint_export", "Export/backup spell study list to FISS XML."))
     ElseIf (Option == fissImportOID)
         SetInfoText(__l("hint_import", "Import/restore spell study list from FISS XML."))
-    ElseIf (Option == abandonSpellOID)
-        setInfoText(__l("hint_abandonSpell", "Manage your spell learning list: Delete the current first spell from your learning list."))
     ElseIf (Option == CustomLocationOID)
         setInfoText(__l("hint_customLocation", "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset."))
     ElseIf (Option == studyIntervalOID)
