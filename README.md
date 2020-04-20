@@ -27,35 +27,13 @@ So I decided to roll up my sleeves and fix it up, because bless all the people w
 
 So here is Spell Learning and Discovery for Skyrim Special Edition... with a little SnP.
 
-What's New
-----------
-
-* Removed the NPC dialogue option because it was the only thing that really made me say "ew" when installing the mod, and I don't think it adds much to the experience
-* Changed the spell notes in inventory to be pages containing runes, instead of having 300 identical "notes" in your inventory that all have the same words on them. Also added a short explainer to the top of the note.
-* Tightened up in-game descriptions like the Spell Study effect, capitals on the mod title, changed "Spirit Tutor" to "Daedric Tutor", and many more little fixes and tweaks that make the experience feel less immersion-breaking - e.g. messages related to Dreadmilk used to just show "I need more Dreadmilk" or "Overdosed" at the top of the screen, now it displays something like "You have overdosed on Dreadmilk."
-* Enthir now sells items related to the mod, including its potions, recipes, and (singular) spell.
-* Messages that let you know what's going on with the mod at each sleep in what I hope will be considered a non-immersion-breaking way - e.g. "It seems your mind isn't settled enough yet to learn any spells..." or "Lightning Bolt still makes no sense..." or "It makes sense now! Learned Lightning Bolt." This way you don't have to constantly look at the MCM pane to know what's happening with the mod.
-* Configurable option to limit consecutive failures when learning spells - e.g. after failing 3 times, you learn it automagically(TM) on the next sleep. Alternatively, option to move spells to the bottom of the list after this amount of failures.
-* Option to try and learn multiple spells (amount configurable) on each sleep
-* Option when learning multiple spells to divide chance to learn by spells being learned (to approximate speed of learning one spell at a time, but still with the chance to get lucky and learn multiple spells on a sleep)
-* Configurable option to automatically fail spells based on skill difference (e.g. novice can't learn master spells)
-* Configurable option to let Dreadmilk (the potion added by the mod) to bypass this automatic failure (e.g. with Dreadmilk, a novice can still have the chance to learn master spells)
-* Configurable option to automatically succeed when learning spells based on skill difference (e.g. master always succeeds at learning novice spells)
-* Configurable option to let automatic successes not count towards the max amount of spells learned per sleep
-* Chance of potion addiction to kill you is now configurable
-* Configurable option for the chance to learn a spell to scale with its difficulty
-* Configurable option for casting spells to not only make you more likely to learn spells, but reduce the amount of time you have to wait before learning again on sleep
-* Revamped potion addiction and tutor spell changes, with a lot of little polish tweaks like health draining quickly when overdosing instead of getting killed directly by the script, or the demonic tutor now having random chances to exact a "price" for his services
-* A new spell that lets you set the custom bonus location in-game without using the MCM
-* A massively expanded MCM menu to support all these new options
-
 Development Status
 ----------
 
 * I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
 * If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
-* Preferably, adding randomized messages instead of the same message every time would be nice.
-* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but at least it's a one-time issue. Just be aware.
+* Adding randomized messages instead of the same message every time would be nice.
+* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
 
 Requirements
 ------------
@@ -66,7 +44,3 @@ Compatibility
 -------------
 
 The Spell Learning features should be compatible with any spell. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds is spells to these lists will be compatible. Most spell mods do so, but Witchhunter Prayers & Spells, for example, doesn't.
-
-This mod does currently add its items to Enthir's merchant inventory using an alias. This does not edit his merchant chest record itself, but it may be incompatible with mods that do.
-
-The durations of the potions added by this mod that can help you learn faster are set to 1 in-game day, but this depends on the clock running at a standard speed. If you have mods that somehow change the flow of in-game time, it could imbalance the potions by making them last far too long or making them run out before you finish sleeping.
