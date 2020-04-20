@@ -8,14 +8,7 @@ meta.ini
 *.jpg
 Scripts.rar
 scripts.zip
-scripts/activemagiceffect.pex
-scripts/constructibleobject.pex
-scripts/enchantment.pex
-scripts/equipslot.pex
-scripts/faction.pex
-scripts/flora.pex
-scripts/form.pex
-scripts/combatstyle.pex
+scripts/*.pex
 *.fxp
 sound/Voice/Processing/FonixData.cdf
 Skyrim.esm
