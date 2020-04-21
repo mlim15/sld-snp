@@ -14,8 +14,6 @@ ImageSpaceModifier property FadeToBlackHoldImod auto
 
 Idle property IdleBook_Reading auto
 Idle property IdleBook_TurnManyPages auto
-Idle property IdleBookSitting_Reading auto
-Idle property IdleBookSitting_TurnManyPages auto
 Idle property IdleStop_Loose auto
 
 string function __l(string keyName, string defaultValue = "")
