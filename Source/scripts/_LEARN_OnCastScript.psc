@@ -1,18 +1,18 @@
 scriptName _LEARN_OnCastScript extends ReferenceAlias
 
-;-- Properties --------------------------------------
+Actor property PlayerRef auto
 Spell property PracticeSpell auto
+Spell property StudyPower auto
 
-;-- Variables ---------------------------------------
 Bool modDisabled = false
 
 ;-- Functions ---------------------------------------
 
 function OnInit()
-    ; Debug.Notification("LEARN Oncastscript init")
-    Actor learningme = Self.GetActorReference()
-    if (learningme)
-        learningme.addspell(PracticeSpell, true)
+    ;Debug.Notification("LEARN Oncastscript init")
+    if (Self.GetActorReference())
+		PlayerRef.AddSpell(StudyPower, true)
+        PlayerRef.AddSpell(PracticeSpell, true)
     endif
 endFunction
 

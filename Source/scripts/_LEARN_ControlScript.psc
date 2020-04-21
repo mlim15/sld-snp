@@ -1,79 +1,88 @@
 ScriptName _LEARN_ControlScript extends Quest ; conditional
 
-globalvariable property _LEARN_CountAlteration auto
-globalvariable property _LEARN_CountConjuration auto
-globalvariable property _LEARN_CountDestruction auto
-globalvariable property _LEARN_CountIllusion auto
-globalvariable property _LEARN_CountRestoration auto
-globalvariable property _LEARN_CountBonus auto
-globalvariable property _LEARN_MinChanceStudy auto
-globalvariable property _LEARN_MaxChanceStudy auto
-globalvariable property _LEARN_MinChanceDiscover auto
-globalvariable property _LEARN_MaxChanceDiscover auto
-globalvariable property _LEARN_BonusScale auto
-globalvariable property _LEARN_MaxFailsBeforeCycle auto
-globalvariable property _LEARN_RemoveSpellBooks auto
-globalvariable property _LEARN_CollectNotes auto
-globalvariable property _LEARN_ForceDiscoverSchool auto
-globalvariable property _LEARN_StudyInterval auto
-globalvariable property _LEARN_AutoNoviceLearningEnabled auto
-globalvariable property _LEARN_AutoNoviceLearning auto
-globalvariable property _LEARN_ParallelLearning auto
-globalvariable property _LEARN_HarderParallel auto
-globalvariable property _LEARN_DreadstareLethality auto
-globalvariable property _LEARN_EffortScaling auto
-globalvariable property _LEARN_AutoSuccessBypassesLimit auto
-globalvariable property _LEARN_TooDifficultEnabled auto
-globalvariable property _LEARN_TooDifficultDelta auto
-globalvariable property _LEARN_SpawnItems auto
-globalvariable property _LEARN_PotionBypass auto
-globalvariable property _LEARN_IntervalCDR auto
-globalvariable property _LEARN_IntervalCDREnabled auto
-globalvariable property _LEARN_MaxFailsAutoSucceeds auto
-globalvariable property _LEARN_DynamicDifficulty auto
-globalvariable property _LEARN_ConsecutiveDreadmilk auto
-globalvariable property _LEARN_AlreadyUsedTutor auto
-globalvariable property _LEARN_SinceLastSetHome auto
+GlobalVariable property _LEARN_CountAlteration auto
+GlobalVariable property _LEARN_CountConjuration auto
+GlobalVariable property _LEARN_CountDestruction auto
+GlobalVariable property _LEARN_CountIllusion auto
+GlobalVariable property _LEARN_CountRestoration auto
+GlobalVariable property _LEARN_CountBonus auto
+GlobalVariable property _LEARN_MinChanceStudy auto
+GlobalVariable property _LEARN_MaxChanceStudy auto
+GlobalVariable property _LEARN_MinChanceDiscover auto
+GlobalVariable property _LEARN_MaxChanceDiscover auto
+GlobalVariable property _LEARN_BonusScale auto
+GlobalVariable property _LEARN_MaxFailsBeforeCycle auto
+GlobalVariable property _LEARN_RemoveSpellBooks auto
+GlobalVariable property _LEARN_CollectNotes auto
+GlobalVariable property _LEARN_ForceDiscoverSchool auto
+GlobalVariable property _LEARN_StudyInterval auto
+GlobalVariable property _LEARN_AutoNoviceLearningEnabled auto
+GlobalVariable property _LEARN_AutoNoviceLearning auto
+GlobalVariable property _LEARN_ParallelLearning auto
+GlobalVariable property _LEARN_HarderParallel auto
+GlobalVariable property _LEARN_DreadstareLethality auto
+GlobalVariable property _LEARN_EffortScaling auto
+GlobalVariable property _LEARN_AutoSuccessBypassesLimit auto
+GlobalVariable property _LEARN_TooDifficultEnabled auto
+GlobalVariable property _LEARN_TooDifficultDelta auto
+GlobalVariable property _LEARN_SpawnItems auto
+GlobalVariable property _LEARN_PotionBypass auto
+GlobalVariable property _LEARN_IntervalCDR auto
+GlobalVariable property _LEARN_IntervalCDREnabled auto
+GlobalVariable property _LEARN_MaxFailsAutoSucceeds auto
+GlobalVariable property _LEARN_DynamicDifficulty auto
+GlobalVariable property _LEARN_ConsecutiveDreadmilk auto
+GlobalVariable property _LEARN_LastSetHome auto
+GlobalVariable property _LEARN_StudiedToday auto
+GlobalVariable property _LEARN_AlreadyUsedTutor auto
+GlobalVariable property _LEARN_StudyIsRest auto
+GlobalVariable property _LEARN_StudyRequiresNotes auto
 String[] effortLabels
 
-keyword property LocTypeTemple auto
-location property WinterholdCollegeLocation auto
-location property customLocation auto
+Keyword property LocTypeTemple auto
+Location property WinterholdCollegeLocation auto
+Keyword property LocTypePlayerHouse auto
+Keyword property LocTypeInn auto
+Location property customLocation auto
 
-actor property PlayerRef auto
+Actor property PlayerRef auto
+GlobalVariable property GameHour auto
+GlobalVariable property GameDaysPassed auto
 Book property _LEARN_SpellNotesAlteration auto
 Book property _LEARN_SpellNotesConjuration auto
 Book property _LEARN_SpellNotesDestruction auto
 Book property _LEARN_SpellNotesIllusion auto
 Book property _LEARN_SpellNotesRestoration auto
-MagicEffect Property AlchDreadmilkEffect Auto
-MagicEffect Property AlchShadowmilkEffect Auto
+MagicEffect Property AlchDreadmilkEffect auto
+MagicEffect Property AlchShadowmilkEffect auto
 MagicEffect Property _LEARN_PracticeEffect auto
-Spell Property Dreadstare Auto
+Spell Property _LEARN_DiseaseDreadmilk auto
 Spell property _LEARN_PracticeAbility auto
 Spell property _LEARN_SummonSpiritTutor auto
-Book Property _LEARN_SpellTomeSummonSpiritTutor Auto
+Spell property _LEARN_SetHomeSp auto
+Spell property _LEARN_StudyPower auto
+Book property _LEARN_SpellTomeSummonSpiritTutor auto
 
-leveleditem property LitemSpellTomes00Alteration Auto
-leveleditem property LitemSpellTomes00Conjuration Auto
-leveleditem property LitemSpellTomes00Destruction Auto
-leveleditem property LitemSpellTomes00Illusion Auto
-leveleditem property LitemSpellTomes00Restoration Auto
-leveleditem property LitemSpellTomes25Alteration Auto
-leveleditem property LitemSpellTomes25Conjuration Auto
-leveleditem property LitemSpellTomes25Destruction Auto
-leveleditem property LitemSpellTomes25Illusion Auto
-leveleditem property LitemSpellTomes25Restoration Auto
-leveleditem property LitemSpellTomes50Alteration Auto
-leveleditem property LitemSpellTomes50Conjuration Auto
-leveleditem property LitemSpellTomes50Destruction Auto
-leveleditem property LitemSpellTomes50Illusion Auto
-leveleditem property LitemSpellTomes50Restoration Auto
-leveleditem property LitemSpellTomes75Alteration Auto
-leveleditem property LitemSpellTomes75Conjuration Auto
-leveleditem property LitemSpellTomes75Destruction Auto
-leveleditem property LitemSpellTomes75Illusion Auto
-leveleditem property LitemSpellTomes75Restoration Auto
+LeveledItem property LitemSpellTomes00Alteration auto
+LeveledItem property LitemSpellTomes00Conjuration auto
+LeveledItem property LitemSpellTomes00Destruction auto
+LeveledItem property LitemSpellTomes00Illusion auto
+LeveledItem property LitemSpellTomes00Restoration auto
+LeveledItem property LitemSpellTomes25Alteration auto
+LeveledItem property LitemSpellTomes25Conjuration auto
+LeveledItem property LitemSpellTomes25Destruction auto
+LeveledItem property LitemSpellTomes25Illusion auto
+LeveledItem property LitemSpellTomes25Restoration auto
+LeveledItem property LitemSpellTomes50Alteration auto
+LeveledItem property LitemSpellTomes50Conjuration auto
+LeveledItem property LitemSpellTomes50Destruction auto
+LeveledItem property LitemSpellTomes50Illusion auto
+LeveledItem property LitemSpellTomes50Restoration auto
+LeveledItem property LitemSpellTomes75Alteration auto
+LeveledItem property LitemSpellTomes75Conjuration auto
+LeveledItem property LitemSpellTomes75Destruction auto
+LeveledItem property LitemSpellTomes75Illusion auto
+LeveledItem property LitemSpellTomes75Restoration auto
 
 Float LastSleepTime
 int iFailuresToLearn
@@ -94,7 +103,7 @@ int iCount
 Form[] _spells
 int currentVersion; save active version
 
-bool property CanUseLocalizationLib = false Auto;
+bool property CanUseLocalizationLib = false auto;
 int property LIST_HEAD_SPARE_COUNT = 8 autoReadOnly
 int property LIST_PURGE_AFTER = 31 autoReadOnly
 string property SPELL_SCHOOL_ALTERATION = "Alteration" autoReadOnly
@@ -108,24 +117,40 @@ int property NOTIFICATION_ADD_SPELL_NOTE = 1 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
-function disableModEffects()
-	if (PlayerRef.HasSpell(Dreadstare))
-		PlayerRef.RemoveSpell(Dreadstare)
-	EndIf
-	if (PlayerRef.HasSpell(_LEARN_PracticeAbility))
-		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
-	EndIf
-	if (PlayerRef.HasSpell(_LEARN_SummonSpiritTutor))
-		PlayerRef.RemoveSpell(_LEARN_SummonSpiritTutor)
-	EndIf
-endFunction
-
-int function GetVersion()
-    return 173; v 1.7.3
-endFunction
-
+; === MCM helper functions
 String[] function getEffortLabels()
 	return effortLabels
+endFunction
+
+String[] function getSchools()
+    return aSchools
+EndFunction
+
+bool function ToggleNotification(int id)
+    if id < 0 || id > VisibleNotifications.Length
+        return false
+    endIf
+    int v = 0;
+    if VisibleNotifications[id] == 0
+        v = 1
+    endIf
+
+    VisibleNotifications[id] = v
+    return v as bool
+endFunction
+
+bool function EnableNotification(int id, bool v)
+    if id < 0 || id > VisibleNotifications.Length
+        return false
+    endIf
+
+    VisibleNotifications[id] = v as int
+    return v
+endFunction
+
+; === Version and upgrade management
+int function GetVersion()
+    return 173; v 1.7.3
 endFunction
 
 function UpgradeVersion()
@@ -145,13 +170,14 @@ function UpgradeVersion()
 		effortLabels[2] = "Linear"
 		; If user is upgrading from an older version, disable new options to not disrupt
 		; existing functionality for users
-		if (currentVersion <= 172)
+		if (currentVersion > 0)
 			_LEARN_DynamicDifficulty.SetValue(0)
 			_LEARN_IntervalCDREnabled.SetValue(0)
 			_LEARN_AutoNoviceLearningEnabled.SetValue(0)
 			_LEARN_MaxFailsAutoSucceeds.SetValue(0)
 			_LEARN_TooDifficultEnabled.SetValue(0)
 		endIf
+		; Add study power?
 	endIf
     if (currentVersion < 172)
         VisibleNotifications = new int[2]
@@ -192,6 +218,7 @@ function InternalPrepare()
     UpgradeVersion()
 endFunction
 
+; === Localization
 string function __l(string keyName, string defaultValue = "")
     if CanUseLocalizationLib
         return _LEARN_Strings.__l(keyName, defaultValue);
@@ -214,6 +241,7 @@ int function GetMenuLangId()
     endIf
 endFunction
 
+; === Spell list management
 function SpellListEnsureCapacity(int capacity)
     if capacity > iMaxSize
         int newSize = NihSldUtil.CalculateNextCapacity(capacity)
@@ -244,28 +272,6 @@ int function CopySpells(Form[] targetList, int startIndex, int count)
         i += 1
     EndWhile
     return count
-endFunction
-
-bool function ToggleNotification(int id)
-    if id < 0 || id > VisibleNotifications.Length
-        return false
-    endIf
-    int v = 0;
-    if VisibleNotifications[id] == 0
-        v = 1
-    endIf
-
-    VisibleNotifications[id] = v
-    return v as bool
-endFunction
-
-bool function EnableNotification(int id, bool v)
-    if id < 0 || id > VisibleNotifications.Length
-        return false
-    endIf
-
-    VisibleNotifications[id] = v as int
-    return v
 endFunction
 
 int function spell_fifo_get_count()
@@ -605,110 +611,7 @@ bool function MoveSpellDown(int spellIndex)
     return true
 endFunction
 
-Bool Function toggleRemove()
-    if (_LEARN_RemoveSpellBooks.GetValue())
-        _LEARN_RemoveSpellBooks.SetValue(0)
-        return false
-    endif
-    _LEARN_RemoveSpellBooks.SetValue(1)
-    return True
-EndFunction
-
-Bool Function toggleCollect()
-    if (_LEARN_CollectNotes.GetValue())
-        _LEARN_CollectNotes.SetValue(0)
-        return false
-    endif
-    _LEARN_CollectNotes.SetValue(1)
-    return True
-EndFunction
-
-Bool Function toggleHarderParallel()
-    if (_LEARN_HarderParallel.GetValue())
-        _LEARN_HarderParallel.SetValue(0)
-        return false
-    endif
-    _LEARN_HarderParallel.SetValue(1)
-    return True
-EndFunction
-
-Bool Function toggleAutoSuccessBypassesLimit()
-    if (_LEARN_AutoSuccessBypassesLimit.GetValue())
-        _LEARN_AutoSuccessBypassesLimit.SetValue(0)
-        return false
-    endif
-    _LEARN_AutoSuccessBypassesLimit.SetValue(1)
-    return True
-EndFunction
-
-Bool Function toggleNoviceLearningEnabled()
-    if (_LEARN_AutoNoviceLearningEnabled.GetValue())
-        _LEARN_AutoNoviceLearningEnabled.SetValue(0)
-        return false
-    endif
-    _LEARN_AutoNoviceLearningEnabled.SetValue(1)
-    return True
-EndFunction
-
-bool function toggleTooDifficultEnabled()
-    if (_LEARN_TooDifficultEnabled.GetValue())
-        _LEARN_TooDifficultEnabled.SetValue(0)
-        return false
-    endif
-    _LEARN_TooDifficultEnabled.SetValue(1)
-    return True
-EndFunction
-
-bool function toggleSpawnItems()
-    if (_LEARN_SpawnItems.GetValue())
-        _LEARN_SpawnItems.SetValue(0)
-        return false
-    endif
-    _LEARN_SpawnItems.SetValue(1)
-    return True
-EndFunction
-
-bool function togglePotionBypass()
-    if (_LEARN_PotionBypass.GetValue())
-        _LEARN_PotionBypass.SetValue(0)
-        return false
-    endif
-    _LEARN_PotionBypass.SetValue(1)
-    return True
-EndFunction
-
-bool function toggleIntervalCDREnabled()
-    if (_LEARN_IntervalCDREnabled.GetValue())
-        _LEARN_IntervalCDREnabled.SetValue(0)
-        return false
-    endif
-    _LEARN_IntervalCDREnabled.SetValue(1)
-    return True
-EndFunction
-
-bool function toggleDynamicDifficulty()
-    if (_LEARN_DynamicDifficulty.GetValue())
-        _LEARN_DynamicDifficulty.SetValue(0)
-        return false
-    endif
-    _LEARN_DynamicDifficulty.SetValue(1)
-    return True
-EndFunction
-
-bool function toggleMaxFailsAutoSucceeds()
-    if (_LEARN_MaxFailsAutoSucceeds.GetValue())
-        _LEARN_MaxFailsAutoSucceeds.SetValue(0)
-        return false
-    endif
-    _LEARN_MaxFailsAutoSucceeds.SetValue(1)
-    return True
-EndFunction
-
-String[] function getSchools()
-    return aSchools
-EndFunction
-
-function SpawnItemsInWorld(); TODO Fix. Needs to pass a form, is passing a book?
+function SpawnItemsInWorld(); TODO Fix. Also add the rest of the items.
 	if (_LEARN_SpawnItems.GetValue() == 1)
 	    Book x
 		int i = LitemSpellTomes00Conjuration.GetNumForms()
@@ -719,15 +622,13 @@ function SpawnItemsInWorld(); TODO Fix. Needs to pass a form, is passing a book?
 			EndIf
 			i = i - 1
 		EndWhile
-		LitemSpellTomes00Conjuration.addform(_LEARN_SpellTomeSummonSpiritTutor, 1, 1)
+		LitemSpellTomes00Conjuration.addform(_LEARN_SpellTomeSummonSpiritTutor as Form, 1, 1)
 	EndIf
 EndFunction
 
 function OnInit()
-    
-    GlobalVariable GameHour = Game.GetForm(0x00000038) as GlobalVariable
-    
-    SpawnItemsInWorld()
+
+	SpawnItemsInWorld()
     
     aSchools = new String[6]
     aSchools[0] = __l("mcm_automatic", "Automatic")
@@ -767,8 +668,10 @@ function OnInit()
     
     RegisterForSleep()
     UpgradeVersion()
+	
 endFunction
 
+; === Chance calculations
 float function scaleEffort(float effort, float minchance, float maxchance)
 	float scaledEffort
 	; This function optionally scales effort to be non-linear. 
@@ -861,14 +764,16 @@ float function calcEffort(float skill, float casts, float notes)
     elseif (PlayerRef.HasMagicEffect(AlchShadowmilkEffect)) ; shadowmilk
         mybonus += 100 ; Shadowmilk provides 33% of total effort all by itself. This can help bypass the "tough start" hump.
     endif
-    ; Check for inspiring location
+    ; Check for good location
     Location locationX = PlayerRef.GetCurrentLocation()
     ; Cell myCell = PlayerRef.GetParentCell()
     if (locationX)
-        if (locationX.haskeyword(LocTypeTemple) || (customLocation && locationX.isSameLocation(customLocation)))
+        if (locationX.HasKeyword(LocTypeTemple) || locationX.HasKeyword(LocTypePlayerHouse) || (customLocation && locationX.isSameLocation(customLocation)))
             mybonus += 22
-        elseif (locationX.isSameLocation(WinterholdCollegeLocation) || WinterholdCollegeLocation.ischild(locationX))
+        elseIf (locationX.isSameLocation(WinterholdCollegeLocation) || WinterholdCollegeLocation.isChild(locationX))
             mybonus += 33
+		elseIf (locationX.HasKeyword(LocTypeInn))
+			mybonus += 11
         endif
     endIf
     ; Failing to learn also counts as progress for rng roll, 
@@ -975,6 +880,10 @@ float function getTotalCasts()
 	return (_LEARN_CountAlteration.GetValue() + _LEARN_CountDestruction.GetValue() + _LEARN_CountConjuration.GetValue() + _LEARN_CountRestoration.GetValue() + _LEARN_CountIllusion.GetValue())
 endFunction
 
+float function getTotalNotes()
+	return (PlayerRef.GetItemCount(_LEARN_SpellNotesAlteration) + PlayerRef.GetItemCount(_LEARN_SpellNotesConjuration) + PlayerRef.GetItemCount(_LEARN_SpellNotesDestruction) + PlayerRef.GetItemCount(_LEARN_SpellNotesIllusion) + PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration))
+endFunction
+
 float function calcCDReffort()
 	;float mybonus = 0
 	;mybonus += _LEARN_CountBonus.GetValue() ; Get value from script counter - e.g. demonic tutor, dreams.
@@ -992,26 +901,6 @@ float function calcCDReffort()
 	; weighting is here and not configurable atm.
 	return ((mycasts)/100*_LEARN_BonusScale.GetValue()) 
 endFunction
-
-float Function hours_before_next_ok_to_learn()
-    GlobalVariable GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
-    float now = GameDaysPassed.GetValue()
-	float nextOK = LastSleepTime + 1
-	; If cooldown reduction is enabled, then reduce the required wait time accordingly.
-	if (_LEARN_IntervalCDREnabled.GetValue() == 1)
-		float actualCDR = 0
-		actualCDR = scaleEffort(calcCDReffort(), 0, (_LEARN_IntervalCDR.GetValue() / 100))
-		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue()*(1-actualCDR)
-	Else
-		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue() ; default is 0.65
-	EndIf
-
-    if now >= nextOK
-        return 0
-    Else
-        return ((nextOK - now) * 24)
-    endif
-EndFunction
 
 bool function rollToLearn(float fChance, Spell sp)
 	Float fRand
@@ -1101,6 +990,26 @@ bool function cannotLearn(Spell sp, int fifoindex)
 	EndIf
 EndFunction
 
+; === Spell Learning
+float Function hours_before_next_ok_to_learn()
+    float now = GameDaysPassed.GetValue()
+	float nextOK = LastSleepTime + 1
+	; If cooldown reduction is enabled, then reduce the required wait time accordingly.
+	if (_LEARN_IntervalCDREnabled.GetValue() == 1)
+		float actualCDR = 0
+		actualCDR = scaleEffort(calcCDReffort(), 0, (_LEARN_IntervalCDR.GetValue() / 100))
+		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue()*(1-actualCDR)
+	Else
+		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue() ; default is 0.65
+	EndIf
+
+    if now >= nextOK
+        return 0
+    Else
+        return ((nextOK - now) * 24)
+    endif
+EndFunction
+
 function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
     ; Initialize variables
 	float fChance
@@ -1163,7 +1072,6 @@ Event OnSleepStop(Bool abInterrupted)
 		return
     endIf
 
-    GlobalVariable GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
     LastSleepTime = GameDaysPassed.GetValue()	
     
     SpawnItemsInWorld()
@@ -1249,7 +1157,7 @@ Event OnSleepStop(Bool abInterrupted)
         tryInventSpell()
     endif
     
-    ; reset counters for the day
+    ; reset counters and limits for the day
     if (True)
         _LEARN_CountAlteration.SetValue(0.0)
         _LEARN_CountConjuration.SetValue(0.0)
@@ -1257,6 +1165,7 @@ Event OnSleepStop(Bool abInterrupted)
         _LEARN_CountIllusion.SetValue(0.0)
         _LEARN_CountRestoration.SetValue(0.0)
         _LEARN_CountBonus.SetValue(0.0)
+		_LEARN_AlreadyUsedTutor.SetValue(0)
     endif
 
     ; dreams
@@ -1276,38 +1185,18 @@ Event OnSleepStop(Bool abInterrupted)
     endif
     
 	; chance to heal Dreadstare disease
-    if (PlayerRef.HasSpell(Dreadstare))
+    if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
 		float fRand = 0
 		fRand = Utility.RandomFloat(0.0, 1.0)
-		if (fRand > (0.3 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
+		if (fRand > (0.2 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
 			Debug.Notification(__l("notification_no_more_dreadmilk_addiction", "You're finally starting to feel your dreadmilk craving wane."))
-			PlayerRef.RemoveSpell(Dreadstare)
-		else
-			Debug.Notification(__l("notification_need_dreadmilk", "You feel an excruciating yearning for dreadmilk..."))
+			PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
 		endif
     endif
 	
-	; Lower blood toxicity
-	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
-		_LEARN_consecutiveDreadmilk.SetValue(_LEARN_consecutiveDreadmilk.GetValue() - 1)
-		if (_LEARN_consecutiveDreadmilk.GetValue() <= 0 && !PlayerRef.HasMagicEffect(AlchDreadmilkEffect))
-			_LEARN_consecutiveDreadmilk.SetValue(0)
-			Debug.Notification(__l("notification_dreadmilk_out_of_system", "All the Dreadmilk is finally out of your system..."))
-			if (PlayerRef.HasSpell(Dreadstare))
-				PlayerRef.RemoveSpell(Dreadstare)
-			endIf
-		endIf
-	endIf
-	
-	_LEARN_AlreadyUsedTutor.SetValue(0)
-	
-	if (_LEARN_SinceLastSetHome.GetValue() <= 6) ; don't blindly increment to prevent overflow for players who play 65535 in game days?!
-		_LEARN_SinceLastSetHome.SetValue(_LEARN_SinceLastSetHome.GetValue() + 1)
-	endIf
-
-	
 EndEvent
 
+; === Spell Discovery
 String function topSchoolToday()
     string magicSchool
     if (_LEARN_ForceDiscoverSchool.GetValue() != 0)
@@ -1396,6 +1285,7 @@ Spell function tryInventSpell()
         
 EndFunction
 
+; === Spell Book management
 function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
     ; maybe remove book
     if (_LEARN_RemoveSpellBooks.GetValue() != 0)

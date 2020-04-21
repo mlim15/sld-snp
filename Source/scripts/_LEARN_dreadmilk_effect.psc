@@ -1,18 +1,19 @@
-Scriptname _LEARN_dreadmilk_effect extends activemagiceffect  
+Scriptname _LEARN_dreadmilk_effect extends ActiveMagicEffect  
 
-_LEARN_ControlScript Property ControlScript  Auto 
-MagicEffect Property AlchDreadmilkEffect Auto
-MagicEffect Property AlchShadowmilkEffect Auto
-Spell Property Dreadstare Auto
-Spell Property DreadmilkOverdose auto
+_LEARN_ControlScript property ControlScript  auto 
+Actor property PlayerRef auto
+GlobalVariable property _LEARN_consecutiveDreadmilk auto
+GlobalVariable property _LEARN_DreadstareLethality auto
+MagicEffect property AlchDreadmilkEffect auto
+MagicEffect property AlchShadowmilkEffect auto
+Spell property _LEARN_DiseaseDreadmilk auto
+Spell property DreadmilkOverdose auto
 
 string function __l(string keyName, string defaultValue = "")
     return ControlScript.__l(keyName, defaultValue);
 endFunction
 
 Event OnEffectStart(Actor Target, Actor Caster)    
-
-    Actor PlayerRef = Game.GetPlayer()
     
     ; Don't want to give instakill ability to reverse-pickpockets
     if (Target != PlayerRef)
@@ -22,29 +23,27 @@ Event OnEffectStart(Actor Target, Actor Caster)
     float fRand
 	bool overdose = false
     ; Don't do (too much) drugs, kids.
-    if (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 0)
+    if (_LEARN_ConsecutiveDreadmilk.GetValue() > 0)
         fRand = Utility.RandomFloat(0, 1.0)
-        if (fRand < (ControlScript._LEARN_DreadstareLethality.getValue() / 100) + (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue()/10))
+        if (fRand < (_LEARN_DreadstareLethality.getValue() / 100) + (_LEARN_ConsecutiveDreadmilk.GetValue()/10))
             Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed."))
 			overdose = true
 			DreadmilkOverdose.Cast(PlayerRef, PlayerRef)
         endif
     endif
 	
-	; Immediate relief of withdrawal symptoms if you're not dead
-    if (PlayerRef.HasSpell(Dreadstare) && !overdose)
-        PlayerRef.RemoveSpell(Dreadstare)
+	; Immediate relief of withdrawal symptoms if you're not dying
+    if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && !overdose)
+        PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
         Debug.Notification(__l("dreadmilk_feels good", "Your withdrawal symptoms are relieved - for now..."))
     endif
 	
 	; Increase blood toxicity
-	ControlScript._LEARN_consecutiveDreadmilk.SetValue(ControlScript._LEARN_consecutiveDreadmilk.GetValue() + 1)
+	_LEARN_consecutiveDreadmilk.Mod(1)
 	
 EndEvent
 
 Event OnEffectFinish(Actor Target, Actor Caster)
-
-    Actor PlayerRef = Game.GetPlayer()
     
     if (Target != PlayerRef)
         Return
@@ -54,9 +53,9 @@ Event OnEffectFinish(Actor Target, Actor Caster)
     fRand = Utility.RandomFloat(0.0, 1.0)
 	; Addiction will always return if it has been used while blood is toxic.
 	; Otherwise there is a 50% chance to get addicted.
-	if ((!PlayerRef.HasSpell(Dreadstare) && (!PlayerRef.HasMagicEffect(AlchDreadmilkEffect) && (fRand > 0.5))) || (ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() > 0 && (!PlayerRef.HasMagicEffect(AlchDreadmilkEffect))))
+	if ((!PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && (!PlayerRef.HasMagicEffect(AlchDreadmilkEffect) && (fRand > 0.5))) || (_LEARN_ConsecutiveDreadmilk.GetValue() > 0 && (!PlayerRef.HasMagicEffect(AlchDreadmilkEffect))))
 		Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."))
-		PlayerRef.AddSpell(Dreadstare)
+		PlayerRef.AddSpell(_LEARN_DiseaseDreadmilk)
 	endif
 	
 endEvent

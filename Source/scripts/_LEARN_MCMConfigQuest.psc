@@ -3,15 +3,54 @@ scriptname _LEARN_MCMConfigQuest extends SKI_ConfigBase
 import FISSFactory
 FISSInterface fiss
 
-; Access the main script to update the variables directly upon update
 _LEARN_ControlScript property ControlScript auto
-
 String ModName = "Spell Learning"
 
-Bool isEnabled
-Bool wasDisabled = False
-Int isEnabledOption
-Int showDebugOutputOption ; Toggle for showing debug output messages
+bool isEnabled
+bool wasDisabled = False
+int isEnabledOption
+int showDebugOutputOption ; Toggle for showing debug output messages
+
+Actor property PlayerRef auto
+Quest property _LEARN_SpellControlQuest auto
+GlobalVariable property GameDaysPassed auto
+GlobalVariable property _LEARN_MinChanceStudy auto
+GlobalVariable property _LEARN_MaxChanceStudy auto
+GlobalVariable property _LEARN_MinChanceDiscover auto
+GlobalVariable property _LEARN_MaxChanceDiscover auto
+GlobalVariable property _LEARN_BonusScale auto
+GlobalVariable property _LEARN_MaxFailsBeforeCycle auto
+GlobalVariable property _LEARN_RemoveSpellBooks auto
+GlobalVariable property _LEARN_CollectNotes auto
+GlobalVariable property _LEARN_ForceDiscoverSchool auto
+GlobalVariable property _LEARN_StudyInterval auto
+GlobalVariable property _LEARN_AutoNoviceLearningEnabled auto
+GlobalVariable property _LEARN_AutoNoviceLearning auto
+GlobalVariable property _LEARN_ParallelLearning auto
+GlobalVariable property _LEARN_HarderParallel auto
+GlobalVariable property _LEARN_DreadstareLethality auto
+GlobalVariable property _LEARN_EffortScaling auto
+GlobalVariable property _LEARN_AutoSuccessBypassesLimit auto
+GlobalVariable property _LEARN_TooDifficultEnabled auto
+GlobalVariable property _LEARN_TooDifficultDelta auto
+GlobalVariable property _LEARN_SpawnItems auto
+GlobalVariable property _LEARN_PotionBypass auto
+GlobalVariable property _LEARN_IntervalCDR auto
+GlobalVariable property _LEARN_IntervalCDREnabled auto
+GlobalVariable property _LEARN_MaxFailsAutoSucceeds auto
+GlobalVariable property _LEARN_DynamicDifficulty auto
+GlobalVariable property _LEARN_ConsecutiveDreadmilk auto
+GlobalVariable property _LEARN_AlreadyUsedTutor auto
+GlobalVariable property _LEARN_LastSetHome auto
+GlobalVariable property _LEARN_StudyIsRest auto
+GlobalVariable property _LEARN_StudyRequiresNotes auto
+GlobalVariable property _LEARN_LastDayStudied auto
+MagicEffect Property _LEARN_PracticeEffect auto
+Spell property _LEARN_DiseaseDreadmilk auto
+Spell property _LEARN_PracticeAbility auto
+Spell property _LEARN_StudyPower auto
+Spell property _LEARN_SummonSpiritTutor auto
+Spell property _LEARN_SetHomeSp auto
 
 ;OID is OptionID (for posterity)
 int minChanceStudyOID
@@ -49,6 +88,8 @@ int maxFailsAutoSucceedsOID
 int nootropicStatusOID
 int tutorStatusOID
 int attunementStatusOID
+int studyRequiresNotesOID
+int studyIsRestOID
 int shutUpOID ; unused
 int spawnItemsOID ; unused
 int enthirSellsOID ; unused
@@ -57,23 +98,22 @@ int[] spellListStates; 0=count,1=pageCount;2=currentPageIndex,3=pageItemIndex
 int[] spellOidList
 Form[] spellsInPage
 String[] spellCommandsMenu
-int Property SPELLS_COUNT = 0 autoReadOnly
-int Property SPELLS_PAGECOUNT = 1 autoReadOnly
-int Property SPELLS_CURRENT_PAGEINDEX = 2 autoReadOnly
-int Property SPELLS_PAGE_ITEMINDEX = 3 autoReadOnly
-int Property SPELLS_CURRENTPAGE_OID = 4 autoReadOnly
-int Property SPELLS_PAGE_ITEMCOUNT = 5 autoReadOnly
+int property SPELLS_COUNT = 0 autoReadOnly
+int property SPELLS_PAGECOUNT = 1 autoReadOnly
+int property SPELLS_CURRENT_PAGEINDEX = 2 autoReadOnly
+int property SPELLS_PAGE_ITEMINDEX = 3 autoReadOnly
+int property SPELLS_CURRENTPAGE_OID = 4 autoReadOnly
+int property SPELLS_PAGE_ITEMCOUNT = 5 autoReadOnly
 bool isSpellListInitialized
 
-int Property SPELL_COMMAND_NONE = 0 autoReadOnly
-int Property SPELL_COMMAND_REMOVE = 1 autoReadOnly
-int Property SPELL_COMMAND_LEARN = 2 autoReadOnly
+int property SPELL_COMMAND_NONE = 0 autoReadOnly
+int property SPELL_COMMAND_REMOVE = 1 autoReadOnly
+int property SPELL_COMMAND_LEARN = 2 autoReadOnly
 bool _useLocalizationLib
 
-actor property PlayerRef auto
-
-;Called when the menu is first registered, grab the values as the first-run data
-Event OnConfigInit()
+; == Initialization
+event OnConfigInit()
+	; Called when the menu is first registered, grab the values as the first-run data
     Debug.Trace(_LEARN_Strings.formatString2("[Spell Learning] MCM Configuring... Menu version is {0}.{1} ...", 10, ControlScript.GetMenuLangId()))
     InternalPrepare()
 
@@ -82,14 +122,15 @@ Event OnConfigInit()
     endif
     
     IsEnabled = True
-EndEvent
+endEvent
 
+; === Tab Definitions
 function InternalPrepare()
     if (!Pages || Pages.Length < 4)
         Pages = new string[4]
     endIf
     _useLocalizationLib = ControlScript.CanUseLocalizationLib
-    Pages[0] = __l("mcm_tab_status", "Status")
+    Pages[0] = __l("mcm_tab_status", "Current Status")
     Pages[1] = __l("mcm_tab_learning","Learning and Discovery")
 	Pages[2] = __l("mcm_tab_spell_list", "Manage Spell List")
 	Pages[3] = __l("mcm_tab_items_and_notifications", "Items and Notifications")
@@ -101,6 +142,7 @@ event OnGameReload()
 	InternalPrepare()
 endEvent
 
+; === Localization and Formatting
 string function __l(string keyName, string defaultValue = "")
 	; since menu uses this function a lot while resetting page nexusishere inlined it here for better performance
     if _useLocalizationLib
@@ -124,6 +166,7 @@ string function __f1(string source, string p1)
     return _LEARN_Strings.StringReplaceAll(source, "{0}", p1)
 endFunction
 
+; === Version Management
 int function GetVersion()
     ; menu version will be multiplies of 10 for allowing user to change language 9 more times
     return 20 + ControlScript.GetMenuLangId();
@@ -139,13 +182,15 @@ Event OnConfigClose()
 	; Called every time the menu is closed (actually saves the data)
     If(!isEnabled && !wasDisabled)
         wasDisabled = True
-		; then disable things cleanly
-		ControlScript.disableModEffects()
+		; Then stop the quest. This should automatically remove items from enthir (?)
+		; as well as stop the script from running on sleep.
+		_LEARN_SpellControlQuest.Stop()
     EndIf
     ; ======== RESET ========
     ; Basically reset; If they disable, close the menu, open, enable, close again, this will turn it back on
     If(isEnabled && wasDisabled)
         wasDisabled = False
+		_LEARN_SpellControlQuest.Start()
     EndIf
     ; sometimes weird warnings occur when assigning None to an array
     Form[] nullFormArray = Utility.CreateFormArray(0)
@@ -158,35 +203,7 @@ Event OnConfigClose()
     isSpellListInitialized = false
 EndEvent
 
-function InitializeSpellList()
-    if isSpellListInitialized
-        return
-    endIf
-    spellsInPage = new Form[10]
-    spellOidList = new int[10]
-    spellListStates = new int[6]
-    int count = ControlScript.spell_fifo_get_count()
-    spellListStates[SPELLS_COUNT] = count
-    int pageCount = count / 10
-    if (count % 10) != 0
-        pageCount += 1
-    endIf
-    spellListStates[SPELLS_PAGECOUNT] = pageCount
-    if count > 0
-        spellListStates[SPELLS_PAGE_ITEMINDEX] = 0
-        spellListStates[SPELLS_CURRENT_PAGEINDEX] = 0
-    else
-        spellListStates[SPELLS_PAGE_ITEMINDEX] = -1
-    endIf
-
-    spellCommandsMenu = new string[3]
-    spellCommandsMenu[SPELL_COMMAND_NONE] = __l("mcm_spell_command_none", "No Operation")
-    spellCommandsMenu[SPELL_COMMAND_REMOVE] = __l("mcm_spell_command_remove", "Remove")
-    spellCommandsMenu[SPELL_COMMAND_LEARN] = __l("mcm_spell_command_learn", "Learn (Instantly)")
-
-    isSpellListInitialized = true
-endFunction
-
+; === Menu Definitions
 event OnPageReset(string page)
 {Called when a new page is selected, including the initial empty page}
     if (page == "")
@@ -199,34 +216,33 @@ event OnPageReset(string page)
         isEnabledOption = AddToggleOption(__l("mcm_mod_enabled", "Mod is Enabled: "), IsEnabled, 0)
 		AddEmptyOption()
         if(isEnabled)   
-            bonusScaleOID = AddSliderOption(__l("mcm_option_roleplaying_bonus", "Roleplaying Bonus Modifier"), ControlScript._LEARN_BonusScale.GetValue(), "{1}", OPTION_FLAG_NONE)
-			effortScalingOID = AddMenuOption(__l("mcm_option_scaling", "Bonus Scaling Type"), ControlScript.getEffortLabels()[ControlScript._LEARN_effortScaling.GetValueInt()], OPTION_FLAG_NONE)
+            bonusScaleOID = AddSliderOption(__l("mcm_option_roleplaying_bonus", "Roleplaying Bonus Modifier"), _LEARN_BonusScale.GetValue(), "{1}", OPTION_FLAG_NONE)
+			effortScalingOID = AddMenuOption(__l("mcm_option_scaling", "Bonus Scaling Type"), ControlScript.getEffortLabels()[_LEARN_effortScaling.GetValueInt()], OPTION_FLAG_NONE)
             string n = __l("mcm_current_location_none", "Undefined"); string none causes unexpected behaviors. avoid it
             if ControlScript.customLocation
                 n = ControlScript.customLocation.GetName()
             endif
             CustomLocationOID = AddTextOption(__l("mcm_option_set_home", "Set Custom Study Location"), n, OPTION_FLAG_NONE)
 			AddEmptyOption()
-			AddHeaderOption(__l("mcm_header_current_learning", "Miscellaneous Status Effects: "), 0)
-			nootropicStatusOID = AddTextOption(__l("mcm_current_blood_toxicity", "Current Bloodstream Toxicity: "), _LEARN_Strings.formatString1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript._LEARN_ConsecutiveDreadmilk.GetValue() * 10) as String),0,3)), OPTION_FLAG_NONE)
-			if (ControlScript._LEARN_AlreadyUsedTutor.GetValue() == 1)
+			AddHeaderOption(__l("mcm_header_current_learning", "Miscellaneous Status Effects"), 0)
+			nootropicStatusOID = AddTextOption(__l("mcm_current_blood_toxicity", "Current Bloodstream Toxicity: "), __f1("{0}%", _LEARN_Strings.SubStringSafe(((_LEARN_ConsecutiveDreadmilk.GetValue() * 10) as String),0,5)), OPTION_FLAG_NONE)
+			if (_LEARN_AlreadyUsedTutor.GetValue() == 1)
 				tutorStatusOID = AddTextOption(__l("mcm_current_tutor_used", "Already Used Tutor: "), __l("mcm_true", "True"), OPTION_FLAG_NONE)
 			else
 				tutorStatusOID = AddTextOption(__l("mcm_current_tutor_used", "Already Used Tutor: "), __l("mcm_false", "False"), OPTION_FLAG_NONE)
 			endIf
-			if (ControlScript._LEARN_SinceLastSetHome.GetValue() >= 7)
-				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), _LEARN_Strings.formatString1(__l("mcm_x_rests", "{0} Rests"), "0"), OPTION_FLAG_NONE)
-			elseIf (ControlScript._LEARN_SinceLastSetHome.GetValue() == 6)
-				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), _LEARN_Strings.formatString1(__l("mcm_x_rest", "{0} Rest"), "1"), OPTION_FLAG_NONE)
+			if ((GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue()) >= 7)
+				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement_now", "Can Change Attunement: "), __f1(__l("mcm_now", "Now"), "0"), OPTION_FLAG_NONE)
+			elseIf ((GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue()) == 6)
+				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), __f1(__l("mcm_x_day", "{0} Day"), "1"), OPTION_FLAG_NONE)
 			else
-				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), _LEARN_Strings.formatString1(__l("mcm_x_rests", "{0} Rests"), (((7 - ControlScript._LEARN_SinceLastSetHome.GetValue()) as int) as String)), OPTION_FLAG_NONE)
+				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), __f1(__l("mcm_x_days", "{0} Days"), (((GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue()) as int) as String)), OPTION_FLAG_NONE)
 			endIf
 		endif
         SetCursorPosition(1) ; Move cursor to top right position
 		if(isEnabled)
 			AddHeaderOption(__l("mcm_header_current_learning", "Current Spell Learning Status"), 0)
-			; current chance to study 
-			infoStudyOID = AddTextOption(__l("mcm_current_learning_chance", "Chance to Successfully Learn: "), _LEARN_Strings.formatString1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToStudy() * 100) as String),0,5)), OPTION_FLAG_NONE)
+			infoStudyOID = AddTextOption(__l("mcm_current_learning_chance", "Chance to Successfully Learn: "), __f1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToStudy() * 100) as String),0,5)), OPTION_FLAG_NONE)
 			int t = (controlscript.hours_before_next_ok_to_learn() as int)
 			if t == 0
 				AddTextOption(__l("mcm_current_sleep_now", "You can sleep now to try learning!"), "", OPTION_FLAG_NONE)
@@ -239,9 +255,7 @@ event OnPageReset(string page)
 		AddEmptyOption()
         If(isEnabled)   
 		    AddHeaderOption(__l("mcm_header_sleep_current_discovery", "Current Spell Discovery Status"), 0)
-            ; current chance to discover
-            infoDiscoverOID = AddTextOption(__l("mcm_current_discovery_chance", "Chance for Discovery: "), _LEARN_Strings.formatString1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToDiscover() * 100) as String),0,5)), OPTION_FLAG_NONE)
-            ; school of magic
+            infoDiscoverOID = AddTextOption(__l("mcm_current_discovery_chance", "Chance for Discovery: "), __f1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToDiscover() * 100) as String),0,5)), OPTION_FLAG_NONE)
             infoSchoolOID = AddTextOption(__l("mcm_current_school", "Current School of Interest: "), ControlScript.topSchoolToday(), OPTION_FLAG_NONE) 
 			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_backup_restore", "Backup/Restore Spell List"), 0)
@@ -252,13 +266,13 @@ event OnPageReset(string page)
         SetCursorFillMode(TOP_TO_BOTTOM) ;starts are 0
         AddHeaderOption(__l("mcm_header_spell_learning_options", "Spell Learning Options"), 0)
 		if (isEnabled)
-			minChanceStudyOID = AddSliderOption(__l("mcm_option_min_learn_chance", "Min Learn Chance"), ControlScript._LEARN_MinChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
-            maxChanceStudyOID = AddSliderOption(__l("mcm_option_max_learn_chance", "Max Learn Chance"), ControlScript._LEARN_MaxChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
-			dynamicDiffOID = AddToggleOption(__l("mcm_option_chance_scales_with_spell_level", "Chance Depends on Spell Level"), ControlScript._LEARN_DynamicDifficulty.GetValue(), OPTION_FLAG_NONE)
-			StudyIntervalOID = AddSliderOption(__l("mcm_option_sleep_interval", "Time Between Learnings"), ControlScript._LEARN_StudyInterval.GetValue(), __l("mcm_x_day(s)", "{2} Day(s)"), OPTION_FLAG_NONE)
-			intervalCDRenabledOID = AddToggleOption(__l("mcm_option_practice_gives_cdr", "Practice Reduces Time"), ControlScript._LEARN_IntervalCDREnabled.GetValue(), OPTION_FLAG_NONE)
-			if (ControlScript._LEARN_IntervalCDREnabled.GetValue() == 1)
-				intervalCdrOID = AddSliderOption(__l("mcm_option_max_cdr", "Maximum Reduction"), ControlScript._LEARN_IntervalCDR.GetValue(), "{0}%", OPTION_FLAG_NONE)
+			minChanceStudyOID = AddSliderOption(__l("mcm_option_min_learn_chance", "Min Learn Chance"), _LEARN_MinChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
+            maxChanceStudyOID = AddSliderOption(__l("mcm_option_max_learn_chance", "Max Learn Chance"), _LEARN_MaxChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
+			dynamicDiffOID = AddToggleOption(__l("mcm_option_chance_scales_with_spell_level", "Chance Depends on Spell Level"), _LEARN_DynamicDifficulty.GetValue(), OPTION_FLAG_NONE)
+			StudyIntervalOID = AddSliderOption(__l("mcm_option_sleep_interval", "Time Between Learnings"), _LEARN_StudyInterval.GetValue(), __l("mcm_x_day(s)", "{2} Day(s)"), OPTION_FLAG_NONE)
+			intervalCDRenabledOID = AddToggleOption(__l("mcm_option_practice_gives_cdr", "Practice Reduces Time"), _LEARN_IntervalCDREnabled.GetValue(), OPTION_FLAG_NONE)
+			if (_LEARN_IntervalCDREnabled.GetValue() == 1)
+				intervalCdrOID = AddSliderOption(__l("mcm_option_max_cdr", "Maximum Reduction"), _LEARN_IntervalCDR.GetValue(), "{0}%", OPTION_FLAG_NONE)
 			else
 				AddEmptyOption()
 			endIf
@@ -267,34 +281,36 @@ event OnPageReset(string page)
 		endIf
 		if (isEnabled)
 			AddHeaderOption(__l("mcm_header_spell_discovery_options", "Spell Discovery Options"), 0)
-			minChanceDiscoverOID = AddSliderOption(__l("mcm_option_min_discovery_chance", "Min Discovery Chance"), ControlScript._LEARN_MinChanceDiscover.GetValue(), "{0}%", OPTION_FLAG_NONE)
-            maxChanceDiscoverOID = AddSliderOption(__l("mcm_option_max_discovery_chance", "Max Discovery Chance"), ControlScript._LEARN_MaxChanceDiscover.GetValue(), "{0}%", OPTION_FLAG_NONE)
-            forceSchoolOID = AddMenuOption(__l("mcm_option_spell_school", "Spell School"), ControlScript.getSchools()[ControlScript._LEARN_ForceDiscoverSchool.GetValueInt()], OPTION_FLAG_NONE)
+			minChanceDiscoverOID = AddSliderOption(__l("mcm_option_min_discovery_chance", "Min Discovery Chance"), _LEARN_MinChanceDiscover.GetValue(), "{0}%", OPTION_FLAG_NONE)
+            maxChanceDiscoverOID = AddSliderOption(__l("mcm_option_max_discovery_chance", "Max Discovery Chance"), _LEARN_MaxChanceDiscover.GetValue(), "{0}%", OPTION_FLAG_NONE)
+            forceSchoolOID = AddMenuOption(__l("mcm_option_spell_school", "Spell School"), ControlScript.getSchools()[_LEARN_ForceDiscoverSchool.GetValueInt()], OPTION_FLAG_NONE)
 		endIf		
 		SetCursorPosition(1) ; Move cursor to top right position
         if (isEnabled)
+			AddHeaderOption(__l("mcm_header_study_options", "Study Power Options"), 0)
+			studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "Power Acts as Resting"), _LEARN_StudyIsRest.GetValue(), OPTION_FLAG_NONE)
+			studyRequiresNotesOID = AddToggleOption(__l("mcm_option_study_notes", "Power Requires Notes"), _LEARN_StudyRequiresNotes.GetValue(), OPTION_FLAG_NONE)
 			AddHeaderOption(__l("mcm_header_adv_spell_options", "Advanced Spell Learning Options"), 0)
-			parallelLearningOID = AddSliderOption(__l("mcm_option_number_spells", "Daily Learning Limit"), ControlScript._LEARN_ParallelLearning.GetValue(), __l("mcm_x_spell(s)", "{0} Spell(s)"), OPTION_FLAG_NONE)
-			if (ControlScript._LEARN_ParallelLearning.GetValue() > 1)
-				harderParallelOID = AddToggleOption(__l("mcm_option_harder_multiple", "Learning Multiple Spells is Harder"), ControlScript._LEARN_HarderParallel.GetValue(), OPTION_FLAG_NONE)
+			parallelLearningOID = AddSliderOption(__l("mcm_option_number_spells", "Daily Learning Limit"), _LEARN_ParallelLearning.GetValue(), __l("mcm_x_spell(s)", "{0} Spell(s)"), OPTION_FLAG_NONE)
+			if (_LEARN_ParallelLearning.GetValue() > 1)
+				harderParallelOID = AddToggleOption(__l("mcm_option_harder_multiple", "Learning Multiple Spells is Harder"), _LEARN_HarderParallel.GetValue(), OPTION_FLAG_NONE)
+			else
 				AddEmptyOption()
+			endIf
+			tooDifficultEnabledOID = AddToggleOption(__l("mcm_option_auto_failure", "Skill-based Automatic Failure"), _LEARN_TooDifficultEnabled.GetValue(), OPTION_FLAG_NONE)
+			if (_LEARN_TooDifficultEnabled.GetValue() == 1)
+				tooDifficultDeltaOID = AddSliderOption(__l("mcm_option_auto_failure_diff", "Max Skill Difference before Auto Fail"), _LEARN_TooDifficultDelta.GetValue(), "{0}", OPTION_FLAG_NONE)
+				potionBypassOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Potions Bypass Auto Fail"), _LEARN_PotionBypass.GetValue(), OPTION_FLAG_NONE)
 			else
 				AddEmptyOption()
 				AddEmptyOption()
 			endIf
-			tooDifficultEnabledOID = AddToggleOption(__l("mcm_option_auto_failure", "Skill-based Automatic Failure"), ControlScript._LEARN_TooDifficultEnabled.GetValue(), OPTION_FLAG_NONE)
-			if (ControlScript._LEARN_TooDifficultEnabled.GetValue() == 1)
-				tooDifficultDeltaOID = AddSliderOption(__l("mcm_option_auto_failure_diff", "Max Skill Difference before Auto Fail"), ControlScript._LEARN_TooDifficultDelta.GetValue(), "{0}", OPTION_FLAG_NONE)
-				potionBypassOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Potions Bypass Auto Fail"), ControlScript._LEARN_PotionBypass.GetValue(), OPTION_FLAG_NONE)
-			else
-				AddEmptyOption()
-				AddEmptyOption()
-			endIf
-			AddEmptyOption()
-			noviceLearningEnabledOID = AddToggleOption(__l("mcm_option_auto_success", "Skill-based Automatic Success"), ControlScript._LEARN_AutoNoviceLearningEnabled.GetValue(), OPTION_FLAG_NONE)
-			if (ControlScript._LEARN_AutoNoviceLearningEnabled.GetValue() == 1)
-				autoNoviceLearningOID = AddSliderOption(__l("mcm_option_auto_success_diff", "Req. Skill Difference for Auto Success"), ControlScript._LEARN_AutoNoviceLearning.GetValue(), "{0}", OPTION_FLAG_NONE)
-				autoSuccessBypassesLimitOID = AddToggleOption(__l("mcm_option_auto_success_bypass", "Auto Success Bypasses Daily Limit"), ControlScript._LEARN_AutoSuccessBypassesLimit.GetValue(), OPTION_FLAG_NONE)
+			; We're running out of space to avoid scroll bars, so no spacer :(
+			; AddEmptyOption()
+			noviceLearningEnabledOID = AddToggleOption(__l("mcm_option_auto_success", "Skill-based Automatic Success"), _LEARN_AutoNoviceLearningEnabled.GetValue(), OPTION_FLAG_NONE)
+			if (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1)
+				autoNoviceLearningOID = AddSliderOption(__l("mcm_option_auto_success_diff", "Req. Skill Difference for Auto Success"), _LEARN_AutoNoviceLearning.GetValue(), "{0}", OPTION_FLAG_NONE)
+				autoSuccessBypassesLimitOID = AddToggleOption(__l("mcm_option_auto_success_bypass", "Auto Success Bypasses Daily Limit"), _LEARN_AutoSuccessBypassesLimit.GetValue(), OPTION_FLAG_NONE)
 			else
 				AddEmptyOption()
 				AddEmptyOption()
@@ -307,15 +323,15 @@ event OnPageReset(string page)
 		SetCursorFillMode(TOP_TO_BOTTOM) ;starts are 0
 		if (isEnabled)
 			AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
-			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), ControlScript._LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
+			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
 			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_spell_book_options", "Spell Book Options"), 0)
-			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), ControlScript._LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
-            collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), ControlScript._LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
+			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
+            collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
 			;AddEmptyOption()
 			;AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0)
-			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), ControlScript._LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
-			;spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items Automatically"), ControlScript._LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
+			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
+			;spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items Automatically"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
@@ -402,8 +418,38 @@ int function GetEnabledOptionFlag(bool enabled)
     endIf
 endFunction
 
-;====================================================================================
+; === Config Helper Functions
+function enableModEffects()
+	PlayerRef.AddSpell(_LEARN_SummonSpiritTutor, true)
+	PlayerRef.AddSpell(_LEARN_SetHomeSp, true)
+	; above only for debug purposes
+	PlayerRef.AddSpell(_LEARN_PracticeAbility, true)
+	PlayerRef.AddSpell(_LEARN_StudyPower, true)
+endFunction
 
+function disableModEffects()
+	if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
+		PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
+	endIf
+	if (PlayerRef.HasSpell(_LEARN_PracticeAbility))
+		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
+	endIf
+	if (PlayerRef.HasSpell(_LEARN_StudyPower))
+		PlayerRef.RemoveSpell(_LEARN_StudyPower)
+	endIf
+endFunction
+
+function removeModSpells()
+	if (PlayerRef.HasSpell(_LEARN_SummonSpiritTutor))
+		PlayerRef.RemoveSpell(_LEARN_SummonSpiritTutor)
+	EndIf
+	if (PlayerRef.HasSpell(_LEARN_SetHomeSp))
+		PlayerRef.RemoveSpell(_LEARN_SetHomeSp)
+	EndIf
+endFunction
+
+; ====================================================================================
+; === On Select, Highlight, and Accept definitions
 Event OnOptionMenuOpen(int option)
     if (option == forceSchoolOID)
         setMenuDialogOptions(ControlScript.getSchools())
@@ -423,12 +469,12 @@ event OnOptionMenuAccept(int option, int index)
     if (option == forceSchoolOID)
         forceSchoolIndex = index
         SetMenuOptionValue(option, ControlScript.getSchools()[forceSchoolIndex], false)
-        ControlScript._LEARN_ForceDiscoverSchool.SetValue(index)
+        _LEARN_ForceDiscoverSchool.SetValue(index)
     endif
     if (option == effortScalingOID)
         effortScalingIndex = index
         SetMenuOptionValue(option, ControlScript.getEffortLabels()[effortScalingIndex], false)
-        ControlScript._LEARN_effortScaling.SetValue(index)
+        _LEARN_effortScaling.SetValue(index)
 		forcepagereset()
     endif
 EndEvent
@@ -436,7 +482,7 @@ EndEvent
 Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
 
     If (a_option == maxConsecutiveFailuresOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_MaxFailsBeforeCycle.GetValue())
+        SetSliderDialogStartValue(_LEARN_MaxFailsBeforeCycle.GetValue())
         SetSliderDialogDefaultValue(3)
         SetSliderDialogRange(0, 10)
         SetSliderDialogInterval(1)
@@ -444,7 +490,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 	
     If (a_option == autoNoviceLearningOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_AutoNoviceLearning.GetValue())
+        SetSliderDialogStartValue(_LEARN_AutoNoviceLearning.GetValue())
         SetSliderDialogDefaultValue(50)
         SetSliderDialogRange(0, 100)
         SetSliderDialogInterval(25)
@@ -452,7 +498,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 	
 	If (a_option == dreadstareLethalityOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_DreadstareLethality.GetValue())
+        SetSliderDialogStartValue(_LEARN_DreadstareLethality.GetValue())
         SetSliderDialogDefaultValue(10)
         SetSliderDialogRange(0, 90)
         SetSliderDialogInterval(1)
@@ -460,7 +506,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 	
     If (a_option == parallelLearningOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_ParallelLearning.GetValue())
+        SetSliderDialogStartValue(_LEARN_ParallelLearning.GetValue())
         SetSliderDialogDefaultValue(1)
         SetSliderDialogRange(1, 10)
         SetSliderDialogInterval(1)
@@ -468,39 +514,39 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 
     If (a_option == minChanceStudyOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_MinChanceStudy.GetValue())
+        SetSliderDialogStartValue(_LEARN_MinChanceStudy.GetValue())
         SetSliderDialogDefaultValue(5)
-        SetSliderDialogRange(0, ControlScript._LEARN_MaxChanceStudy.GetValue())
+        SetSliderDialogRange(0, _LEARN_MaxChanceStudy.GetValue())
         SetSliderDialogInterval(1)
         return
     EndIf
 
     If (a_option == maxChanceStudyOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_MaxChanceStudy.GetValue())
+        SetSliderDialogStartValue(_LEARN_MaxChanceStudy.GetValue())
         SetSliderDialogDefaultValue(80)
-        SetSliderDialogRange(ControlScript._LEARN_MinChanceStudy.GetValue(), 100)
+        SetSliderDialogRange(_LEARN_MinChanceStudy.GetValue(), 100)
         SetSliderDialogInterval(1)
         return
     EndIf
 
     If (a_option == minChanceDiscoverOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_MinChanceDiscover.GetValue())
+        SetSliderDialogStartValue(_LEARN_MinChanceDiscover.GetValue())
         SetSliderDialogDefaultValue(0)
-        SetSliderDialogRange(0, ControlScript._LEARN_MaxChanceDiscover.GetValue())
+        SetSliderDialogRange(0, _LEARN_MaxChanceDiscover.GetValue())
         SetSliderDialogInterval(1)
         return
     EndIf
 
     If (a_option == maxChanceDiscoverOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_MaxChanceDiscover.GetValue())
+        SetSliderDialogStartValue(_LEARN_MaxChanceDiscover.GetValue())
         SetSliderDialogDefaultValue(10)
-        SetSliderDialogRange(ControlScript._LEARN_MinChanceDiscover.GetValue(), 100)
+        SetSliderDialogRange(_LEARN_MinChanceDiscover.GetValue(), 100)
         SetSliderDialogInterval(1)
         return
     EndIf
 
     If (a_option == bonusScaleOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_BonusScale.GetValue())
+        SetSliderDialogStartValue(_LEARN_BonusScale.GetValue())
         SetSliderDialogDefaultValue(1.0)
         SetSliderDialogRange(0, 4)
         SetSliderDialogInterval(0.1)
@@ -508,7 +554,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 
     If (a_option == studyIntervalOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_StudyInterval.GetValue())
+        SetSliderDialogStartValue(_LEARN_StudyInterval.GetValue())
         SetSliderDialogDefaultValue(0.65)
         SetSliderDialogRange(0, 4)
         SetSliderDialogInterval(0.01)
@@ -516,7 +562,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 	
 	If (a_option == tooDifficultDeltaOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_TooDifficultDelta.GetValue())
+        SetSliderDialogStartValue(_LEARN_TooDifficultDelta.GetValue())
         SetSliderDialogDefaultValue(75)
         SetSliderDialogRange(25, 100)
         SetSliderDialogInterval(25)
@@ -524,7 +570,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     EndIf
 	
 	If (a_option == intervalCdrOID)
-        SetSliderDialogStartValue(ControlScript._LEARN_IntervalCDR.GetValue())
+        SetSliderDialogStartValue(_LEARN_IntervalCDR.GetValue())
         SetSliderDialogDefaultValue(25)
         SetSliderDialogRange(1, 100)
         SetSliderDialogInterval(1)
@@ -537,75 +583,75 @@ Event OnOptionSliderAccept(Int a_option, Float a_value)
 
     If (a_option == maxConsecutiveFailuresOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_MaxFailsBeforeCycle.SetValue(a_value)
+        _LEARN_MaxFailsBeforeCycle.SetValue(a_value)
         return
     EndIf
 	
 	If (a_option == autoNoviceLearningOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_AutoNoviceLearning.SetValue(a_value)
+        _LEARN_AutoNoviceLearning.SetValue(a_value)
         return
     EndIf
 	
 	If (a_option == dreadstareLethalityOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_DreadstareLethality.SetValue(a_value)
+        _LEARN_DreadstareLethality.SetValue(a_value)
         return
     EndIf
 	
 	If (a_option == parallelLearningOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_ParallelLearning.SetValue(a_value)
+        _LEARN_ParallelLearning.SetValue(a_value)
 		forcepagereset()
         return
     EndIf
 
     If (a_option == minChanceStudyOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_MinChanceStudy.SetValue(a_value)
+        _LEARN_MinChanceStudy.SetValue(a_value)
         return
     EndIf
 
     If (a_option == maxChanceStudyOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_MaxChanceStudy.SetValue(a_value)
+        _LEARN_MaxChanceStudy.SetValue(a_value)
         return
     EndIf
 
     If (a_option == minChanceDiscoverOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_MinChanceDiscover.SetValue(a_value)
+        _LEARN_MinChanceDiscover.SetValue(a_value)
         return
     EndIf
 
     If (a_option == maxChanceDiscoverOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
-        ControlScript._LEARN_MaxChanceDiscover.SetValue(a_value)
+        _LEARN_MaxChanceDiscover.SetValue(a_value)
         return
     EndIf
 
     If (a_option == bonusScaleOID)   
         SetSliderOptionValue(a_option, a_value, "{1}", false)
-        ControlScript._LEARN_BonusScale.SetValue(a_value)
+        _LEARN_BonusScale.SetValue(a_value)
 		forcepagereset()
         return
     EndIf
 
     If (a_option == studyIntervalOID)   
         SetSliderOptionValue(a_option, a_value, "{2}", false)
-        ControlScript._LEARN_studyInterval.SetValue(a_value)
+        _LEARN_studyInterval.SetValue(a_value)
         return
     EndIf
 	
 	If (a_option == tooDifficultDeltaOID)   
         SetSliderOptionValue(a_option, a_value, "{2}", false)
-        ControlScript._LEARN_TooDifficultDelta.SetValue(a_value)
+        _LEARN_TooDifficultDelta.SetValue(a_value)
         return
     EndIf
 	
 	If (a_option == intervalCdrOID)
         SetSliderOptionValue(a_option, a_value, "{2}", false)
-        ControlScript._LEARN_IntervalCDR.SetValue(a_value)
+        _LEARN_IntervalCDR.SetValue(a_value)
         return
     EndIf
 
@@ -615,20 +661,20 @@ event OnOptionSelect(int option)
     if (option != 0 && CurrentPage == Pages[2] && SelectSpellItem(option))
         return
     endIf
-    ;enable and disable the mod (remove the spell from the player but leave the quest running for now)
+	; === Enabling/Disabling Mod
     If (Option == isEnabledOption)
         IsEnabled = !IsEnabled
         SetToggleOptionValue(option, IsEnabled, False)
-
-        Actor learningme = Game.GetPlayer()
-        Spell PracticeSpell = Game.GetFormFromFile(0x00000802, "Spell Learning.esp") as Spell
         if (IsEnabled)
-            learningme.addspell(PracticeSpell, true)
-            ControlScript.start()
+			_LEARN_SpellControlQuest.Start()
+			ControlScript.start()
+			enableModEffects()
         Else
-            learningme.removespell(PracticeSpell)
-            ControlScript.stop()
+            disableModEffects()
+			ControlScript.stop()
+			_LEARN_SpellControlQuest.Stop()
         EndIf
+	; === Setting Custom Location
     ElseIf (Option == customLocationOID)
         Location l = Game.GetPlayer().GetCurrentLocation()
         if (ControlScript.customLocation != l)
@@ -638,30 +684,34 @@ event OnOptionSelect(int option)
         endif
         forcepagereset()
     ElseIf (Option == removeOID)
-        SetToggleOptionValue(option, ControlScript.toggleRemove(), False)
+        SetToggleOptionValue(option, toggleRemove(), False)
     ElseIf (Option == collectOID)
-        SetToggleOptionValue(option, ControlScript.toggleCollect(), False)
+        SetToggleOptionValue(option, toggleCollect(), False)
 	ElseIf (Option == harderParallelOID)
-		SetToggleOptionValue(option, ControlScript.toggleHarderParallel(), False)
+		SetToggleOptionValue(option, toggleHarderParallel(), False)
 	ElseIf (Option == autoSuccessBypassesLimitOID)
-		SetToggleOptionValue(option, ControlScript.toggleAutoSuccessBypassesLimit(), False)	
+		SetToggleOptionValue(option, toggleAutoSuccessBypassesLimit(), False)	
 	ElseIf (Option == noviceLearningEnabledOID)
-		SetToggleOptionValue(option, ControlScript.toggleNoviceLearningEnabled(), False)	
+		SetToggleOptionValue(option, toggleNoviceLearningEnabled(), False)	
 		forcepagereset()
 	ElseIf (Option == spawnItemsOID) ; not implemented.
-		SetToggleOptionValue(option, ControlScript.toggleSpawnItems(), False)
+		SetToggleOptionValue(option, toggleSpawnItems(), False)
 	ElseIf (Option == potionBypassOID)
-		SetToggleOptionValue(option, ControlScript.togglePotionBypass(), False)
+		SetToggleOptionValue(option, togglePotionBypass(), False)
 	ElseIf (Option == tooDifficultEnabledOID)
-		SetToggleOptionValue(option, ControlScript.toggleTooDifficultEnabled(), False)
+		SetToggleOptionValue(option, toggleTooDifficultEnabled(), False)
 		forcepagereset()
 	ElseIf (Option == intervalCDRenabledOID)
-		SetToggleOptionValue(option, ControlScript.toggleIntervalCDREnabled(), False)
+		SetToggleOptionValue(option, toggleIntervalCDREnabled(), False)
 		forcepagereset()
 	ElseIf (Option == dynamicDiffOID)
-		SetToggleOptionValue(option, ControlScript.toggleDynamicDifficulty(), False)
+		SetToggleOptionValue(option, toggleDynamicDifficulty(), False)
 	ElseIf (Option == maxFailsAutoSucceedsOID)
-		SetToggleOptionValue(option, ControlScript.toggleMaxFailsAutoSucceeds(), False)
+		SetToggleOptionValue(option, toggleMaxFailsAutoSucceeds(), False)
+	ElseIf (Option == studyIsRestOID)
+		SetToggleOptionValue(option, toggleStudyIsRest(), False)
+	ElseIf (Option == studyRequiresNotesOID)
+		SetToggleOptionValue(option, toggleStudyRequiresNotes(), False)
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -787,10 +837,14 @@ Event OnOptionHighlight(int option)
 		setInfoText(__l("hint_tutor_status", "Whether or not you have successfully recieved the bonus from the Summon Daedric Tutor spell for this learning period."))
 	ElseIf (Option == attunementStatusOID)
 		setInfoText(__l("hint_attunement_status", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
+	ElseIf (Option == studyIsRestOID)
+		setInfoText(__l("hint_study_is_rest", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
+	ElseIf (Option == studyRequiresNotesOID)
+		setInfoText(__l("hint_study_requires_notes", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
 	EndIf
 EndEvent
 
-;====================================================================================
+; ====================================================================================
 ; === Some Custom UI functions
 function InternalSetOptionTextValue(Int a_index, String a_strValue, Bool a_noUpdate = false)
 	String menu = "Journal Menu"
@@ -818,8 +872,37 @@ function CustomUpdateTextOption(Int a_option, String a_header, string a_strValue
 		ui.Invoke(menu, root + ".invalidateOptionData")
 	endIf
 endFunction
-; === End of Custom UI functions
+
 ; === Spell List Management
+function InitializeSpellList()
+    if isSpellListInitialized
+        return
+    endIf
+    spellsInPage = new Form[10]
+    spellOidList = new int[10]
+    spellListStates = new int[6]
+    int count = ControlScript.spell_fifo_get_count()
+    spellListStates[SPELLS_COUNT] = count
+    int pageCount = count / 10
+    if (count % 10) != 0
+        pageCount += 1
+    endIf
+    spellListStates[SPELLS_PAGECOUNT] = pageCount
+    if count > 0
+        spellListStates[SPELLS_PAGE_ITEMINDEX] = 0
+        spellListStates[SPELLS_CURRENT_PAGEINDEX] = 0
+    else
+        spellListStates[SPELLS_PAGE_ITEMINDEX] = -1
+    endIf
+
+    spellCommandsMenu = new string[3]
+    spellCommandsMenu[SPELL_COMMAND_NONE] = __l("mcm_spell_command_none", "No Operation")
+    spellCommandsMenu[SPELL_COMMAND_REMOVE] = __l("mcm_spell_command_remove", "Remove")
+    spellCommandsMenu[SPELL_COMMAND_LEARN] = __l("mcm_spell_command_learn", "Learn (Instantly)")
+
+    isSpellListInitialized = true
+endFunction
+
 bool function SelectSpellItem(int option)
     return SelectSpellItemByIndex(spellOidList.Find(option))
 endFunction
@@ -937,6 +1020,7 @@ function MoveSpellItem(int activeIndex, int toIndex)
     SetSliderOptionValueST(1 + startIndex + toIndex, "{0}", false, "MoveToIndex")
     ;SelectSpellItemByIndex(toIndex)
 endFunction
+
 ; === Selected Spell Commands
 function UpdateListAfterSpellRemoved(int realIndex)
     int newCount = ControlScript.spell_fifo_get_count()
@@ -1184,6 +1268,7 @@ state SpellCommand
 	endEvent    
 endState
 
+; === Helper functions to clean up code for button presses
 state ShowRemoveBookNotification
 	event OnSelectST()
 		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_REMOVE_BOOK))
@@ -1209,3 +1294,120 @@ state ShowAddSpellNoteNotification
 	event OnHighlightST()
 	endEvent    
 endState
+
+Bool Function toggleRemove()
+    if (_LEARN_RemoveSpellBooks.GetValue())
+        _LEARN_RemoveSpellBooks.SetValue(0)
+        return false
+    endif
+    _LEARN_RemoveSpellBooks.SetValue(1)
+    return True
+EndFunction
+
+Bool Function toggleCollect()
+    if (_LEARN_CollectNotes.GetValue())
+        _LEARN_CollectNotes.SetValue(0)
+        return false
+    endif
+    _LEARN_CollectNotes.SetValue(1)
+    return True
+EndFunction
+
+Bool Function toggleHarderParallel()
+    if (_LEARN_HarderParallel.GetValue())
+        _LEARN_HarderParallel.SetValue(0)
+        return false
+    endif
+    _LEARN_HarderParallel.SetValue(1)
+    return True
+EndFunction
+
+Bool Function toggleAutoSuccessBypassesLimit()
+    if (_LEARN_AutoSuccessBypassesLimit.GetValue())
+        _LEARN_AutoSuccessBypassesLimit.SetValue(0)
+        return false
+    endif
+    _LEARN_AutoSuccessBypassesLimit.SetValue(1)
+    return True
+EndFunction
+
+Bool Function toggleNoviceLearningEnabled()
+    if (_LEARN_AutoNoviceLearningEnabled.GetValue())
+        _LEARN_AutoNoviceLearningEnabled.SetValue(0)
+        return false
+    endif
+    _LEARN_AutoNoviceLearningEnabled.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleTooDifficultEnabled()
+    if (_LEARN_TooDifficultEnabled.GetValue())
+        _LEARN_TooDifficultEnabled.SetValue(0)
+        return false
+    endif
+    _LEARN_TooDifficultEnabled.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleSpawnItems()
+    if (_LEARN_SpawnItems.GetValue())
+        _LEARN_SpawnItems.SetValue(0)
+        return false
+    endif
+    _LEARN_SpawnItems.SetValue(1)
+    return True
+EndFunction
+
+bool function togglePotionBypass()
+    if (_LEARN_PotionBypass.GetValue())
+        _LEARN_PotionBypass.SetValue(0)
+        return false
+    endif
+    _LEARN_PotionBypass.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleIntervalCDREnabled()
+    if (_LEARN_IntervalCDREnabled.GetValue())
+        _LEARN_IntervalCDREnabled.SetValue(0)
+        return false
+    endif
+    _LEARN_IntervalCDREnabled.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleDynamicDifficulty()
+    if (_LEARN_DynamicDifficulty.GetValue())
+        _LEARN_DynamicDifficulty.SetValue(0)
+        return false
+    endif
+    _LEARN_DynamicDifficulty.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleMaxFailsAutoSucceeds()
+    if (_LEARN_MaxFailsAutoSucceeds.GetValue())
+        _LEARN_MaxFailsAutoSucceeds.SetValue(0)
+        return false
+    endif
+    _LEARN_MaxFailsAutoSucceeds.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleStudyIsRest()
+    if (_LEARN_StudyIsRest.GetValue())
+        _LEARN_StudyIsRest.SetValue(0)
+        return false
+    endif
+    _LEARN_MaxFailsAutoSucceeds.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleStudyRequiresNotes()
+    if (_LEARN_StudyRequiresNotes.GetValue())
+        _LEARN_StudyRequiresNotes.SetValue(0)
+        return false
+    endif
+    _LEARN_StudyRequiresNotes.SetValue(1)
+    return True
+EndFunction
