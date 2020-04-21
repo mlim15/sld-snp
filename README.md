@@ -16,16 +16,16 @@ The mod also provides a simple spell discovery system - shouldn't mages be able 
 Why another version of this mod?
 -------------
 
-When I was looking for mods that solve the problems of the vanilla game's spell learning system, I found quite a few things I liked quite a bit, but all of them had at least some problems:
+Similar mods that take differing approaches to this problem: 
+* [Better Spell Learning](https://www.nexusmods.com/skyrimspecialedition/mods/4924)
+* [Spell Research](https://www.nexusmods.com/skyrimspecialedition/mods/20983)
 
-* I like [Better Spell Learning](https://www.nexusmods.com/skyrimspecialedition/mods/4924) a lot, and it does solve the issue of learning spells seeming effortless - but it also makes it quite a chore, and it's *the player* that's forced to do that chore. I want my character to do the chores in the background, I don't want to manually waste my own time doing them. It also requires patches for any mods that add spells, because it works by replacing all spell books in the game with custom versions that have a script attached. 
-* Something like [Spell Research](https://www.nexusmods.com/skyrimspecialedition/mods/20983) is also great, but it's a big mod that adds a lot of features and requires the use of menus. I wanted something that stayed closer to the vanilla experience, and typically I prefer mods that can be set up once they way I like them and then left forever, without being forced to go back into any menus at any point, because this breaks immersion.
+A lot of people have made mods tackling this problem. I used Better Spell Tomes for quite a while and liked it a lot. But now I have a lot of free time on my hands, so I figured I would try to put something together totally suited to my personal preferences. What are those preferences?
+* Gameplay should not be a chore for the player. I want my character to do the chores in the background.
+* Should not require patches to support other mods if possible.
+* Do not force the use of menus for gameplay. I want to play the game, not the menu. Set it up once and leave it alone.
 
-Then I found this mod. It was perfectly suited to my preferences... but it felt unfinished. A lot of things seemed unpolished - for example, the dialogue option with mages was pretty unintuitive, and for some NPCs like Mirabelle, was missing voicing. Much of the mod's functionality was relatively opaque to the end-user - how was I supposed to know that the dialogue option costs money once you've already passed a certain percentage chance? And on top of that, I felt it could be a little more configurable. If I could have just disabled all the parts of the mod I didn't like, I would have done that and called it a day. But those options weren't exposed to the user.
-
-So I decided to roll up my sleeves and fix it up, because bless all the people who have worked on this mod, they have *all* provided the sources (and permission for anyone to alter and redistribute). Initially I just wanted to remove the immersion-breaking parts, like some of the debug messages and the NPC dialogue. Then I started adding a couple little features and config settings... and another... and another... and now we're here. The original mod, especially with the great more robust spell list nexusishere added to the SSE version, has a ton of promise.  All I've done is added a little SnP. What's SnP? I don't know. Maybe the base mod was a great meal that just needed a little salt and pepper. Maybe it was a nice pair of boots that needed a little spit and polish. It's SnP.
-
-So here is Spell Learning and Discovery for Skyrim Special Edition... with a little SnP.
+Then I found this mod. It was a great balance... but it felt somewhat unpolished, the mod's functionality was relatively opaque to the end-user, and I wanted it to be a little more configurable. If I could have just disabled all the parts of the mod I didn't like, I would have done that and called it a day. But those options weren't exposed to the user. Thankfully, sources were provided under permissive terms for this project by all the authors involved. Initially I just wanted to make a couple tweaks, then I started adding a couple little features and config settings... and another... and another... and now we're here. I've done is added a little SnP. What's SnP? Maybe the base mod was a great meal that just needed a little salt and pepper. Maybe it was a nice pair of boots that needed a little spit and polish. It's SnP.
 
 Requirements
 ------------
@@ -47,9 +47,11 @@ Once you get in-game, the mod will set itself up without your intervention. Note
 Development Status
 ----------
 
-* I am still planning on implementing a "quiet" mode somehow that disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
-* If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
-* Adding randomized messages instead of the same message every time would be nice.
-* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
+I have basically added all of the features and options that I thought were interesting, and at this point the level of polish is stisfactory to me. I am still planning on trying to implement a "quiet" mode at some point to disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking. Adding randomized messages instead of the same message every time might also be nice.
 
+Known Problems
+----------
+* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
+* Enabling and disabling the mod mostly works, but sometimes potion effects can get stuck on the player. If this happens, you'll need to try again until after disabling you don't have any permanent effects stuck on you. Alternatively, you can use the console to remove them. This is mostly an issue with the addictive potions system.
+* Not all items are currently set up to spawn in the world.
 
