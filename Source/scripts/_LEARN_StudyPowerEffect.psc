@@ -30,13 +30,19 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		return
 	endIf
 	
+	; Ensure there are actually spells to study if StudyIsRest is on
+	if (_LEARN_StudyIsRest.GetValue() == 1 && ControlScript.spell_fifo_get_count() == 0)
+		Debug.Notification(__l("notification_study_no_spells", "You don't have any spell ideas to research right now."))
+		return
+	endIf
+	
 	; Check all the reasons we might not want to study and display proper messages,
 	; then quit without studying if any situation is true.
 	if ((_LEARN_StudyIsRest.GetValue() == 1) && (ControlScript.hours_before_next_ok_to_learn() > 0))
-		Debug.Notification(__l("notification_slept_too_soon", "It seems your mind isn't settled enough yet to learn any spells..."))
+		Debug.Notification(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."))
 		return
-	elseIf (_LEARN_LastDayStudied.GetValue() == 1)
-		Debug.Notification(__l("notification_study_too_soon", "You've already studied today."))
+	elseIf (_LEARN_LastDayStudied.GetValue() == 1 && (_LEARN_StudyIsRest.GetValue() == 1))
+		Debug.Notification(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."))
 		return
 	elseIf (PlayerRef.IsInCombat())
 		Debug.Notification(__l("notification_study_in_combat", "You can't study in combat!"))
@@ -53,30 +59,22 @@ Event OnEffectStart(Actor Target, Actor Caster)
 	; Start our animations and things.
 	Game.DisablePlayerControls()		
 	Game.ForceThirdPerson()
-	; Sitting or standing animations
-	if (PlayerRef.GetSitState() >= 3)
-		PlayerRef.PlayIdle(IdleBookSitting_Reading)
-		Utility.wait(3)
-		PlayerRef.PlayIdle(IdleBookSitting_TurnManyPages)
-		Utility.Wait(4)
-	else
-		PlayerRef.PlayIdle(IdleBook_Reading)
-		Utility.Wait(3)
-		PlayerRef.PlayIdle(IdleBook_TurnManyPages)
-		Utility.Wait(4)
-	endIf
+	PlayerRef.PlayIdle(IdleBook_Reading)
+	Utility.Wait(2)
+	PlayerRef.PlayIdle(IdleBook_TurnManyPages)
+	Utility.Wait(2)
 	; Fade out
 	FadeToBlackImod.Apply()
 	Utility.Wait(2)
 	FadeToBlackImod.PopTo(FadeToBlackHoldImod)
-	; Change time
-	Utility.Wait(2)
+	; Change time while screen is black
+	Utility.Wait(4)
 	GameHour.SetValue(GameHour.Mod(1))
 	; Free player from idle animation hell
 	; and give back control
 	PlayerRef.PlayIdle(IdleStop_Loose)
 	Game.EnablePlayerControls()
-	; Fade in
+	; Fade back in
 	FadeToBlackHoldImod.PopTo(FadeToBlackBackImod)
 	FadeToBlackHoldImod.Remove()
 	
@@ -84,7 +82,23 @@ Event OnEffectStart(Actor Target, Actor Caster)
 	if (_LEARN_StudyIsRest.GetValue() == 1)
 		ControlScript.OnSleepStop(false)
 	else
-		_LEARN_CountBonus.Mod(33)
+		float bonus = 0
+		; Give scaling bonus based on amount of notes in inventory
+		; The number of notes possessed by the player is related to the value of the spells they have read.
+		; So this value is normalized by comparing the value of a core spellbook 
+		; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
+		Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
+		float priceFactor = refCandleLight.GetGoldValue() / 44
+		float notes = ControlScript.getTotalNotes()
+		notes = notes / pricefactor
+		bonus = notes / 600
+		; Formula is gives 1/9 of max chance (value of 30) for studying when carrying total 18000 
+		; gold worth of notes. 2/9 is given using only school-specific notes in the roll script 
+		; and is capped at a value of 3600. So for 5 schools, we cap at a value of 18k.
+		if bonus > 30
+			bonus = 30
+		endIf
+		_LEARN_CountBonus.Mod(bonus)
 		_LEARN_LastDayStudied.SetValue(1)
 		Debug.Notification(__l("notification_study_progress", "You feel you've made some progress."))
 	endIf

@@ -6,12 +6,8 @@ Spell property StudyPower auto
 
 Bool modDisabled = false
 
-;-- Functions ---------------------------------------
-
 function OnInit()
-    ;Debug.Notification("LEARN Oncastscript init")
     if (Self.GetActorReference())
-		PlayerRef.AddSpell(StudyPower, true)
         PlayerRef.AddSpell(PracticeSpell, true)
     endif
 endFunction

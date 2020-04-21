@@ -8,6 +8,7 @@ MagicEffect property AlchDreadmilkEffect auto
 MagicEffect property AlchShadowmilkEffect auto
 Spell property _LEARN_DiseaseDreadmilk auto
 Spell property ShadowmilkOverdose auto
+Spell property _LEARN_shadowmilkHangover auto
 
 string function __l(string keyName, string defaultValue = "")
     return ControlScript.__l(keyName, defaultValue);
@@ -31,9 +32,14 @@ Event OnEffectStart(Actor Target, Actor Caster)
 			ShadowmilkOverdose.Cast(PlayerRef, PlayerRef)
         endif
     endif
+	
+	if (PlayerRef.HasSpell(_LEARN_shadowmilkHangover) && !overdose)
+		PlayerRef.RemoveSpell(_LEARN_shadowmilkHangover)
+		; Doesn't merit a notification.
+	endIf
 
-	; Tell player it won't stave off dreadstare
-    if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && !overdose)
+	; Tell player it won't stave off dreadstare if it's the first one they drank with the effect
+    if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && !overdose && !PlayerRef.HasMagicEffect(AlchShadowmilkEffect))
         Debug.Notification(__l("notification_dreadmilk_feels_bad_man", "You feel a little better, but it's not enough..."))
     endif
 	
@@ -42,3 +48,16 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		_LEARN_consecutiveDreadmilk.Mod(0.5)
 	endIf
 EndEvent
+
+Event OnEffectFinish(Actor Target, Actor Caster)
+	; Only on players
+    if (Target != PlayerRef)
+        Return
+    EndIf
+	; Give hangover. Conditions are built into spell to not apply when
+	; 1. having Dreadstare
+	; 2. under effects of dreadmilk
+	; 3. under effects of shadowmilk
+	_LEARN_shadowmilkHangover.Cast(Target, Target)
+endEvent
+

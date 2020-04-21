@@ -51,6 +51,9 @@ Spell property _LEARN_PracticeAbility auto
 Spell property _LEARN_StudyPower auto
 Spell property _LEARN_SummonSpiritTutor auto
 Spell property _LEARN_SetHomeSp auto
+MagicEffect Property AlchDreadmilkEffect auto
+MagicEffect Property AlchShadowmilkEffect auto
+MagicEffect property _LEARN_ShadowmilkHangover auto
 
 ;OID is OptionID (for posterity)
 int minChanceStudyOID
@@ -93,6 +96,11 @@ int studyIsRestOID
 int shutUpOID ; unused
 int spawnItemsOID ; unused
 int enthirSellsOID ; unused
+int removeSpellsOID
+int removePowerOID
+int removeStatusEffectsOID
+int addPowerOID
+int addStatusTrackerOID
 
 int[] spellListStates; 0=count,1=pageCount;2=currentPageIndex,3=pageItemIndex
 int[] spellOidList
@@ -133,7 +141,7 @@ function InternalPrepare()
     Pages[0] = __l("mcm_tab_status", "Current Status")
     Pages[1] = __l("mcm_tab_learning","Learning and Discovery")
 	Pages[2] = __l("mcm_tab_spell_list", "Manage Spell List")
-	Pages[3] = __l("mcm_tab_items_and_notifications", "Items and Notifications")
+	Pages[3] = __l("mcm_tab_miscellaneous", "Miscellaneous")
 endFunction
 
 event OnGameReload()
@@ -182,9 +190,14 @@ Event OnConfigClose()
 	; Called every time the menu is closed (actually saves the data)
     If(!isEnabled && !wasDisabled)
         wasDisabled = True
+		disableModEffects()
+		Utility.wait(2)
+		;removeModSpells()
+		disableModEffects() ; You can never be too sure
 		; Then stop the quest. This should automatically remove items from enthir (?)
 		; as well as stop the script from running on sleep.
 		_LEARN_SpellControlQuest.Stop()
+		disableModEffects() ; beat a dead horse
     EndIf
     ; ======== RESET ========
     ; Basically reset; If they disable, close the menu, open, enable, close again, this will turn it back on
@@ -236,7 +249,14 @@ event OnPageReset(string page)
 			elseIf ((GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue()) == 6)
 				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), __f1(__l("mcm_x_day", "{0} Day"), "1"), OPTION_FLAG_NONE)
 			else
-				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), __f1(__l("mcm_x_days", "{0} Days"), (((GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue()) as int) as String)), OPTION_FLAG_NONE)
+				attunementStatusOID = AddTextOption(__l("mcm_current_days_left_attunement", "Can Change Attunement in: "), __f1(__l("mcm_x_days", "{0} Days"), (((_LEARN_LastSetHome.GetValue() - GameDaysPassed.GetValue() + 7) as int) as String)), OPTION_FLAG_NONE)
+			endIf
+			if (_LEARN_StudyIsRest.GetValue() == 0)
+				if (_LEARN_LastDayStudied.GetValue() == 1)
+					AddTextOption(__l("mcm_current_study_used", "Already Studied: "), __l("mcm_true", "True"), OPTION_FLAG_NONE)
+				else
+					AddTextOption(__l("mcm_current_study_used", "Already Studied: "), __l("mcm_false", "False"), OPTION_FLAG_NONE)
+				endIf
 			endIf
 		endif
         SetCursorPosition(1) ; Move cursor to top right position
@@ -280,6 +300,7 @@ event OnPageReset(string page)
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
 		if (isEnabled)
+			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_spell_discovery_options", "Spell Discovery Options"), 0)
 			minChanceDiscoverOID = AddSliderOption(__l("mcm_option_min_discovery_chance", "Min Discovery Chance"), _LEARN_MinChanceDiscover.GetValue(), "{0}%", OPTION_FLAG_NONE)
             maxChanceDiscoverOID = AddSliderOption(__l("mcm_option_max_discovery_chance", "Max Discovery Chance"), _LEARN_MaxChanceDiscover.GetValue(), "{0}%", OPTION_FLAG_NONE)
@@ -287,10 +308,14 @@ event OnPageReset(string page)
 		endIf		
 		SetCursorPosition(1) ; Move cursor to top right position
         if (isEnabled)
-			AddHeaderOption(__l("mcm_header_study_options", "Study Power Options"), 0)
-			studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "Power Acts as Resting"), _LEARN_StudyIsRest.GetValue(), OPTION_FLAG_NONE)
-			studyRequiresNotesOID = AddToggleOption(__l("mcm_option_study_notes", "Power Requires Notes"), _LEARN_StudyRequiresNotes.GetValue(), OPTION_FLAG_NONE)
 			AddHeaderOption(__l("mcm_header_adv_spell_options", "Advanced Spell Learning Options"), 0)
+			maxConsecutiveFailuresOID = AddSliderOption(__l("Limit Consecutive Failures To..."), _LEARN_MaxFailsBeforeCycle.GetValue(), "{0}", OPTION_FLAG_NONE)
+			if (_LEARN_MaxFailsBeforeCycle.GetValue() > 0)
+				maxFailsAutoSucceedsOID = AddToggleOption(__l("Auto Succeed When Max Failures Reached"), _LEARN_MaxFailsAutoSucceeds.GetValue(), OPTION_FLAG_NONE)
+			else
+				AddEmptyOption()
+			endIf
+				
 			parallelLearningOID = AddSliderOption(__l("mcm_option_number_spells", "Daily Learning Limit"), _LEARN_ParallelLearning.GetValue(), __l("mcm_x_spell(s)", "{0} Spell(s)"), OPTION_FLAG_NONE)
 			if (_LEARN_ParallelLearning.GetValue() > 1)
 				harderParallelOID = AddToggleOption(__l("mcm_option_harder_multiple", "Learning Multiple Spells is Harder"), _LEARN_HarderParallel.GetValue(), OPTION_FLAG_NONE)
@@ -305,8 +330,7 @@ event OnPageReset(string page)
 				AddEmptyOption()
 				AddEmptyOption()
 			endIf
-			; We're running out of space to avoid scroll bars, so no spacer :(
-			; AddEmptyOption()
+			AddEmptyOption()
 			noviceLearningEnabledOID = AddToggleOption(__l("mcm_option_auto_success", "Skill-based Automatic Success"), _LEARN_AutoNoviceLearningEnabled.GetValue(), OPTION_FLAG_NONE)
 			if (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1)
 				autoNoviceLearningOID = AddSliderOption(__l("mcm_option_auto_success_diff", "Req. Skill Difference for Auto Success"), _LEARN_AutoNoviceLearning.GetValue(), "{0}", OPTION_FLAG_NONE)
@@ -328,21 +352,32 @@ event OnPageReset(string page)
 			AddHeaderOption(__l("mcm_header_spell_book_options", "Spell Book Options"), 0)
 			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
+			AddEmptyOption()
+			AddHeaderOption(__l("mcm_header_study_options", "Study Power Options"), 0)
+			studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "'Study' Acts as Rest"), _LEARN_StudyIsRest.GetValue(), OPTION_FLAG_NONE)
+			studyRequiresNotesOID = AddToggleOption(__l("mcm_option_study_notes", "'Study' Requires Notes"), _LEARN_StudyRequiresNotes.GetValue(), OPTION_FLAG_NONE)
 			;AddEmptyOption()
-			;AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0)
-			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
-			;spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items Automatically"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
+			;AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0) ; not implemented
+			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
+			;spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items Automatically"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE) ; not implemented
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
 		SetCursorPosition(1) ; Move cursor to top right position
 		if (isEnabled)
-			; These options seem to be broken so we'll leave them for now.
+			; These options seem to be broken?
 			; Can investigate when putting together quiet mode.
-			;AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
-			;AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
-			;AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
-			;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL])
+			AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
+			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
+			AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
+			;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
+			AddEmptyOption()
+			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
+			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
+			removePowerOID = AddTextOption(__l("mcm_remove_power", "CLICK: Remove 'Study' ability"), "", OPTION_FLAG_NONE)
+			removeStatusEffectsOID = AddTextOption(__l("mcm_purge_effects", "CLICK: Remove status effects"), "", OPTION_FLAG_NONE)
+			addPowerOID = AddTextOption(__l("mcm_add_power", "CLICK: Add 'Study' ability"), "", OPTION_FLAG_NONE)
+			addStatusTrackerOID = AddTextOption(__l("mcm_add_tracker", "CLICK: Add tracking status effect"), "", OPTION_FLAG_NONE)
 		endIf
 	endIf
 endEvent
@@ -420,23 +455,53 @@ endFunction
 
 ; === Config Helper Functions
 function enableModEffects()
-	PlayerRef.AddSpell(_LEARN_SummonSpiritTutor, true)
-	PlayerRef.AddSpell(_LEARN_SetHomeSp, true)
-	; above only for debug purposes
 	PlayerRef.AddSpell(_LEARN_PracticeAbility, true)
 	PlayerRef.AddSpell(_LEARN_StudyPower, true)
 endFunction
 
 function disableModEffects()
-	if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
-		PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
-	endIf
-	if (PlayerRef.HasSpell(_LEARN_PracticeAbility))
-		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
-	endIf
+	purgeStatusEffects()
 	if (PlayerRef.HasSpell(_LEARN_StudyPower))
 		PlayerRef.RemoveSpell(_LEARN_StudyPower)
 	endIf
+endFunction
+
+function addPower()
+	if (!PlayerRef.HasSpell(_LEARN_StudyPower))
+		PlayerRef.AddSpell(_LEARN_StudyPower)
+	endIf
+endFunction
+
+function purgeStatusEffects()
+	; This should remove all potion and addiction effects
+	PlayerRef.DispelAllSpells()
+	Utility.wait(3)
+	; Wait for OnRemoval effects to trigger because those add more status effects.
+	PlayerRef.DispelAllSpells()
+	if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
+		PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
+	endIf
+	; status effects and powers
+	if (PlayerRef.HasSpell(_LEARN_PracticeAbility))
+		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
+	endIf
+endFunction
+
+function removePower()
+	if (PlayerRef.HasSpell(_LEARN_StudyPower))
+		PlayerRef.RemoveSpell(_LEARN_StudyPower)
+	endIf
+endFunction
+
+function addStatusTracker()
+	if (!PlayerRef.HasSpell(_LEARN_PracticeAbility))
+		PlayerRef.AddSpell(_LEARN_PracticeAbility)
+	endIf
+endFunction
+
+function addModSpells()
+	PlayerRef.AddSpell(_LEARN_SummonSpiritTutor, true)
+	PlayerRef.AddSpell(_LEARN_SetHomeSp, true)
 endFunction
 
 function removeModSpells()
@@ -584,6 +649,7 @@ Event OnOptionSliderAccept(Int a_option, Float a_value)
     If (a_option == maxConsecutiveFailuresOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
         _LEARN_MaxFailsBeforeCycle.SetValue(a_value)
+		forcepagereset()
         return
     EndIf
 	
@@ -712,6 +778,19 @@ event OnOptionSelect(int option)
 		SetToggleOptionValue(option, toggleStudyIsRest(), False)
 	ElseIf (Option == studyRequiresNotesOID)
 		SetToggleOptionValue(option, toggleStudyRequiresNotes(), False)
+	; FOR DEBUGGING ONLY COMMENT THIS OUT WHEN RELEASING
+	;ElseIf (Option == infoStudyOID)
+	;	addModSpells()
+	ElseIf (Option == removeSpellsOID)
+		removeModSpells()
+	ElseIf (Option == removePowerOID)
+		removePower()
+	ElseIf (Option == removeStatusEffectsOID)
+		purgeStatusEffects()
+	ElseIf (Option == addPowerOID)
+		addPower()
+	ElseIf (Option == addStatusTrackerOID)
+		addStatusTracker()
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -780,15 +859,15 @@ Event OnOptionHighlight(int option)
 	ElseIf (Option == noviceLearningEnabledOID)
 		SetInfoText(__l("hint_noviceLearningEnabled", "When enabled, the difference between your skill in a school and the level of the spell you're trying to learn can result in an automatic success. The required difference to ensure this success is configurable below. Defaults to on."))
 	ElseIf (Option == autoSuccessBypassesLimitOID)
-		SetInfoText(__l("hint_autoSuccessBypassesLimit", "Spells learned via the above option do not count towards the daily limit. Default off. This can result in learning many spells per sleep."))
+		SetInfoText(__l("hint_autoSuccessBypassesLimit", "Spells learned via the above option do not count towards the daily limit. Default off. This can result in learning many spells per attempt."))
 	ElseIf (Option == dreadstareLethalityOID)
         SetInfoText(__l("hint_dreadstareLethality", "Base chance to overdose when consuming Dreadmilk. Defaults to 10%. Increased by your bloodstream toxicity."))
 	ElseIf (Option == parallelLearningOID)
-        SetInfoText(__l("hint_parallelLearning", "Choose how many spells from the top of your list you will attempt to learn on each sleep. Keep in mind that when combined with drugs and a high max learning chance, learning multiple per sleep is overpowered. 1 is default."))
+        SetInfoText(__l("hint_parallelLearning", "Choose how many spells from the top of your list you will try to learn on each attempt. Keep in mind that when combined with drugs and a high max learning chance, this can be overpowered. 1 is default."))
 	ElseIf (Option == harderParallelOID)
         SetInfoText(__l("hint_harderParallel", "When learning multiple spells at once, divide the chance to learn by the amount of spells being learned to help preserve a similar speed. Recommended, defaults to on."))
     ElseIf (Option == bonusScaleOID)
-        SetInfoText(__l("hint_bonusScale", "Multiplier applied to the roleplaying bonus to chance of learning/discovering. This means casting spells relevant to your study, hoarding relevant spell notes, sleeping at the College and temples, consuming shadowmilk, etc. Default is 1.0. Raising this can make it unreasonably easy to learn spells."))
+        SetInfoText(__l("hint_bonusScale", "Multiplier applied to the roleplaying bonus to chance of learning/discovering. This means casting spells relevant to your study, hoarding relevant spell notes, sleeping or studying at the College and temples, consuming nootropics, etc. Default is 1.0. Raising this can make it unreasonably easy to learn spells."))
     ElseIf (Option == infoStudyOID)
         SetInfoText(__l("hint_infoStudy", "Current chance to learn the next spell on your list on an eligible rest. Cast spells of the same school, use potions, or collect more notes to improve. If your study list is empty, this will show 0%."))
     ElseIf (Option == infoDiscoverOID)
@@ -810,7 +889,7 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == CustomLocationOID)
         setInfoText(__l("hint_customLocation", "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell."))
     ElseIf (Option == studyIntervalOID)
-        setInfoText(__l("hint_studyInterval", "How many days must pass between learning attempts on sleep. Default is 0.65."))
+        setInfoText(__l("hint_studyInterval", "How many days must pass between learning attempts. Default is 0.65."))
 	ElseIf (Option == enthirSellsOID) ; unused
         setInfoText(__l("hint_enthir", "Whether or not Enthir will keep a stock of items related to this mod. Default is yes."))
 	ElseIf (Option == spawnItemsOID) ; unused
@@ -820,7 +899,7 @@ Event OnOptionHighlight(int option)
 	ElseIf (Option == tooDifficultEnabledOID)
         setInfoText(__l("hint_tooDiffEnabled", "When enabled, you can automatically fail to learn a spell if it's significantly above your current skill level. In this case you will automatically move to the next possible spell without penalty."))
     ElseIf (Option == isEnabledOption)
-		setInfoText(__l("hint_deletionWarning", "WARNING: Disabling mod will clear your spell list! Use backups!"))
+		setInfoText(__l("hint_deletionWarning", "WARNING: Disabling mod will clear your spell research list, remove known mod spells and purge *ALL* non-permanent spell effects from your character! Use FISS backups to save your research list!"))
 	ElseIf (Option == potionBypassOID)
 		setInfoText(__l("hint_potionBypass", "When enabled, Dreadmilk will bypass enabled skill requirements. For example, with Dreadmilk a novice can attempt to learn a master spell even when they would otherwise be prevented from doing so. Defaults to on."))
 	ElseIf (Option == intervalCDRenabledOID)
@@ -838,9 +917,19 @@ Event OnOptionHighlight(int option)
 	ElseIf (Option == attunementStatusOID)
 		setInfoText(__l("hint_attunement_status", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
 	ElseIf (Option == studyIsRestOID)
-		setInfoText(__l("hint_study_is_rest", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
+		setInfoText(__l("hint_study_is_rest", "Whether or not using the 'Study' power will enable the player to attempt to learn spells. Defaults to on. When off, the power gives a significant bonus to their learning chance instead, once per learning cycle."))
 	ElseIf (Option == studyRequiresNotesOID)
-		setInfoText(__l("hint_study_requires_notes", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
+		setInfoText(__l("hint_study_requires_notes", "Whether or not using the 'Study' power requires having notes in the inventory. Defaults to on."))
+	ElseIf (Option == removeSpellsOID)
+		setInfoText(__l("hint_remove_spells", "Removes Attunement and Summon Daedric Tutor from your spells (if known)."))
+	ElseIf (Option == removePowerOID)
+		setInfoText(__l("hint_remove_power", "Removes the 'Study' power from your character."))
+	ElseIf (Option == removeStatusEffectsOID)
+		setInfoText(__l("hint_remove_status", "Removes all mod-related status effects, including the tracking effect and potion effects. Also removes the 'Spell Learning' tracking status effect."))
+	ElseIf (Option == addPowerOID)
+		setInfoText(__l("hint_add_power", "Adds the 'Study' power to your character, which can be assigned like a dragon shout to enable learning and discovery without sleeping."))
+	ElseIf (Option == addStatusTrackerOID)
+		setInfoText(__l("hint_add_tracker_effect", "Adds the 'Spell Learning' tracking effect to your character, which records spell casts, automatically removes spellbooks, and generates notes."))
 	EndIf
 EndEvent
 
@@ -1069,28 +1158,6 @@ int function GetSelectedSpellRealIndex()
     int pageIndex = spellListStates[SPELLS_CURRENT_PAGEINDEX]
     return (pageIndex * 10 ) + itemIndex
 endFunction
-
-;/ ; we don't have enough space to put it as button. replaced by CurrentPage
-state GotoPage
-    event OnSliderOpenST()
-        SetSliderDialogStartValue(spellListStates[SPELLS_CURRENT_PAGEINDEX] + 1)
-        SetSliderDialogDefaultValue(1)
-        SetSliderDialogRange(1, spellListStates[SPELLS_PAGECOUNT])
-        SetSliderDialogInterval(1)
-    endEvent
-
-    event OnSliderAcceptST(float value)
-        GotoSpellPage((value as Int) - 1)
-    endEvent
-
-    event OnDefaultST()
-        GotoSpellPage(0)
-    endEvent
-
-    event OnHighlightST()
-    endEvent
-endState
-/;
 
 state CurrentPage
     event OnSliderOpenST()
@@ -1411,3 +1478,8 @@ bool function toggleStudyRequiresNotes()
     _LEARN_StudyRequiresNotes.SetValue(1)
     return True
 EndFunction
+
+; === Helper functions for other scripts
+bool function modIsEnabled()
+	return isEnabled
+endFunction

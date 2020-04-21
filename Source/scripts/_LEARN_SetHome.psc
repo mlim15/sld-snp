@@ -16,7 +16,7 @@ event OnEffectStart(Actor Target, Actor Caster)
 
 	; Check to see if we've already changed it in the last 7 days. If so, return without doing anything.
 	if ((GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue()) < 7)
-		Debug.Notification(__f1(__l("notification_cannot_attune", "You can only attune once per week. Wait {0} day(s)."), (GameDaysPassed.GetValue() - _LEARN_LastSetHome.GetValue() as String)))
+		Debug.Notification(__f1(__l("notification_cannot_attune", "You can only attune once per week. Wait {0} day(s)."), ((_LEARN_LastSetHome.GetValue() - GameDaysPassed.GetValue() + 7) as int) as String))
 		return
 	endIf
 	

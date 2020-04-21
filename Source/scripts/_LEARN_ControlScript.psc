@@ -33,7 +33,7 @@ GlobalVariable property _LEARN_MaxFailsAutoSucceeds auto
 GlobalVariable property _LEARN_DynamicDifficulty auto
 GlobalVariable property _LEARN_ConsecutiveDreadmilk auto
 GlobalVariable property _LEARN_LastSetHome auto
-GlobalVariable property _LEARN_StudiedToday auto
+GlobalVariable property _LEARN_LastDayStudied auto
 GlobalVariable property _LEARN_AlreadyUsedTutor auto
 GlobalVariable property _LEARN_StudyIsRest auto
 GlobalVariable property _LEARN_StudyRequiresNotes auto
@@ -168,16 +168,24 @@ function UpgradeVersion()
 		effortLabels[0] = "Tough Start"
 		effortLabels[1] = "Diminishing Returns"
 		effortLabels[2] = "Linear"
-		; If user is upgrading from an older version, disable new options to not disrupt
-		; existing functionality for users
-		if (currentVersion > 0)
+		; If user is upgrading from the last version, disable new options to not disrupt
+		; existing functionality for users. Unfortunately cannot cover older versions than
+		; that because it was only 1.7.2 that introduced versioning
+		if (currentVersion == 172)
 			_LEARN_DynamicDifficulty.SetValue(0)
 			_LEARN_IntervalCDREnabled.SetValue(0)
 			_LEARN_AutoNoviceLearningEnabled.SetValue(0)
 			_LEARN_MaxFailsAutoSucceeds.SetValue(0)
 			_LEARN_TooDifficultEnabled.SetValue(0)
 		endIf
-		; Add study power?
+		; Add study power
+		PlayerRef.AddSpell(_LEARN_StudyPower, true)
+		; Fix attunement cooldown
+		if (GameDaysPassed.GetValue() >= 7)
+			_LEARN_LastSetHome.SetValue(GameDaysPassed.GetValue() - 7)
+		else
+			_LEARN_LastSetHome.SetValue(0)
+		endIf
 	endIf
     if (currentVersion < 172)
         VisibleNotifications = new int[2]
@@ -735,44 +743,42 @@ float function calcEffort(float skill, float casts, float notes)
     ; calculate mybonus
     float mybonus = 0 ; no cap. enough bonus can make up for lacking in other two.
 	; the CountBonus variable is accessed by other scripts to add more to the bonus.
-	; For example, the deprecated dialogue option used this variable.
-	; The random "dream" bonus/penalty and the Daedric Tutor also use this value, though I may disable 
-	; them by default or make them an optional components for pure lorefriendliness and less debug message spam.
-	; It is kept for posterity and can be extended in the future.
+	; For example, the removed dialogue option used this variable.
+	; The random "dream" bonus/penalty, the Daedric Tutor, and the study power bonus use this value.
     mybonus += _LEARN_CountBonus.GetValue()
     ; Amount of spell learning notes in inventory provide bonus (diminishing returns, 
 	; up to asymptote of 33% of 33% of final effort).
 	; The number of notes possessed by the player is related to the value of the spells they have read.
 	; So this value is normalized by comparing the value of a core spellbook 
 	; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
-	; Let's try to be consistent across load orders.
     Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
     float priceFactor = refCandleLight.GetGoldValue() / 44
     notes = notes / pricefactor
     float bnot
     bnot = Math.sqrt(notes)
-	; With a cap of 33, the max number of notes that give benefit to the player is 1089 (33 squared).
-	; It accounts for a max of 33% of 33% of the final total effort.
-	; This value could be configurable in a future update.
-    if (bnot > 33)
-        bnot = 33
+	; Keeping with the 2/3 specific school and 1/3 total theme: the study power bonus for all notes
+	; is capped at 30, or 1/10 of total final effort,
+	; this school-specific note bonus will be capped at 60, or 2/10 of the total final effort.
+	; This value could be configurable in a future update. Getting the max value of 60 requires carrying 
+	; 3600g worth of notes for the relevant school.
+    if (bnot > 60)
+        bnot = 60
     EndIf
     mybonus += bnot
     ; Check for drug bonus
     if (PlayerRef.HasMagicEffect(AlchDreadmilkEffect)) ; dreadmilk
         mybonus += 300 ; Dreadmilk gives automatic max total effort, and therefore automatic max roll.
     elseif (PlayerRef.HasMagicEffect(AlchShadowmilkEffect)) ; shadowmilk
-        mybonus += 100 ; Shadowmilk provides 33% of total effort all by itself. This can help bypass the "tough start" hump.
+        mybonus += 60 ; Shadowmilk provides 20% of total effort all by itself. This can help bypass the "tough start" hump.
     endif
     ; Check for good location
-    Location locationX = PlayerRef.GetCurrentLocation()
-    ; Cell myCell = PlayerRef.GetParentCell()
-    if (locationX)
-        if (locationX.HasKeyword(LocTypeTemple) || locationX.HasKeyword(LocTypePlayerHouse) || (customLocation && locationX.isSameLocation(customLocation)))
+    Location currentLocation = PlayerRef.GetCurrentLocation()
+    if (currentLocation)
+        if (currentLocation.HasKeyword(LocTypeTemple) || currentLocation.HasKeyword(LocTypePlayerHouse) || currentLocation.isSameLocation(customLocation))
             mybonus += 22
-        elseIf (locationX.isSameLocation(WinterholdCollegeLocation) || WinterholdCollegeLocation.isChild(locationX))
+        elseIf (currentLocation.isSameLocation(WinterholdCollegeLocation) || WinterholdCollegeLocation.isChild(currentLocation))
             mybonus += 33
-		elseIf (locationX.HasKeyword(LocTypeInn))
+		elseIf (currentLocation.HasKeyword(LocTypeInn))
 			mybonus += 11
         endif
     endIf
@@ -1068,7 +1074,7 @@ Event OnSleepStop(Bool abInterrupted)
    
     ; Do not roll for any spells if was already called too recently. 
     if (hours_before_next_ok_to_learn() > 0)
-        Debug.Notification(__l("notification_slept_too_soon", "It seems your mind isn't settled enough yet to learn any spells..."))
+        Debug.Notification(__l("notification_slept_too_soon", "Your mind hasn't settled enough yet to learn spells..."))
 		return
     endIf
 
@@ -1166,10 +1172,14 @@ Event OnSleepStop(Bool abInterrupted)
         _LEARN_CountRestoration.SetValue(0.0)
         _LEARN_CountBonus.SetValue(0.0)
 		_LEARN_AlreadyUsedTutor.SetValue(0)
+		_LEARN_LastDayStudied.SetValue(0)
     endif
 
     ; dreams
-    if (true)
+	; disabled for now because we're reusing this function for the study power.
+	; could use a global that the study power sets when it starts and turns off when
+	; it finishes in order to disable this
+    if (false)
 		float fRand = 1
         fRand = Utility.RandomFloat(0.0, 1.0)
         if (fRand < 0.01)
@@ -1193,6 +1203,18 @@ Event OnSleepStop(Bool abInterrupted)
 			PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
 		endif
     endif
+	
+	; Reduce blood toxicity
+	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
+		_LEARN_consecutiveDreadmilk.Mod(-1)
+		if (_LEARN_consecutiveDreadmilk.GetValue() <= 0 && !PlayerRef.HasMagicEffect(AlchDreadmilkEffect))
+			_LEARN_consecutiveDreadmilk.SetValue(0)
+			Debug.Notification(__l("notification_dreadmilk_out_of_system", "All the Dreadmilk is finally out of your system..."))
+			if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
+				PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
+			endIf
+		endIf
+	endIf
 	
 EndEvent
 
@@ -1278,7 +1300,7 @@ Spell function tryInventSpell()
         EndWhile
         
         if (inventedsp && (! (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp))))
-            Debug.Notification(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you in a dream: {0}"), inventedsp.GetName()))
+            Debug.Notification(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you: {0}!"), inventedsp.GetName()))
             spell_fifo_push(inventedsp)
             Bookextension.setreadWFB(inventedbook, true)
         EndIf

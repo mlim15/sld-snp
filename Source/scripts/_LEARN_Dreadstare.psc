@@ -11,20 +11,10 @@ string function __l(string keyName, string defaultValue = "")
 endFunction
 
 Event OnInit()
-	RegisterForSingleUpdateGameTime(24)
+	; This could possibly be used with OnUpdate or GameTime events to change how the toxicity system works in a future update
 endEvent
 
 Event OnUpdate()
-	if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
-		_LEARN_consecutiveDreadmilk.Mod(-1)
-		if (_LEARN_consecutiveDreadmilk.GetValue() <= 0 && !PlayerRef.HasMagicEffect(AlchDreadmilkEffect))
-			_LEARN_consecutiveDreadmilk.SetValue(0)
-			Debug.Notification(__l("notification_dreadmilk_out_of_system", "All the Dreadmilk is finally out of your system..."))
-			if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
-				PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
-			endIf
-		endIf
-	endIf
-	RegisterForSingleUpdateGameTime(24) ; If the magiceffect is removed, this registration will apparently automatically disappear. So no performance concern
+	; This could possibly be used with OnUpdate or GameTime events to change how the toxicity system works in a future update
 endEvent
 

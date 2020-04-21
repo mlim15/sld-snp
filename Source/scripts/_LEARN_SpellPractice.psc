@@ -55,5 +55,5 @@ function OnItemAdded(Form akBaseItem, Int aiItemCount, ObjectReference akItemRef
     if (! sp)
         Return
     endif
-    ControlScript.TryAddSpellBook(akBook, sp, aiItemCount); single call to ControlScript is much more faster
+    ControlScript.TryAddSpellBook(akBook, sp, aiItemCount); single call to ControlScript is much faster
 EndFunction
