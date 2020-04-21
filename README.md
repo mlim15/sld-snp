@@ -51,6 +51,5 @@ Development Status
 * If I can figure out a good way to do it, I would also like to add the option for a notification that tells the player when they are eligible to learn new spells on sleep.
 * Adding randomized messages instead of the same message every time would be nice.
 * For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
-* Adding a usable power to study instead of only doing it on sleep could also be interesting, although I personally like that the mod actually gives you a reason to sleep. It's practically a non-mechanic in the vanilla game.
 
 
