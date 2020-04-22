@@ -18,11 +18,12 @@ Why another version of this mod?
 
 Similar mods that take differing approaches to this problem: 
 * [Better Spell Learning](https://www.nexusmods.com/skyrimspecialedition/mods/4924)
+* [Challenging Spell Learning](https://www.nexusmods.com/skyrimspecialedition/mods/20521)
 * [Immersive Spell Learning](https://www.nexusmods.com/skyrimspecialedition/mods/33375)
 * [Spell Research](https://www.nexusmods.com/skyrimspecialedition/mods/20983)
 
-A lot of people have made mods tackling this problem. I used Better Spell Tomes for quite a while and liked it a lot. But now I have a lot of free time on my hands, so I figured I would try to put something together totally suited to my personal preferences. What are those preferences?
-* Gameplay should not be a chore for the player. I want my character to do the chores in the background.
+A lot of people have made mods tackling this problem. Some of them have been staples for me in the past. But now I have a lot of free time on my hands, so I figured I would try to put something together totally suited to my personal preferences. What are those preferences?
+* Gameplay should not be a chore for the player. I want my character to do the chores in the background. No repeatedly using specific items, or micromanaging anything.
 * Should not require patches to support other mods if possible.
 * Do not force the use of menus for gameplay. I want to play the game, not the menu. Set it up once and leave it alone.
 
