@@ -27,11 +27,6 @@ Book property _LEARN_SpellNotesDestruction auto
 Book property _LEARN_SpellNotesIllusion auto
 Book property _LEARN_SpellNotesRestoration auto
 
-_LEARN_ControlScript property ControlScript auto
-
-float TimeWithoutEvent
-float PreviousMagicka
-
 function OnSpellCast(Form akForm)
     Spell akSpell = akForm as Spell
     if ! akSpell

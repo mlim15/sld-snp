@@ -38,6 +38,7 @@
 		"mcm_option_scaling" :  "Bonus Scaling Type", 
 		"mcm_current_location_none" :  "Undefined", 
 		"mcm_option_set_home" :  "Set Custom Study Location", 
+		"mcm_option_spawn_items_in_world" : "Spawn Items as Loot",
 		"mcm_current_blood_toxicity" :  "Current Bloodstream Toxicity: ", 
 		"mcm_option_potion_toxicity" :  "Potion Toxicity", 
 		"mcm_header_notifications" :  "Notifications", 
@@ -145,8 +146,8 @@
 		"hint_import" :  "Import/restore spell study list from FISS XML.", 
 		"hint_customLocation" :  "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell.", 
 		"hint_studyInterval" :  "How many days must pass between learning attempts. Default is 0.65.", 
-		"hint_enthir" :  "Whether or not Enthir will keep a stock of items related to this mod. Default is yes.", 
-		"hint_spawnItems" :  "Whether or not items are added to loot lists, causing them to spawn in random merchants and as loot. Defaults to no.", 
+		"hint_enthir" :  "Whether or not Enthir will keep a stock of items related to this mod. Defaults to yes.", 
+		"hint_spawnItems" :  "Whether or not items are added to loot lists, causing them to spawn as loot. Defaults to yes.", 
 		"hint_tooDifficultDiff" :  "The difference in skill tier required to automatically fail learning. Default is 75 - a novice will automatically fail to learn expert+ level spells.", 
 		"hint_tooDiffEnabled" :  "When enabled, you can automatically fail to learn a spell if it's significantly above your current skill level. In this case you will automatically move to the next possible spell without penalty.", 
 		"hint_deletionWarning" :  "WARNING: Disabling mod will clear your spell research list, remove known mod spells and purge *ALL* non-permanent spell effects from your character! Use FISS backups to save your research list!", 
@@ -185,7 +186,15 @@
 		"notification_study_swimming" : "You'll ruin your notes if you try to study here!",
 		"mcm_header_study_options" : "Study Power Options",
 		"mcm_option_study_rest" : "'Study' Acts as Rest",
-		"mcm_option_study_notes" : "'Study' Requires Notes"
+		"mcm_option_study_notes" : "'Study' Requires Notes",
+		"mcm_option_learn_on_study" : "Learn when Studying",
+		"mcm_option_discover_on_study" : "Discover when Studying",
+		"mcm_option_learn_on_sleep" : "Learn when Sleeping",
+		"mcm_option_discover_on_sleep" : "Discover when Sleeping",
+		"hint_learn_on_study" : "When enabled, using the 'Study' power will cause you to attempt to learn new spells off your spell list. Defaults to on.",
+		"hint_discover_on_study" : "When enabled, using the 'Study' power will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
+		"hint_learn_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on.",
+		"hint_discover_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on. "
     },
     "int" :{
         "menu_lang_id" : 0

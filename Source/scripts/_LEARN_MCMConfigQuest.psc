@@ -50,6 +50,10 @@ GlobalVariable property _LEARN_LastSetHome auto
 GlobalVariable property _LEARN_StudyIsRest auto
 GlobalVariable property _LEARN_StudyRequiresNotes auto
 GlobalVariable property _LEARN_LastDayStudied auto
+GlobalVariable property _LEARN_DiscoverOnSleep auto
+GlobalVariable property _LEARN_LearnOnSleep auto
+GlobalVariable property _LEARN_DiscoverOnStudy auto
+GlobalVariable property _LEARN_LearnOnStudy auto
 MagicEffect Property _LEARN_PracticeEffect auto
 Spell property _LEARN_DiseaseDreadmilk auto
 Spell property _LEARN_PracticeAbility auto
@@ -106,6 +110,10 @@ int removePowerOID
 int removeStatusEffectsOID
 int addPowerOID
 int addStatusTrackerOID
+int learnOnStudyOID
+int discoverOnStudyOID
+int learnOnSleepOID 
+int discoverOnSleepOID
 
 int[] spellListStates; 0=count,1=pageCount;2=currentPageIndex,3=pageItemIndex
 int[] spellOidList
@@ -358,13 +366,15 @@ event OnPageReset(string page)
 			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
 			AddEmptyOption()
-			AddHeaderOption(__l("mcm_header_study_options", "Study Power Options"), 0)
-			studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "'Study' Acts as Rest"), _LEARN_StudyIsRest.GetValue(), OPTION_FLAG_NONE)
-			studyRequiresNotesOID = AddToggleOption(__l("mcm_option_study_notes", "'Study' Requires Notes"), _LEARN_StudyRequiresNotes.GetValue(), OPTION_FLAG_NONE)
-			;AddEmptyOption()
-			;AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0) ; not implemented
-			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
-			;spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items Automatically"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE) ; not implemented
+            AddHeaderOption(__l("mcm_header_study_options", "Sleeping and Studying Options"), 0)
+            studyRequiresNotesOID = AddToggleOption(__l("mcm_option_study_notes", "'Study' Requires Notes"), _LEARN_StudyRequiresNotes.GetValue(), OPTION_FLAG_NONE)
+            studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "'Study' Learns/Discovers"), _LEARN_StudyIsRest.GetValue(), OPTION_FLAG_NONE)
+            if (_LEARN_StudyIsRest.GetValue() == 1)
+                learnOnStudyOID = AddToggleOption(__l("mcm_option_learn_on_study", "Learn when Studying"), _LEARN_LearnOnStudy.GetValue(), OPTION_FLAG_NONE)
+                discoverOnStudyOID = AddToggleOption(__l("mcm_option_discover_on_study", "Discover when Studying"), _LEARN_DiscoverOnStudy.GetValue(), OPTION_FLAG_NONE)
+            endIf
+            learnOnSleepOID = AddToggleOption(__l("mcm_option_learn_on_sleep", "Learn when Sleeping"), _LEARN_LearnOnSleep.GetValue(), OPTION_FLAG_NONE)
+            discoverOnSleepOID = AddToggleOption(__l("mcm_option_discover_on_sleep", "Discover when Sleeping"), _LEARN_DiscoverOnSleep.GetValue(), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
@@ -375,7 +385,11 @@ event OnPageReset(string page)
 			AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
 			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
 			AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
-			;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
+            ;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
+            AddEmptyOption()
+			AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0) ; not implemented
+			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
+			spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
 			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
 			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
@@ -795,7 +809,15 @@ event OnOptionSelect(int option)
 	ElseIf (Option == addPowerOID)
 		addPower()
 	ElseIf (Option == addStatusTrackerOID)
-		addStatusTracker()
+        addStatusTracker()
+    ElseIf (Option == learnOnStudyOID)
+        toggleLearnOnStudy()
+    ElseIf (Option == discoverOnStudyOID)
+        toggleDiscoverOnStudy()
+    ElseIf (Option == learnOnSleepOID)
+        toggleLearnOnSleep()
+    ElseIf (Option == discoverOnSleepOID)
+        toggleDiscoverOnSleep()
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -896,9 +918,9 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == studyIntervalOID)
         setInfoText(__l("hint_studyInterval", "How many days must pass between learning attempts. Default is 0.65."))
 	ElseIf (Option == enthirSellsOID) ; unused
-        setInfoText(__l("hint_enthir", "Whether or not Enthir will keep a stock of items related to this mod. Default is yes."))
-	ElseIf (Option == spawnItemsOID) ; unused
-        setInfoText(__l("hint_studyInterval", "Whether or not items are added to loot lists, causing them to spawn in random merchants and as loot. Defaults to no."))
+        setInfoText(__l("hint_enthir", "Whether or not Enthir will keep a stock of items related to this mod. Defaults to yes."))
+	ElseIf (Option == spawnItemsOID)
+        setInfoText(__l("hint_studyInterval", "Whether or not items are added to loot lists, causing them to spawn as loot. Defaults to yes."))
 	ElseIf (Option == tooDifficultDeltaOID)
         setInfoText(__l("hint_tooDifficultDiff", "The difference in skill required to automatically fail learning. Default is 75 - a novice will automatically fail to learn expert+ level spells."))
 	ElseIf (Option == tooDifficultEnabledOID)
@@ -935,7 +957,19 @@ Event OnOptionHighlight(int option)
 		setInfoText(__l("hint_add_power", "Adds the 'Study' power to your character, which can be assigned like a dragon shout to enable learning and discovery without sleeping."))
 	ElseIf (Option == addStatusTrackerOID)
 		setInfoText(__l("hint_add_tracker_effect", "Adds the 'Spell Learning' tracking effect to your character, which records spell casts, automatically removes spellbooks, and generates notes."))
-	EndIf
+    ElseIf (Option == learnOnStudyOID)
+		setInfoText(__l("hint_learn_on_study", "When enabled, using the 'Study' power will cause you to attempt to learn new spells off your spell list. Defaults to on."))
+    ElseIf (Option == discoverOnStudyOID)
+        setInfoText(__l("hint_discover_on_study", "When enabled, using the 'Study' power will cause you to attempt to discover and add new spells to your spell list. Defaults to on."))
+    ElseIf (Option == learnOnSleepOID)
+        setInfoText(__l("hint_learn_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on."))
+    ElseIf (Option == discoverOnSleepOID)
+		setInfoText(__l("hint_discover_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on. "))
+learnOnStudyOID = AddToggleOption(__l("mcm_option_learn_on_study", "Learn when Studying"), _LEARN_LearnOnStudy.GetValue(), OPTION_FLAG_NONE)
+discoverOnStudyOID = AddToggleOption(__l("mcm_option_discover_on_study", "Discover when Studying"), _LEARN_DiscoverOnStudy.GetValue(), OPTION_FLAG_NONE)
+learnOnSleepOID = AddToggleOption(__l("mcm_option_learn_on_sleep", "Learn when Sleeping"), _LEARN_LearnOnSleep.GetValue(), OPTION_FLAG_NONE)
+discoverOnSleepOID = AddToggleOption(__l("mcm_option_discover_on_sleep", "Discover when Sleeping"), _LEARN_DiscoverOnSleep.GetValue(), OPTION_FLAG_NONE)
+    EndIf
 EndEvent
 
 ; ====================================================================================
@@ -1481,6 +1515,42 @@ bool function toggleStudyRequiresNotes()
         return false
     endif
     _LEARN_StudyRequiresNotes.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleLearnOnStudy()
+    if (_LEARN_LearnOnStudy.GetValue())
+        _LEARN_LearnOnStudy.SetValue(0)
+        return false
+    endif
+    _LEARN_LearnOnStudy.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleDiscoverOnStudy()
+    if (_LEARN_DiscoverOnStudy.GetValue())
+        _LEARN_DiscoverOnStudy.SetValue(0)
+        return false
+    endif
+    _LEARN_DiscoverOnStudy.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleLearnOnSleep()
+    if (_LEARN_LearnOnSleep.GetValue())
+        _LEARN_LearnOnSleep.SetValue(0)
+        return false
+    endif
+    _LEARN_LearnOnSleep.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleDiscoverOnSleep()
+    if (_LEARN_DiscoverOnSleep.GetValue())
+        _LEARN_DiscoverOnSleep.SetValue(0)
+        return false
+    endif
+    _LEARN_DiscoverOnSleep.SetValue(1)
     return True
 EndFunction
 

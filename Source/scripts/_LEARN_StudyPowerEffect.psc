@@ -7,6 +7,8 @@ GlobalVariable property _LEARN_StudyIsRest auto
 GlobalVariable property _LEARN_StudyRequiresNotes auto
 GlobalVariable property _LEARN_LastDayStudied auto
 GlobalVariable property _LEARN_CountBonus auto
+GlobalVariable property _LEARN_DiscoverOnStudy auto
+GlobalVariable property _LEARN_LearnOnStudy auto
 
 ImageSpaceModifier property FadeToBlackImod auto
 ImageSpaceModifier property FadeToBlackBackImod auto
@@ -78,7 +80,13 @@ Event OnEffectStart(Actor Target, Actor Caster)
 	
 	; Give bonus or do rest effect
 	if (_LEARN_StudyIsRest.GetValue() == 1)
-		ControlScript.OnSleepStop(false)
+		if (_LEARN_LearnOnStudy.GetValue() == 1)
+			ControlScript.doLearning()
+		endIf
+		if (_LEARN_DiscoverOnStudy.GetValue() == 1)
+			ControlScript.doDiscovery()
+		endIf
+		ControlScript.doReset()
 	else
 		float bonus = 0
 		; Give scaling bonus based on amount of notes in inventory

@@ -40,8 +40,8 @@ GlobalVariable property _LEARN_ConsecutiveDreadmilk auto
 GlobalVariable property _LEARN_LastSetHome auto
 GlobalVariable property _LEARN_LastDayStudied auto
 GlobalVariable property _LEARN_AlreadyUsedTutor auto
-GlobalVariable property _LEARN_StudyIsRest auto
-GlobalVariable property _LEARN_StudyRequiresNotes auto
+GlobalVariable property _LEARN_DiscoverOnSleep auto
+GlobalVariable property _LEARN_LearnOnSleep auto
 String[] effortLabels
 
 Keyword property LocTypeTemple auto
@@ -1354,9 +1354,15 @@ Event OnSleepStop(Bool abInterrupted)
         return
     endIf
     	
-	; If we pass the checks, then do the things.
-    doLearning()
-    doDiscovery()
+    ; If we pass the checks and they are enabled, then do the things.
+    if (_LEARN_LearnOnSleep.GetValue() == 1)
+        doLearning()
+    endIf
+    if (_LEARN_DiscoverOnSleep.GetValue() == 1)
+        doDiscovery()
+    endIf
+
+    ; Dreams
     doDream()
     
     ; Chance to heal Dreadstare disease (this is only on rest, not on study so 
