@@ -12,6 +12,13 @@ globalvariable property _LEARN_CountIllusion auto
 globalvariable property _LEARN_CountRestoration auto
 globalvariable property _LEARN_RemoveSpellBooks auto
 globalvariable property _LEARN_CollectNotes auto
+globalvariable property _LEARN_AutoNoviceLearningEnabled auto
+
+string property SPELL_SCHOOL_ALTERATION = "Alteration" autoReadOnly
+string property SPELL_SCHOOL_CONJURATION = "Conjuration" autoReadOnly
+string property SPELL_SCHOOL_DESTRUCTION = "Destruction" autoReadOnly
+string property SPELL_SCHOOL_ILLUSION = "Illusion" autoReadOnly
+string property SPELL_SCHOOL_RESTORATION = "Restoration" autoReadOnly
 
 actor property PlayerRef auto
 Book property _LEARN_SpellNotesAlteration auto
@@ -66,7 +73,7 @@ EndFunction
 function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
     ; maybe remove book
     if (_LEARN_RemoveSpellBooks.GetValue() != 0)
-        PlayerRef.removeItem(akBook, aiItemCount, !cs.VisibleNotifications[NOTIFICATION_REMOVE_BOOK])
+        PlayerRef.removeItem(akBook, aiItemCount, !cs.VisibleNotifications[cs.NOTIFICATION_REMOVE_BOOK])
     EndIf
 	; maybe add notes
 	if (_LEARN_CollectNotes.GetValue() != 0)
@@ -74,15 +81,15 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
 		MagicEffect eff = sp.GetNthEffectMagicEffect(0)
 		String magicSchool = eff.GetAssociatedSkill() 
 		if magicSchool == SPELL_SCHOOL_ALTERATION
-			PlayerRef.addItem(_LEARN_SpellNotesAlteration, value, !cs.VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
+			PlayerRef.addItem(_LEARN_SpellNotesAlteration, value, !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE]) 
 		elseIf magicSchool == SPELL_SCHOOL_CONJURATION
-			PlayerRef.addItem(_LEARN_SpellNotesConjuration, value, !cs.VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+			PlayerRef.addItem(_LEARN_SpellNotesConjuration, value, !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
 		elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
-			PlayerRef.addItem(_LEARN_SpellNotesDestruction, value, !cs.VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
+			PlayerRef.addItem(_LEARN_SpellNotesDestruction, value, !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE]) 
 		elseIf magicSchool == SPELL_SCHOOL_ILLUSION
-			PlayerRef.addItem(_LEARN_SpellNotesIllusion, value, !cs.VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+			PlayerRef.addItem(_LEARN_SpellNotesIllusion, value, !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
 		elseIf magicSchool == SPELL_SCHOOL_RESTORATION
-			PlayerRef.addItem(_LEARN_SpellNotesRestoration, value, !cs.VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+			PlayerRef.addItem(_LEARN_SpellNotesRestoration, value, !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
 		endIf
 	endIf
 	
@@ -101,7 +108,7 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
 	; which doesn't display which books are read in the menu anyway.
 	; sucks for those who got used to that convenience in SkyUI though.
 	bool isRead = akBook.isRead()
-    if _canSetBookAsRead && !isRead
+    if (cs.bookExtensionEnabled() && !isRead)
         BookExtension.SetReadWFB(akBook, true)
     endIf
 endFunction 

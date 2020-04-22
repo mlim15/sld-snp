@@ -137,6 +137,10 @@ String[] function getSchools()
     return aSchools
 EndFunction
 
+bool function bookExtensionEnabled()
+    return _canSetBookAsRead
+endFunction
+
 bool function ToggleNotification(int id)
     if id < 0 || id > VisibleNotifications.Length
         return false
@@ -641,6 +645,7 @@ function addLLToListIfMissing(LeveledItem listToAdd, LeveledItem list, int level
     bool addToList = false
     int i = list.GetNumForms()
     While (i > 0)
+        Form x
         x = list.GetNthForm(i)
         if (x == listToAdd)
             ; it's is already present in list
@@ -656,6 +661,7 @@ function addBookToListIfMissing(Book bookToAdd, LeveledItem list, int level, int
     bool addToList = false
     int i = list.GetNumForms()
     While (i > 0)
+        Book x
         x = list.GetNthForm(i) as Book
         if (x == bookToAdd)
             ; item is already present in list
@@ -900,8 +906,10 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         int magicLevel = 0
 		magicLevel = eff.GetSkillLevel()
         ; Get player skill of specific school
+        float sskill = 0
         sskill = PlayerRef.GetActorValue(magicSchool)
         ; Get average magical skill
+        float tskill = 0
         tskill = getAverageSkill()
         ; Using same 1/3 and 2/3 proportions as for learning, make the value used to represent 
         ; the player's overall skill for this calculation
@@ -916,10 +924,9 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         ; so making it bigger makes learning more likely.
         fChance = fChance*skillDiff
         ; Make sure we don't go over or below max/min chance
-        if fChance < minchance
+        if (fChance < minchance)
             fChance = minchance
-        elseIf
-            fChance > maxchance
+        elseIf (fChance > maxchance)
             fChance = maxchance
         endIf
     endIf
