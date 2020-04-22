@@ -47,7 +47,10 @@ Once you get in-game, the mod will set itself up without your intervention. Note
 Development Status
 ----------
 
-I have basically added all of the features and options that I thought were interesting, and at this point the level of polish is stisfactory to me. I am still planning on trying to implement a "quiet" mode at some point to disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking. Adding randomized messages instead of the same message every time might also be nice.
+I have basically added all of the features and options that I thought were interesting, and at this point the level of polish is satisfactory to me. 
+* I am still planning on trying to implement a "quiet" mode at some point to disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking. 
+* Adding randomized messages instead of the same message every time might also be nice.
+* Further tweaks and little config options are possible. For example, what the power does (just learn, just discover, do both, do neither but give bonus) could easily be a config option. Currently the power is both or neither. Similarly, changing what happens on sleep based on options, so the player could make sleeping just for discovery and studying just for learning, for exmaple.
 
 Known Problems
 ----------
