@@ -9,7 +9,7 @@
 		"notification_learn_spell" :  "It all makes sense now! Learned {0}.", 
 		"notification_fail_spell" :  "{0} still makes no sense...", 
 		"notification_sleep_interrupted" :  "Your sleep was interrupted.", 
-		"notification_slept_too_soon" :  "It seems your mind isn't settled enough yet to learn any spells...", 
+		"notification_slept_too_soon" :  "Your mind isn't settled enough yet to learn any spells...", 
 		"notification_fail_upwards" :  "It's finally coming together! Learned {0}.", 
 		"notification_moving_on" :  "Not making any progress on {0}... trying other spells.", 
 		"notification_impossible_spell" :  "{0} is too difficult. Trying other spells first.", 
@@ -146,7 +146,7 @@
 		"hint_customLocation" :  "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell.", 
 		"hint_studyInterval" :  "How many days must pass between learning attempts. Default is 0.65.", 
 		"hint_enthir" :  "Whether or not Enthir will keep a stock of items related to this mod. Default is yes.", 
-		"hint_studyInterval" :  "Whether or not items are added to loot lists, causing them to spawn in random merchants and as loot. Defaults to no.", 
+		"hint_spawnItems" :  "Whether or not items are added to loot lists, causing them to spawn in random merchants and as loot. Defaults to no.", 
 		"hint_tooDifficultDiff" :  "The difference in skill tier required to automatically fail learning. Default is 75 - a novice will automatically fail to learn expert+ level spells.", 
 		"hint_tooDiffEnabled" :  "When enabled, you can automatically fail to learn a spell if it's significantly above your current skill level. In this case you will automatically move to the next possible spell without penalty.", 
 		"hint_deletionWarning" :  "WARNING: Disabling mod will clear your spell research list, remove known mod spells and purge *ALL* non-permanent spell effects from your character! Use FISS backups to save your research list!", 
@@ -177,7 +177,6 @@
 		"notification_spirit_drained" :  "You suddenly feel very drained...", 
 		"notification_spirit_weaker" :  "You suddenly feel very tired...", 
 		"notification_study_progress" : "You feel you've made some progress.",
-		"notification_slept_too_soon" : "Your mind hasn't settled enough yet to learn spells...", 
 		"notification_studied_too_soon" : "Your mind isn't yet settled enough to do more research.", 
 		"notification_study_no_notes" : "You can't study without any notes...",
 		"notification_study_no_spells" : "You don't have any spell ideas to research right now.", 
@@ -189,6 +188,6 @@
 		"mcm_option_study_notes" : "'Study' Requires Notes"
     },
     "int" :{
-        "menu_lang_id" : 0, 
+        "menu_lang_id" : 0
     }
 }

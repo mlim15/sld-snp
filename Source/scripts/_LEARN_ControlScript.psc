@@ -1343,7 +1343,7 @@ Event OnSleepStop(Bool abInterrupted)
         return
     ; Do not roll for any spells if was already called too recently. 
     elseIf (hours_before_next_ok_to_learn() > 0)
-        Debug.Notification(__l("notification_slept_too_soon", "Your mind hasn't settled enough yet to learn spells..."))
+        Debug.Notification(__l("notification_slept_too_soon", "Your mind isn't settled enough yet to learn any spells..."))
         return
     endIf
     	
