@@ -19,7 +19,7 @@
 		"notification_no_more_dreadmilk_addiction" :  "You're finally starting to feel your dreadmilk craving wane.", 
 		"notification_need_dreadmilk" :  "You feel an excruciating yearning for dreadmilk...", 
 		"notification_dreadmilk_out_of_system" :  "All the Dreadmilk is finally out of your system...", 
-		"notification_spell_invention_bug" :  "Bug in spell invention, boy", 
+		"notification_spell_invention_bug" :  "ERROR: A spell tome in your game has no spell associated with it.", 
 		"notification_new_spell_idea" :  "An idea for a new spell came to you: {0}!", 
 		"dreadmilk_overdosed" :  "You have overdosed.", 
 		"dreadmilk_feels good" :  "Your withdrawal symptoms are relieved - for now...", 
