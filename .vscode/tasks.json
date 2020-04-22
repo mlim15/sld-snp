@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Papyrus Compile Directory",
+            "group": "build",
+            "type": "process",
+            "command": "${config:papyrus.skyrimSpecialEdition.installPath}\\Papyrus Compiler\\PapyrusCompiler.exe",
+            "options": {
+                "cwd": "${config:papyrus.skyrimSpecialEdition.installPath}\\Papyrus Compiler"
+            },
+            "args": [
+                {
+                    "value": "${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\Spell Learning and Discovery Development\\Source\\scripts",
+                    "quoting": "strong"
+                },
+                {
+                    "value": "-import=${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\Spell Learning and Discovery Development\\Source\\scripts;${config:papyrus.skyrimSpecialEdition.installPath}\\Data\\Scripts\\Source;${config:papyrus.skyrimSpecialEdition.installPath}\\Data\\Source\\Scripts;${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\PapyrusUtil\\Source\\Scripts",
+                    "quoting": "strong"
+                },
+                {
+                    "value": "-output=${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\Spell Learning and Discovery Development\\Scripts",
+                    "quoting": "strong"
+                },
+                {
+                    "value": "-flags=TESV_Papyrus_Flags.flg",
+                    "quoting": "strong"
+                },
+                {
+                    "value": "-all",
+                    "quoting": "strong"
+                }
+            ],
+            "problemMatcher": []
+        }
+
+    ]
+}
