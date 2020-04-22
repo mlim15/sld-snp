@@ -1,4 +1,9 @@
 scriptname _LEARN_MCMConfigQuest extends SKI_ConfigBase
+; This is the mod's MCM configuration menu. It is attached to the player by
+; another quest, as usual for MCM modules. It contains everything related
+; to the MCM and otherwise remains mostly stateless, aside from an enabled/disabled
+; local variable that is used by the MCM to enable/disable the quest and main script
+; on the player.
 
 import FISSFactory
 FISSInterface fiss
