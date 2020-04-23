@@ -43,8 +43,8 @@
 		"mcm_current_blood_toxicity" :  "Current Bloodstream Toxicity: ", 
 		"mcm_option_potion_toxicity" :  "Potion Toxicity", 
 		"mcm_header_notifications" :  "Notifications", 
-		"mcm_notification_remove_book" :  "When Consuming Spell Books", 
-		"mcm_notification_add_spell_note" :  "When Adding Spell Notes", 
+		"mcm_notification_remove_book" :  "Vanilla Book Removal Notification", 
+		"mcm_notification_add_spell_note" :  "Vanilla Notes Added Notification", 
 		"mcm_shut_up_notifications" :  "Quiet Mode", 
 		"mcm_header_current_learning" :  "Current Spell Learning Status", 
 		"mcm_current_learning_chance" :  "Chance to Successfully Learn: ", 
@@ -207,7 +207,14 @@
 		"hint_max_notes" : "The value of school-specific notes required to reach the above maximum bonus chance. If the study power is not used for learning or discovery, it will require 5 times this number of any notes to give its max modifier. Defaults to 2000g.",
 		"mcm_option_max_notes_bonus" : "Highest Chance Given by Notes",
 		"mcm_option_max_notes" : "Max Per-School Notes Counted",
-		"mcm_x_g" : "{0}g"
+		"mcm_x_g" : "{0}g",
+		"notification_spell_added" : "{0} added to study list.", 
+		"notification_spell_not_added_notes" : "Already knew {0}. Tome deconstructed into {1} notes.",
+		"notification_spell_not_added" : "Already knew {0}.",
+		"notification_spell_added_notes" : "{0} added to study list. Tome deconstructed into {1} notes.",
+		"mcm_notification_add_spell_list" : "When Adding Spell to List",
+		"notification_spell_not_added_studying_notes" : "Already studying {0}. Tome deconstructed into {1} notes.",
+		"notification_spell_not_added_studying" : "Already studying {0}."
 	},
     "int" :{
         "menu_lang_id" : 0

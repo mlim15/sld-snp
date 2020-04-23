@@ -129,6 +129,7 @@ string property SPELL_SCHOOL_RESTORATION = "Restoration" autoReadOnly
 
 int property NOTIFICATION_REMOVE_BOOK = 0 autoReadOnly
 int property NOTIFICATION_ADD_SPELL_NOTE = 1 autoReadOnly
+int property NOTIFICATION_ADD_SPELL_LIST = 2 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
@@ -191,6 +192,12 @@ function UpgradeVersion()
             _LEARN_maxNotes.SetValue(1800)
             _LEARN_maxNotesBonus.SetValue(20)
         endIf  
+        ; Change default notification setting to prepare for better notifications
+        ; Section setting these has been removed from 1.7.2 below
+        VisibleNotifications = new int[3]
+        VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
+        VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 0
+        VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST] = 1
     endIf
 	if (currentVersion < 173)
 		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
@@ -225,9 +232,6 @@ function UpgradeVersion()
 		endIf
 	endIf
     if (currentVersion < 172)
-        VisibleNotifications = new int[2]
-        VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
-        VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 1
         UpgradeSpellList()
 		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.2")
 		if (!displayedUpgradeNotice)
@@ -282,6 +286,11 @@ string function formatString1(string source, string p1)
     return _LEARN_Strings.StringReplaceAll(source, "{0}", p1)
 endFunction
 
+string function formatString2(string source, string p1, string p2)
+    string r = formatString1(source, p1)
+    return _LEARN_Strings.StringReplaceAll(r, "{1}", p2)
+endFunction
+
 int function GetMenuLangId()
     if CanUseLocalizationLib
         return _LEARN_Strings.GetMenuLangId()
@@ -328,7 +337,7 @@ int function spell_fifo_get_count()
 EndFunction
 
 bool function spell_fifo_has_ref(Spell sp)
-    return iCount > 0 && _spells.Find(sp as Form) >= 0
+    return (iCount > 0 && _spells.Find(sp as Form) >= 0)
 EndFunction
 
 int function spell_fifo_get_ref(Spell sp)

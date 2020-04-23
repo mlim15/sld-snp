@@ -402,8 +402,9 @@ event OnPageReset(string page)
 			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
             ;AddEmptyOption()
             AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
-			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
-			AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
+			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "Vanilla Book Removal Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
+            AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "Vanilla Notes Added Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
+            AddToggleOptionST("ShowAddSpellListNotification", __l("mcm_notification_add_spell_list", "When Adding Spell to List"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST]) 
             ;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
 			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
 			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
@@ -1447,13 +1448,26 @@ state ShowRemoveBookNotification
 	endEvent    
 endState
 
+state ShowAddSpellListNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST, true))
+	endEvent
+
+	event OnHighlightST()
+	endEvent    
+endState
+
 state ShowAddSpellNoteNotification
 	event OnSelectST()
 		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ADD_SPELL_NOTE))
 	endEvent
 
 	event OnDefaultST()
-		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_NOTE, true))
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_NOTE, false))
 	endEvent
 
 	event OnHighlightST()
