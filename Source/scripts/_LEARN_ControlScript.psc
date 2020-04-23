@@ -691,10 +691,10 @@ EndFunction
 
 function RemoveItemsFromWorld()
         ; Remove items from lists. The only clean way of doing this also removes all other
-        ; script-added items from these lists. Players should save and reload after disabling
-        ; SpawnItems to refresh these lists. As a result, we should ensure this function
-        ; is only run when the setting is disabled, not frequently, as this would disrupt
-        ; other mod scripts that affect these lists.
+        ; script-added items from these lists. Players are asked to save and reload after disabling
+        ; SpawnItems to refresh any changes to these lists from other mods. As a result, we should 
+        ; ensure this function is only run when the setting is first disabled, not frequently, 
+        ; as this would disrupt other mod scripts that affect these lists.
         ; Currently it is set up to ONLY run from MCMConfigQuest after the player has
         ; clicked the toggle in order to disable the setting.
         ; Why do it this way when it has problems? Well, RemoveAddedForm doesn't seem to be
@@ -841,12 +841,14 @@ float function calcEffort(float skill, float casts, float notes)
     float priceFactor = refCandleLight.GetGoldValue() / 44
     notes = notes / pricefactor
     float bnot
-    bnot = Math.sqrt(notes)
+    ; Used to use square root but was too punishing because reaching 60 required 60*60=3600g
+    ; of school specific notes. Let's change power to require 1800g of school specific notes for max bonus.
+    bnot = Math.pow(notes, (1/1.83))
 	; Keeping with the 2/3 specific school and 1/3 total theme: the study power bonus for all notes
 	; is capped at 30, or 1/10 of total final effort,
 	; this school-specific note bonus will be capped at 60, or 2/10 of the total final effort.
 	; This value could be configurable in a future update. Getting the max value of 60 requires carrying 
-	; 3600g worth of notes for the relevant school.
+	; 1800g worth of notes for the relevant school.
     if (bnot > 60)
         bnot = 60
     EndIf
@@ -942,7 +944,7 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         magicLevel = eff.GetSkillLevel()
         ; If it's a novice spell, set it to 12.5 so we don't divide by zero later.
         ; Setting it to 1 seems to make sense until you realize we are later
-        ; multiplying by the player's skill level if we do that. So we'll go 
+        ; multiplying chance by the player's skill level if we do that. So we'll go 
         ; for halfway to apprentice, so learning apprentice spells is still twice
         ; as hard with adjustment.
         if (magicLevel == 0)
@@ -1388,20 +1390,22 @@ function doDream()
 endFunction
 
 function doReset()
-        ; reset counters and limits for the cycle
-        _LEARN_CountAlteration.SetValue(0.0)
-        _LEARN_CountConjuration.SetValue(0.0)
-        _LEARN_CountDestruction.SetValue(0.0)
-        _LEARN_CountIllusion.SetValue(0.0)
-        _LEARN_CountRestoration.SetValue(0.0)
-        _LEARN_CountBonus.SetValue(0.0)
-        _LEARN_AlreadyUsedTutor.SetValue(0)
-        _LEARN_LastDayStudied.SetValue(0)
-        ; this function checks to see if the proper config setting is enabled so we don't need to here
-        ; the purpose of having this here is if a player turns on the setting mid-play,
-        ; otherwise it wouldn't be refreshed until the next load game.
-        ; checks in the function ensure everything is only added once, so it does no harm.
-        SpawnItemsInWorld() 
+    ; reset counters and limits for the cycle
+    ; These are bonuses only that get reset here. 
+    ; Any negative effects that tick down are tied to the sleep cooldown.
+    _LEARN_CountAlteration.SetValue(0.0)
+    _LEARN_CountConjuration.SetValue(0.0)
+    _LEARN_CountDestruction.SetValue(0.0)
+    _LEARN_CountIllusion.SetValue(0.0)
+    _LEARN_CountRestoration.SetValue(0.0)
+    _LEARN_CountBonus.SetValue(0.0)
+    _LEARN_AlreadyUsedTutor.SetValue(0)
+    _LEARN_LastDayStudied.SetValue(0)
+    ; this function checks to see if the proper config setting is enabled so we don't need to here
+    ; the purpose of having this here is if a player turns on the setting mid-play,
+    ; otherwise it wouldn't be refreshed until the next load game.
+    ; checks in the function ensure everything is only added once, so it does no harm.
+    SpawnItemsInWorld() 
 endFunction
 
 ; === Tracked player events

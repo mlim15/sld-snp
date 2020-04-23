@@ -122,10 +122,10 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		float priceFactor = refCandleLight.GetGoldValue() / 44
 		float notes = ControlScript.getTotalNotes()
 		notes = notes / pricefactor
-		bonus = notes / 600
-		; Formula is gives 1/9 of max chance (value of 30) for studying when carrying total 18000 
+		bonus = notes / 300
+		; Formula is gives 1/9 of max chance (value of 30) for studying when carrying total 9000 
 		; gold worth of notes. 2/9 is given using only school-specific notes in the roll script 
-		; and is capped at a value of 3600. So for 5 schools, we cap at a value of 18k.
+		; and is capped at a value of 1800. So for 5 schools, we cap at a value of 9k.
 		if bonus > 30
 			bonus = 30
 		endIf
