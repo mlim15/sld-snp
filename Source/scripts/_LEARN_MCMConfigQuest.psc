@@ -278,18 +278,28 @@ event OnPageReset(string page)
 			infoStudyOID = AddTextOption(__l("mcm_current_learning_chance", "Chance to Successfully Learn: "), __f1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToStudy() * 100) as String),0,5)), OPTION_FLAG_NONE)
 			int t = (controlscript.hours_before_next_ok_to_learn() as int)
 			if t == 0
-				AddTextOption(__l("mcm_current_sleep_now", "You can sleep now to try learning!"), "", OPTION_FLAG_NONE)
+				AddTextOption(__l("mcm_current_learn_now", "You can try learning now!"), "", OPTION_FLAG_NONE)
 			elseIf t == 1
-				AddTextOption(__f1(__l("mcm_current_sleep_1h", "You can sleep in 1h to try learning."), t), "", OPTION_FLAG_NONE)
+				AddTextOption(__f1(__l("mcm_current_learn_1h", "You can try learning in 1h."), t), "", OPTION_FLAG_NONE)
 			else
-				AddTextOption(__f1(__l("mcm_current_sleep_Xh", "You can sleep in {0}h to try learning."), t), "", OPTION_FLAG_NONE)
-			endIf
+				AddTextOption(__f1(__l("mcm_current_learn_Xh", "You can try learning in {0}h."), t), "", OPTION_FLAG_NONE)
+            endIf
 		endIf
 		AddEmptyOption()
         If(isEnabled)   
 		    AddHeaderOption(__l("mcm_header_sleep_current_discovery", "Current Spell Discovery Status"), 0)
             infoDiscoverOID = AddTextOption(__l("mcm_current_discovery_chance", "Chance for Discovery: "), __f1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToDiscover() * 100) as String),0,5)), OPTION_FLAG_NONE)
             infoSchoolOID = AddTextOption(__l("mcm_current_school", "Current School of Interest: "), ControlScript.topSchoolToday(), OPTION_FLAG_NONE) 
+            if (ControlScript.cooldownDiscoverLearnEqual())
+                int t = (controlscript.hours_before_next_ok_to_discover() as int)
+                if t == 0
+                    AddTextOption(__l("mcm_current_discover_now", "You can try discovering now!"), "", OPTION_FLAG_NONE)
+                elseIf t == 1
+                    AddTextOption(__f1(__l("mcm_current_discover_1h", "You can try discovering in 1h."), t), "", OPTION_FLAG_NONE)
+                else
+                    AddTextOption(__f1(__l("mcm_current_discover_Xh", "You can try discovering in {0}h."), t), "", OPTION_FLAG_NONE)
+                endIf
+            endIf
 			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_backup_restore", "Backup/Restore Spell List"), 0)
 			fissExportOID = AddTextOption(__l("mcm_option_export", "Export to FISS"), __l("mcm_export_fiss", "Click"), OPTION_FLAG_NONE)

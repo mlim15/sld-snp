@@ -95,6 +95,8 @@ LeveledItem property LootForswornRandomWizard auto
 LeveledItem property LootLearningDrugs auto
 LeveledItem property LootWarlockSpellTomes00All15 auto
 
+Float LastLearnTime
+Float LastDiscoverTime
 Float LastSleepTime
 int iFailuresToLearn
 String[] aSchools
@@ -161,6 +163,14 @@ bool function EnableNotification(int id, bool v)
 
     VisibleNotifications[id] = v as int
     return v
+endFunction
+
+bool function cooldownDiscoverLearnEqual()
+    if (LastLearnTime == LastDiscoverTime)
+        return true
+    else
+        return false
+    endIf
 endFunction
 
 ; === Version and upgrade management
@@ -974,14 +984,14 @@ endFunction
 ; === Time management
 float Function hours_before_next_ok_to_learn()
     float now = GameDaysPassed.GetValue()
-	float nextOK = LastSleepTime + 1
+	float nextOK = LastLearnTime + 1
 	; If cooldown reduction is enabled, then reduce the required wait time accordingly.
 	if (_LEARN_IntervalCDREnabled.GetValue() == 1)
 		float actualCDR = 0
 		actualCDR = scaleEffort(calcCDReffort(), 0, (_LEARN_IntervalCDR.GetValue() / 100))
-		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue()*(1-actualCDR)
+		nextOK = LastLearnTime + _LEARN_StudyInterval.GetValue()*(1-actualCDR)
 	Else
-		nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue() ; default is 0.65
+		nextOK = LastLearnTime + _LEARN_StudyInterval.GetValue() ; default is 0.65
 	EndIf
 
     if now >= nextOK
@@ -990,6 +1000,36 @@ float Function hours_before_next_ok_to_learn()
         return ((nextOK - now) * 24)
     endif
 EndFunction
+
+float Function hours_before_next_ok_to_discover()
+    float now = GameDaysPassed.GetValue()
+	float nextOK = LastDiscoverTime + 1
+	; If cooldown reduction is enabled, then reduce the required wait time accordingly.
+	if (_LEARN_IntervalCDREnabled.GetValue() == 1)
+		float actualCDR = 0
+		actualCDR = scaleEffort(calcCDReffort(), 0, (_LEARN_IntervalCDR.GetValue() / 100))
+		nextOK = LastDiscoverTime + _LEARN_StudyInterval.GetValue()*(1-actualCDR)
+	Else
+		nextOK = LastDiscoverTime + _LEARN_StudyInterval.GetValue() ; default is 0.65
+	EndIf
+
+    if now >= nextOK
+        return 0
+    Else
+        return ((nextOK - now) * 24)
+    endif
+EndFunction
+
+float function hours_before_next_ok_to_sleep()
+    float now = GameDaysPassed.GetValue()
+    float nextOK = LastSleepTime + 1
+    nextOK = LastSleepTime + _LEARN_StudyInterval.GetValue()
+    if now >= nextOK
+        return 0
+    Else
+        return ((nextOK - now) * 24)
+    endif
+endFunction
 
 ; === Learning and discovery helper functions
 function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
@@ -1245,6 +1285,9 @@ function doLearning()
 		endWhile
     endIf
 
+    ; Reset learning timer
+    LastLearnTime = GameDaysPassed.GetValue()
+
 endFunction
 
 Spell function doDiscovery()
@@ -1255,6 +1298,8 @@ Spell function doDiscovery()
     
     float fRand = Utility.RandomFloat(0.0, 1.0) 
     if (fRand > baseChance) 
+        ; Reset discovery timer
+        LastDiscoverTime = GameDaysPassed.GetValue()
         ; Spell discovery failure ! 
         Return None
     EndIf
@@ -1279,6 +1324,8 @@ Spell function doDiscovery()
     
     if inventedsp == None
         Debug.Notification(__l("notification_spell_invention_bug", "ERROR: A spell tome in your game has no spell associated with it."))
+        ; Reset discovery timer
+        LastDiscoverTime = GameDaysPassed.GetValue()
         return None
     endif
     
@@ -1295,6 +1342,9 @@ Spell function doDiscovery()
         Bookextension.setreadWFB(inventedbook, true)
     EndIf
     
+    ; Reset discovery timer
+    LastDiscoverTime = GameDaysPassed.GetValue()
+
 EndFunction
 
 function doDream()
@@ -1313,18 +1363,53 @@ function doDream()
 endFunction
 
 function doReset()
-        ; reset counters and limits for the day
-        if (True)
-            _LEARN_CountAlteration.SetValue(0.0)
-            _LEARN_CountConjuration.SetValue(0.0)
-            _LEARN_CountDestruction.SetValue(0.0)
-            _LEARN_CountIllusion.SetValue(0.0)
-            _LEARN_CountRestoration.SetValue(0.0)
-            _LEARN_CountBonus.SetValue(0.0)
-            _LEARN_AlreadyUsedTutor.SetValue(0)
-            _LEARN_LastDayStudied.SetValue(0)
+        ; reset counters and limits for the cycle
+        _LEARN_CountAlteration.SetValue(0.0)
+        _LEARN_CountConjuration.SetValue(0.0)
+        _LEARN_CountDestruction.SetValue(0.0)
+        _LEARN_CountIllusion.SetValue(0.0)
+        _LEARN_CountRestoration.SetValue(0.0)
+        _LEARN_CountBonus.SetValue(0.0)
+        _LEARN_AlreadyUsedTutor.SetValue(0)
+        _LEARN_LastDayStudied.SetValue(0)
+endFunction
+
+; === Tracked player events
+Event OnSleepStop(Bool abInterrupted)
+	
+	; Test conditions for doing absolutely nothing
+    if (abInterrupted)
+        ; If sleep was interrupted. 
+        Debug.Notification(__l("notification_sleep_interrupted", "Your sleep was interrupted."))
+        return
+    endIf
+
+    ; If we pass the checks and they are enabled and off cooldown, then do the things.
+    ; In the case that anything fails, check to see if we've already sent a notification, and if we have, don't send another.
+    if (_LEARN_LearnOnSleep.GetValue() == 1 && hours_before_next_ok_to_learn() <= 0 && spell_fifo_get_count() != 0)
+        ; This only runs and resets the learning cooldown if there's actually something to learn.
+        doLearning()
+    elseIf (_LEARN_LearnOnSleep.GetValue() == 1 && hours_before_next_ok_to_learn() > 0)
+        ; This is really the only mandatory "nothing happened" style notification so most other things have been removed
+        Debug.Notification(__l("notification_slept_too_soon", "Your mind isn't settled enough yet to learn any spells..."))
+    endIf
+    if (_LEARN_DiscoverOnSleep.GetValue() == 1 && hours_before_next_ok_to_discover() <= 0)
+        doDiscovery()
+    endIf
+
+    ; All the functionality tied to a sleep-specific cooldown
+    if (hours_before_next_ok_to_sleep() <= 0)
+        ; Chance to heal Dreadstare disease (this is only on rest, not on study so 
+        ; it's not broken out into the "reset" function)
+        if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
+            float fRand = 0
+            fRand = Utility.RandomFloat(0.0, 1.0)
+            if (fRand > (0.2 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
+                Debug.Notification(__l("notification_no_more_dreadmilk_addiction", "You're finally starting to feel your dreadmilk craving wane."))
+                PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
+            endif
         endif
-    
+        
         ; Reduce blood toxicity
         if (_LEARN_consecutiveDreadmilk.GetValue() > 0)
             _LEARN_consecutiveDreadmilk.Mod(-1)
@@ -1337,47 +1422,14 @@ function doReset()
             endIf
         endIf
 
-        ; Reset learning timer
+        ; Reset sleep cooldown and once-per-cycle bonuses
         LastSleepTime = GameDaysPassed.GetValue()
-endFunction
+        doReset()
 
-; === Tracked player events
-Event OnSleepStop(Bool abInterrupted)
-	
-	; Do nothing if sleep was interrupted. 
-	if (abInterrupted)
-        Debug.Notification(__l("notification_sleep_interrupted", "Your sleep was interrupted."))
-        return
-    ; Do not roll for any spells if was already called too recently. 
-    elseIf (hours_before_next_ok_to_learn() > 0)
-        Debug.Notification(__l("notification_slept_too_soon", "Your mind isn't settled enough yet to learn any spells..."))
-        return
-    endIf
-    	
-    ; If we pass the checks and they are enabled, then do the things.
-    if (_LEARN_LearnOnSleep.GetValue() == 1)
-        doLearning()
-    endIf
-    if (_LEARN_DiscoverOnSleep.GetValue() == 1)
-        doDiscovery()
+        ; Dreams after we reset the bonus
+        doDream()
     endIf
 
-    ; Dreams
-    doDream()
-    
-    ; Chance to heal Dreadstare disease (this is only on rest, not on study so 
-    ; it's not broken out into the "reset" function)
-    if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
-		float fRand = 0
-		fRand = Utility.RandomFloat(0.0, 1.0)
-		if (fRand > (0.2 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
-			Debug.Notification(__l("notification_no_more_dreadmilk_addiction", "You're finally starting to feel your dreadmilk craving wane."))
-			PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
-		endif
-    endif
-	
-    doReset()
-	
 EndEvent
 
 
