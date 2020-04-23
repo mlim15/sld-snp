@@ -184,8 +184,13 @@ function UpgradeVersion()
         Debug.Trace(msg)
         ; When upgrading, keep old default note scaling values
         ; These were not previously user-configurable
-        _LEARN_maxNotes.SetValue(1800)
-        _LEARN_maxNotesBonus.SetValue(20)
+        if (currentVersion == 172)
+            _LEARN_maxNotes.SetValue(10000)
+            _LEARN_maxNotesBonus.SetValue(10)
+        elseif (currentVersion == 173)
+            _LEARN_maxNotes.SetValue(1800)
+            _LEARN_maxNotesBonus.SetValue(20)
+        endIf  
     endIf
 	if (currentVersion < 173)
 		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
