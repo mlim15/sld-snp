@@ -382,9 +382,11 @@ event OnPageReset(string page)
                 AddEmptyOption()
             endIf
             AddEmptyOption()
-            AddHeaderOption(__l("mcm_header_item_options", "Spell Book Options"), 0)
+            AddHeaderOption(__l("mcm_header_item_options", "Item Options"), 0)
 			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
+            ;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
+            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
@@ -394,10 +396,6 @@ event OnPageReset(string page)
             ; Can investigate when putting together quiet mode.
             AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
 			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
-			AddEmptyOption()
-			AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0) ; not implemented
-			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
-            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
             AddEmptyOption()
             AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
 			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
@@ -1525,7 +1523,7 @@ bool function toggleStudyIsRest()
         _LEARN_StudyIsRest.SetValue(0)
         return false
     endif
-    _LEARN_MaxFailsAutoSucceeds.SetValue(1)
+    _LEARN_StudyIsRest.SetValue(1)
     return True
 EndFunction
 
