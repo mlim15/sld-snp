@@ -62,3 +62,4 @@ Known Problems
 ----------
 
 * For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
+* The way Skyrim handles picking up books seems to mean that if you drop a stack of them on the floor, picking up that stack only adds one copy to your inventory. As a result, dropping notes on the floor and picking them up will result in you losing all but one of the notes you dropped. So don't drop your notes on the ground.
