@@ -183,6 +183,7 @@ function UpgradeVersion()
 		endIf
         Debug.Trace(msg)
         ; When upgrading, keep old default note scaling values
+        ; These were not previously user-configurable
         _LEARN_maxNotes.SetValue(1800)
         _LEARN_maxNotesBonus.SetValue(20)
     endIf
