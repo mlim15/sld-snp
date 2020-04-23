@@ -56,12 +56,9 @@ I have basically added all of the features and options that I thought were inter
 
 * I am still planning on trying to implement a "quiet" mode at some point to disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
 * Adding randomized messages instead of the same message every time might also be nice.
-* Further tweaks and little config options are possible. For example, what the power does (just learn, just discover, do both, do neither but give bonus) could easily be a config option. Currently the power is both or neither. Similarly, changing what happens on sleep based on options, so the player could make sleeping just for discovery and studying just for learning, for exmaple.
-* Because the study power re-uses the sleep script, the random "dream" bonuses are currently disabled. If I implement the above option this will be fixed.
+* Replacing the alias used to spawn items in Enthir's inventory with something scriptable/configurable
 
 Known Problems
 ----------
 
 * For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
-* Enabling and disabling the mod mostly works, but sometimes potion effects can get stuck on the player. If this happens, you'll need to try again until after disabling you don't have any permanent effects stuck on you. Alternatively, you can use the console to remove them. This is mostly an issue with the addictive potions system.
-* Not all items are currently set up to spawn in the world.
