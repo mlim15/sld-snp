@@ -77,7 +77,7 @@
 		"mcm_option_min_discovery_chance" :  "Min Discovery Chance", 
 		"mcm_option_max_discovery_chance" :  "Max Discovery Chance", 
 		"mcm_option_spell_school" :  "Spell School", 
-		"mcm_header_spell_book_options" :  "Spell Book Options", 
+		"mcm_header_item_options" :  "Item Options", 
 		"mcm_option_remove_books" :  "Auto-Remove Spell Books", 
 		"mcm_option_collect_notes" :  "Create Study Notes from Books", 
 		"mcm_header_adv_spell_options" :  "Advanced Spell Learning Options", 
@@ -188,8 +188,8 @@
 		"notification_study_in_combat" : "You can't study in combat!",
 		"notification_study_trespassing" : "You'll surely be discovered if you stop to study here!",
 		"notification_study_swimming" : "You'll ruin your notes if you try to study here!",
-		"mcm_header_study_options" : "Study Power Options",
-		"mcm_option_study_rest" : "'Study' Acts as Rest",
+		"mcm_header_study_options" : "Sleeping and Studying Options",
+		"mcm_option_study_rest" : "'Study' Learns/Discovers",
 		"mcm_option_study_notes" : "'Study' Requires Notes",
 		"mcm_option_learn_on_study" : "Learn when Studying",
 		"mcm_option_discover_on_study" : "Discover when Studying",
@@ -198,7 +198,8 @@
 		"hint_learn_on_study" : "When enabled, using the 'Study' power will cause you to attempt to learn new spells off your spell list. Defaults to on.",
 		"hint_discover_on_study" : "When enabled, using the 'Study' power will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
 		"hint_learn_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on.",
-		"hint_discover_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on. "
+		"hint_discover_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
+		"mcm_message_removed_items_reload" : "Done removing items from lists. Please save and reload."
     },
     "int" :{
         "menu_lang_id" : 0

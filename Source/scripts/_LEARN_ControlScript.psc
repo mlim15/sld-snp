@@ -249,11 +249,10 @@ function InternalPrepare()
     aSchools[0] = __l("mcm_automatic", "Automatic"); added here for mid-game localization support
     _canSetBookAsRead = SKSE.GetPluginVersion("BookExtension") != -1
     UpgradeVersion()
-    ; Because this function is called on every load, we can refresh our LeveledList changes
-    ; since they are not persistent in a save when added via script.
-    if (_LEARN_SpawnItems.GetValue() == 1)
-        SpawnItemsInWorld()
-    endIf
+    ; Because this function InternalPrepare() is called on every load, we can refresh our LeveledList changes
+    ; since they are not persistent in a save when added via script. This function checks
+    ; conditions itself, so we don't need to here.
+    SpawnItemsInWorld()
 endFunction
 
 ; === Localization
@@ -651,8 +650,7 @@ endFunction
 
 ; === Mod initialization functions
 
-function addLLToListIfMissing(LeveledItem listToAdd, LeveledItem list, int level, int count)
-    bool addToList = false
+function addLlToListIfMissing(LeveledItem listToAdd, LeveledItem list, int level, int count)
     int i = list.GetNumForms()
     While (i > 0)
         Form x
@@ -668,7 +666,6 @@ function addLLToListIfMissing(LeveledItem listToAdd, LeveledItem list, int level
 endFunction
 
 function addBookToListIfMissing(Book bookToAdd, LeveledItem list, int level, int count)
-    bool addToList = false
     int i = list.GetNumForms()
     While (i > 0)
         Book x
@@ -684,21 +681,48 @@ function addBookToListIfMissing(Book bookToAdd, LeveledItem list, int level, int
 endFunction
 
 function SpawnItemsInWorld(); TODO Test.
-    ; Spirit Tutor tome
-    addBookToListIfMissing(_LEARN_SpellTomeSummonSpiritTutor, LitemSpellTomes00Conjuration, 1, 1)
-    ; Attunement tome
-    addBookToListIfMissing(_LEARN_SetHomeSpBook, LitemSpellTomes25Alteration, 1, 1)
-    ; Drugs
-    addLLToListIfMissing(LootLearningDrugs, LootWarlockRandom, 1, 1)
-    addLLToListIfMissing(LootLearningDrugs, LootRandomBanditWizard, 1, 1)
-    addLLToListIfMissing(LootLearningDrugs, LootForswornRandomWizard, 1, 1)
-    addLLToListIfMissing(LootLearningDrugs, LootLearningDrugs, 1, 1)
-    ; Add more spell tome spawns to some mage enemies
-    addLLToListIfMissing(LootWarlockSpellTomes00All15, LootWarlockRandom, 1, 1)
-    addLLToListIfMissing(LootWarlockSpellTomes00All15, LootRandomBanditWizard, 1, 1)
-    addLLToListIfMissing(LootWarlockSpellTomes00All15, LootForswornRandomWizard, 1, 1)
-    addLLToListIfMissing(LootWarlockSpellTomes00All15, LootLearningDrugs, 1, 1)
+    if (_LEARN_SpawnItems.GetValue() == 1)
+        ; Spirit Tutor tome
+        addBookToListIfMissing(_LEARN_SpellTomeSummonSpiritTutor, LitemSpellTomes00Conjuration, 1, 1)
+        ; Attunement tome
+        addBookToListIfMissing(_LEARN_SetHomeSpBook, LitemSpellTomes25Alteration, 1, 1)
+        ; Drugs
+        addLlToListIfMissing(LootLearningDrugs, LootWarlockRandom, 1, 1)
+        addLlToListIfMissing(LootLearningDrugs, LootRandomBanditWizard, 1, 1)
+        addLlToListIfMissing(LootLearningDrugs, LootForswornRandomWizard, 1, 1)
+        ; Add more spell tome spawns to some mage enemies
+        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootWarlockRandom, 1, 1)
+        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootRandomBanditWizard, 1, 1)
+        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootForswornRandomWizard, 1, 1)
+    endIf
 EndFunction
+
+function RemoveItemsFromWorld()
+        ; Remove items from lists. The only clean way of doing this also removes all other
+        ; script-added items from these lists. Players should save and reload after disabling
+        ; SpawnItems to refresh these lists. As a result, we should ensure this function
+        ; is only run when the setting is disabled, not frequently, as this would disrupt
+        ; other mod scripts that affect these lists.
+        ; Currently it is set up to ONLY run from MCMConfigQuest after the player has
+        ; clicked the toggle in order to disable the setting.
+        ; Why do it this way when it has problems? Well, RemoveAddedForm doesn't seem to be
+        ; working and isn't documented on the wiki. An alternative to this is to set each 
+        ; item's count to 0, but I have a feeling that will bork the save if players remove the
+        ; mod and reload, so let's not do that.
+        ;
+        ; Spirit Tutor tome
+        LitemSpellTomes00Conjuration.Revert()
+        ; Attunement tome
+        LitemSpellTomes25Alteration.Revert()
+        ; Drugs
+        LootWarlockRandom.Revert()
+        LootRandomBanditWizard.Revert()
+        LootForswornRandomWizard.Revert()
+        ; Add more spell tome spawns to some mage enemies
+        LootWarlockRandom.Revert()
+        LootRandomBanditWizard.Revert()
+        LootForswornRandomWizard.Revert()
+endFunction
 
 function OnInit()
    
@@ -1372,6 +1396,11 @@ function doReset()
         _LEARN_CountBonus.SetValue(0.0)
         _LEARN_AlreadyUsedTutor.SetValue(0)
         _LEARN_LastDayStudied.SetValue(0)
+        ; this function checks to see if the proper config setting is enabled so we don't need to here
+        ; the purpose of having this here is if a player turns on the setting mid-play,
+        ; otherwise it wouldn't be refreshed until the next load game.
+        ; checks in the function ensure everything is only added once, so it does no harm.
+        SpawnItemsInWorld() 
 endFunction
 
 ; === Tracked player events
