@@ -202,7 +202,12 @@
 		"mcm_message_removed_items_reload" : "Done removing items from lists. Please save and reload.",
 		"mcm_message_multiple_consecutive_exclusive" : "Learning multiple spells at once and limiting maximum consecutive failures are mutually exclusive. Your settings have been changed accordingly.",
 		"hint_already_studied" : "Whether or not you have already recieved the bonus from using the 'Study' power this cycle.",
-		"hint_study_is_rest" : "Whether or not using the 'Study' power will enable the player to attempt to learn spells. Defaults to on. When off, the power gives a significant bonus to their learning chance based on the amount of notes carried instead, once per learning cycle."
+		"hint_study_is_rest" : "Whether or not using the 'Study' power will enable the player to attempt to learn spells. Defaults to on. When off, the power gives a significant bonus to their learning chance based on the amount of notes carried instead, once per learning cycle.",
+		"hint_max_notes_bonus" : "The highest possible total chance provided by school-specific notes in your inventory. If the study power is not used for learning or discovery, it will provide a bonus maxed at half of this value. Default is 33%.",
+		"hint_max_notes" : "The value of school-specific notes required to reach the above maximum bonus chance. If the study power is not used for learning or discovery, it will require 5 times this number of any notes to give its max modifier. Defaults to 2000g.",
+		"mcm_option_max_notes_bonus" : "Highest Chance Given by Notes",
+		"mcm_option_max_notes" : "Max Per-School Notes Counted",
+		"mcm_x_g" : "{0}g"
 	},
     "int" :{
         "menu_lang_id" : 0

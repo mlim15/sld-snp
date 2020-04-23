@@ -42,6 +42,8 @@ GlobalVariable property _LEARN_LastDayStudied auto
 GlobalVariable property _LEARN_AlreadyUsedTutor auto
 GlobalVariable property _LEARN_DiscoverOnSleep auto
 GlobalVariable property _LEARN_LearnOnSleep auto
+GlobalVariable property _LEARN_maxNotes auto
+GlobalVariable property _LEARN_maxNotesBonus auto
 String[] effortLabels
 
 Keyword property LocTypeTemple auto
@@ -167,11 +169,23 @@ endFunction
 
 ; === Version and upgrade management
 int function GetVersion()
-    return 173; v 1.7.3
+    return 174; v 1.7.4
 endFunction
 
 function UpgradeVersion()
-	bool displayedUpgradeNotice = false
+    bool displayedUpgradeNotice = false
+    if (currentVersion < 174)
+		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.4")
+		if (!displayedUpgradeNotice)
+			; don't display multiple upgrade messages
+			Debug.Notification(msg)
+			displayedUpgradeNotice = true
+		endIf
+        Debug.Trace(msg)
+        ; When upgrading, keep old default note scaling values
+        _LEARN_maxNotes.SetValue(1800)
+        _LEARN_maxNotesBonus.SetValue(20)
+    endIf
 	if (currentVersion < 173)
 		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
 		if (!displayedUpgradeNotice)
@@ -803,6 +817,68 @@ float function getAverageSkill()
     return myskill
 endFunction
 
+float function getNotesBonus(float notes, bool schoolSpecific)
+    ; Amount of spell learning notes in inventory provide bonus (diminishing returns, 
+	; up to max of 33% of 33% of final effort).
+	; The number of notes possessed by the player is related to the value of the spells they have read.
+	; So this value is normalized by comparing the value of a core spellbook 
+	; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
+    Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
+    float priceFactor = refCandleLight.GetGoldValue() / 44
+    notes = notes / pricefactor
+    float bnot
+    ; Since these numbers are now configurable, the defaults are set in the esp.
+    ; Initialize
+    float maxNotesBonusRaw = 1
+    float maxNotesBonusPercent = 1
+    float maxNotes = 1
+    ; _LEARN_maxNotesBonus is currently a percent. We want it to be on a scale from 1-300.
+    ; Keeping with the 2/3 specific school and 1/3 total theme: the study power bonus for all notes
+    ; is capped at a default of 50, or a defualt of 1/6 of total final effort, and is only given by the 
+    ; study power when it's not used for learning/discovery.
+	; Thus a school-specific note bonus will be capped at 100, or 1/3 of the total final effort.
+	; Getting the default max value of 100 requires carrying a default of 2000g worth of notes for the relevant school.
+    if(schoolSpecific)
+        maxNotesBonusRaw = _LEARN_maxNotesBonus.GetValue()*3
+        maxNotes = _LEARN_maxNotes.GetValue()
+    else
+        maxNotesBonusRaw = _LEARN_maxNotesBonus.GetValue()*3/2
+		maxNotes = _LEARN_maxNotes.GetValue()*5
+    endIf
+    maxNotesBonusPercent = maxNotesBonusRaw/100/3
+    ; Used to use square root but was too punishing because reaching 100 required 100*100=10000g
+    ; of school specific notes. Let's change power to require 2000g of school specific notes for max bonus of 100.
+    ; Now that this amount is configurable, the proper exponent to achieve this  is automatically calculated 
+    ; using logarithms based on the player's configuration.
+    ; This logarithm function requires some recent version of SKSE, and it's currently undocumented on the Creation Kit wiki.
+    ; I'm also not sure if it's natural or base 10 but to be honest I really don't care enough to investigate.
+    ;
+    ; Testing Notes
+    ; After testing, diminishing returns is the only model that really makes the power worth using, so we'll go with just that.
+    ; The code for the other scaling methods is below. Linear is OK but the power doesn't feel worth using until you have a lot of notes,
+    ; and I haven't set up a way to independently configure the bonus chance scaling for notes - nor am I sure I want to. This was the original
+    ; design and it does seem to work fine. The problem is this number was always "double scaled", first through this diminishing returns method
+    ; and then later by the effort scaler using the s-curve (or now another method). Let's not fix what isn't broken.
+    ;if (_LEARN_EffortScaling.GetValue() == 0) ; If set to punishing start, s-curve.
+        ;float percentMaxNotes = 0
+        ;float bnotPercent = 0
+        ;percentMaxNotes = notes/maxNotes
+        ;bnotPercent = scaleEffort(percentMaxNotes, 0, maxNotesBonusPercent) ; Returns a value from 0 to 1 representing the decimal percentage of the raw bonus we should get
+        ;bnot = bnotPercent * maxNotesBonusRaw
+    ;if (_LEARN_EffortScaling.GetValue() == 1) ; If diminishing returns scaling method, use x root method with logarithms
+        float power = 1
+        power = 1/(Math.log(maxNotes)/Math.log(maxNotesBonusRaw))
+        bnot = Math.pow(notes, power)
+    ;if(_LEARN_EffortScaling.GetValue() == 2 || _LEARN_EffortScaling.GetValue() == 0) ; Linear scaling for tough start or linear
+    ;    bnot = (notes/maxNotes)*maxNotesBonusRaw
+    ;endIf
+    ; Cap at max value
+    if (bnot > maxNotesBonusRaw)
+        bnot = maxNotesBonusRaw
+    endIf
+    return bnot
+endFunction
+
 float function calcEffort(float skill, float casts, float notes)
     float effort
 	; result is on a scale of 0-1ish.
@@ -832,27 +908,7 @@ float function calcEffort(float skill, float casts, float notes)
 	; For example, the removed dialogue option used this variable.
 	; The random "dream" bonus/penalty, the Daedric Tutor, and the study power bonus use this value.
     mybonus += _LEARN_CountBonus.GetValue()
-    ; Amount of spell learning notes in inventory provide bonus (diminishing returns, 
-	; up to asymptote of 33% of 33% of final effort).
-	; The number of notes possessed by the player is related to the value of the spells they have read.
-	; So this value is normalized by comparing the value of a core spellbook 
-	; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
-    Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
-    float priceFactor = refCandleLight.GetGoldValue() / 44
-    notes = notes / pricefactor
-    float bnot
-    ; Used to use square root but was too punishing because reaching 60 required 60*60=3600g
-    ; of school specific notes. Let's change power to require 1800g of school specific notes for max bonus.
-    bnot = Math.pow(notes, (1/1.83))
-	; Keeping with the 2/3 specific school and 1/3 total theme: the study power bonus for all notes
-	; is capped at 30, or 1/10 of total final effort,
-	; this school-specific note bonus will be capped at 60, or 2/10 of the total final effort.
-	; This value could be configurable in a future update. Getting the max value of 60 requires carrying 
-	; 1800g worth of notes for the relevant school.
-    if (bnot > 60)
-        bnot = 60
-    EndIf
-    mybonus += bnot
+    mybonus += getNotesBonus(notes, true)
     ; Check for drug bonus
     if (PlayerRef.HasMagicEffect(AlchDreadmilkEffect)) ; dreadmilk
         mybonus += 300 ; Dreadmilk gives automatic max total effort, and therefore automatic max roll.

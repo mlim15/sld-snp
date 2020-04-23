@@ -113,23 +113,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		ControlScript.doReset()
 	else
 		; This is for no learning/no discovery - a once-per-cycle bonus to chance is added instead
-		float bonus = 0
-		; Give scaling bonus based on amount of notes in inventory
-		; The number of notes possessed by the player is related to the value of the spells they have read.
-		; So this value is normalized by comparing the value of a core spellbook 
-		; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
-		Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
-		float priceFactor = refCandleLight.GetGoldValue() / 44
-		float notes = ControlScript.getTotalNotes()
-		notes = notes / pricefactor
-		bonus = notes / 300
-		; Formula is gives 1/9 of max chance (value of 30) for studying when carrying total 9000 
-		; gold worth of notes. 2/9 is given using only school-specific notes in the roll script 
-		; and is capped at a value of 1800. So for 5 schools, we cap at a value of 9k.
-		if bonus > 30
-			bonus = 30
-		endIf
-		_LEARN_CountBonus.Mod(bonus)
+		_LEARN_CountBonus.Mod(ControlScript.getNotesBonus(ControlScript.getTotalNotes(), false))
 		_LEARN_LastDayStudied.SetValue(1)
 		Debug.Notification(__l("notification_study_progress", "You feel you've made some progress."))
 	endIf

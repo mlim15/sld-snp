@@ -54,6 +54,8 @@ GlobalVariable property _LEARN_DiscoverOnSleep auto
 GlobalVariable property _LEARN_LearnOnSleep auto
 GlobalVariable property _LEARN_DiscoverOnStudy auto
 GlobalVariable property _LEARN_LearnOnStudy auto
+GlobalVariable property _LEARN_maxNotes auto
+GlobalVariable property _LEARN_maxNotesBonus auto
 MagicEffect Property _LEARN_PracticeEffect auto
 Spell property _LEARN_DiseaseDreadmilk auto
 Spell property _LEARN_PracticeAbility auto
@@ -115,6 +117,8 @@ int discoverOnStudyOID
 int learnOnSleepOID 
 int discoverOnSleepOID
 int alreadyStudiedOID
+int maxNotesOID
+int maxNotesBonusOID
 
 int[] spellListStates; 0=count,1=pageCount;2=currentPageIndex,3=pageItemIndex
 int[] spellOidList
@@ -206,12 +210,13 @@ Event OnConfigClose()
         wasDisabled = True
 		disableModEffects()
 		Utility.wait(2)
-		;removeModSpells()
+        ;removeModSpells()
+        ControlScript.RemoveItemsFromWorld()
 		disableModEffects() ; You can never be too sure
 		; Then stop the quest. This should automatically remove items from enthir (?)
 		; as well as stop the script from running on sleep.
 		_LEARN_SpellControlQuest.Stop()
-		disableModEffects() ; beat a dead horse
+        disableModEffects() ; beat a dead horse
     EndIf
     ; ======== RESET ========
     ; Basically reset; If they disable, close the menu, open, enable, close again, this will turn it back on
@@ -381,19 +386,18 @@ event OnPageReset(string page)
                 AddEmptyOption()
                 AddEmptyOption()
             endIf
-            AddEmptyOption()
             AddHeaderOption(__l("mcm_header_item_options", "Item Options"), 0)
 			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
             ;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
-            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
+            maxNotesBonusOID = AddSliderOption(__l("mcm_option_max_notes_bonus", "Highest Chance Given by Notes"), _LEARN_maxNotesBonus.GetValue(), "{0}%", OPTION_FLAG_NONE)
+            maxNotesOID = AddSliderOption(__l("mcm_option_max_notes", "Max Per-School Notes Counted"), _LEARN_maxNotes.GetValue(), __l("mcm_x_g", "{0}g"), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
 		SetCursorPosition(1) ; Move cursor to top right position
 		if (isEnabled)
-			; These options seem to be broken?
-            ; Can investigate when putting together quiet mode.
+            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
             AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
 			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
             ;AddEmptyOption()
@@ -401,7 +405,6 @@ event OnPageReset(string page)
 			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
 			AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
             ;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
-			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
 			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
 			removePowerOID = AddTextOption(__l("mcm_remove_power", "CLICK: Remove 'Study' ability"), "", OPTION_FLAG_NONE)
@@ -672,6 +675,22 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
         return
     EndIf
 
+    If (a_option == maxNotesBonusOID)
+        SetSliderDialogStartValue(_LEARN_maxNotesBonus.GetValue())
+        SetSliderDialogDefaultValue(33)
+        SetSliderDialogRange(1, 100)
+        SetSliderDialogInterval(1)
+        return
+    EndIf
+
+    If (a_option == maxNotesOID)
+        SetSliderDialogStartValue(_LEARN_maxNotes.GetValue())
+        SetSliderDialogDefaultValue(2000)
+        SetSliderDialogRange(1, 10000)
+        SetSliderDialogInterval(1)
+        return
+    EndIf
+
 EndEvent
 
 Event OnOptionSliderAccept(Int a_option, Float a_value)
@@ -756,6 +775,18 @@ Event OnOptionSliderAccept(Int a_option, Float a_value)
 	If (a_option == intervalCdrOID)
         SetSliderOptionValue(a_option, a_value, "{0}", false)
         _LEARN_IntervalCDR.SetValue(a_value)
+        return
+    EndIf
+
+    If (a_option == maxNotesBonusOID)
+        SetSliderOptionValue(a_option, a_value, "{0}", false)
+        _LEARN_maxNotesBonus.SetValue(a_value)
+        return
+    EndIf
+
+    If (a_option == maxNotesOID)
+        SetSliderOptionValue(a_option, a_value, "{0}", false)
+        _LEARN_maxNotes.SetValue(a_value)
         return
     EndIf
 
@@ -993,6 +1024,10 @@ Event OnOptionHighlight(int option)
 		setInfoText(__l("hint_discover_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on. "))
     ElseIf (Option == alreadyStudiedOID)
         setInfoText(__l("hint_already_studied", "Whether or not you have already recieved the bonus from using the 'Study' power this cycle."))
+    ElseIf (Option == maxNotesBonusOID)
+        setInfoText(__l("hint_max_notes_bonus", "The highest possible total chance provided by school-specific notes in your inventory. If the study power is not used for learning or discovery, it will provide a bonus maxed at half of this value. Default is 33%."))
+    ElseIf (Option == maxNotesOID)
+        setInfoText(__l("hint_max_notes", "The value of school-specific notes required to reach the above maximum bonus chance. If the study power is not used for learning or discovery, it will require 5 times this number of any notes to give its max modifier. Defaults to 2000g."))
     EndIf
 EndEvent
 
