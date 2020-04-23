@@ -104,7 +104,7 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
     ; Notify player if they already were studying the spell if add spell list notifications are on
     if (cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_LIST])
         if (cs.spell_fifo_has_ref(sp))
-            if (_LEARN_CollectNotes.GetValue())
+            if (_LEARN_CollectNotes.GetValue() && !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
                 Debug.Notification(__fs2(__l("notification_spell_not_added_studying_notes", "Already studying {0}. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()))
             else
                 Debug.Notification(__fs1(__l("notification_spell_not_added_studying", "Already studying {0}."), sp.GetName()))
@@ -115,7 +115,7 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
     ; Notify player if they already knew the spell if add spell list notifications are on
     if (cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_LIST])
         if (PlayerRef.HasSpell(sp))
-            if (_LEARN_CollectNotes.GetValue())
+            if (_LEARN_CollectNotes.GetValue() && !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
                 Debug.Notification(__fs2(__l("notification_spell_not_added_notes", "Already knew {0}. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()))
             else
                 Debug.Notification(__fs1(__l("notification_spell_not_added", "Already knew {0}."), sp.GetName()))
@@ -128,7 +128,7 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
         cs.spell_fifo_push(sp)
         ; Notify if add spell list notifications are on.
         if (cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_LIST])
-            if (_LEARN_CollectNotes.GetValue())
+            if (_LEARN_CollectNotes.GetValue() && !cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
                 Debug.Notification(__fs2(__l("notification_spell_added_notes", "{0} added to study list. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()))
             else
                 Debug.Notification(__fs1(__l("notification_spell_added", "{0} added to study list."), sp.GetName()))

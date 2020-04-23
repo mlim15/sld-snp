@@ -212,9 +212,12 @@
 		"notification_spell_not_added_notes" : "Already knew {0}. Tome deconstructed into {1} notes.",
 		"notification_spell_not_added" : "Already knew {0}.",
 		"notification_spell_added_notes" : "{0} added to study list. Tome deconstructed into {1} notes.",
-		"mcm_notification_add_spell_list" : "When Adding Spell to List",
+		"mcm_notification_add_spell_list" : "When (not) Adding Spell to List",
 		"notification_spell_not_added_studying_notes" : "Already studying {0}. Tome deconstructed into {1} notes.",
-		"notification_spell_not_added_studying" : "Already studying {0}."
+		"notification_spell_not_added_studying" : "Already studying {0}.",
+		"hint_notification_add_spell" : "Custom notifications when the mod adds a new spell to the list, deconstructs a tome, et cetera. Will include information about note addition if vanilla notification is off. Enabled by default.",
+		"hint_notification_add_note" : "Vanilla item add notification when adding notes to inventory. Defaults to off.",
+		"hint_notification_remove_book" : "Vanilla item removal notification when mod automatically removes spellbook. Defaults to off."
 	},
     "int" :{
         "menu_lang_id" : 0

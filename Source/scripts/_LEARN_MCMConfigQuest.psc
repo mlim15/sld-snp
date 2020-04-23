@@ -404,7 +404,7 @@ event OnPageReset(string page)
             AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
 			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "Vanilla Book Removal Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
             AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "Vanilla Notes Added Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
-            AddToggleOptionST("ShowAddSpellListNotification", __l("mcm_notification_add_spell_list", "When Adding Spell to List"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST]) 
+            AddToggleOptionST("ShowAddSpellListNotification", __l("mcm_notification_add_spell_list", "When (not) Adding Spell to List"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST]) 
             ;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
 			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
 			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
@@ -1444,7 +1444,8 @@ state ShowRemoveBookNotification
 		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_REMOVE_BOOK, false))
 	endEvent
 
-	event OnHighlightST()
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_remove_book", "Vanilla item removal notification when mod automatically removes spellbook. Defaults to off."))
 	endEvent    
 endState
 
@@ -1457,7 +1458,8 @@ state ShowAddSpellListNotification
 		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST, true))
 	endEvent
 
-	event OnHighlightST()
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_add_spell", "Custom notifications when the mod adds a new spell to the list, deconstructs a tome, et cetera. Will include information about note addition if vanilla notification is off. Enabled by default."))
 	endEvent    
 endState
 
@@ -1470,7 +1472,8 @@ state ShowAddSpellNoteNotification
 		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_NOTE, false))
 	endEvent
 
-	event OnHighlightST()
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_add_note", "Vanilla item add notification when adding notes to inventory. Defaults to off."))
 	endEvent    
 endState
 
