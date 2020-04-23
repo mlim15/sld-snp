@@ -65,8 +65,8 @@
 		"mcm_import_fiss" :  "Click", 
 		"mcm_header_spell_learning_options" :  "Spell Learning Options", 
 		"mcm_option_sleep_interval" :  "Days Between Chances", 
-		"mcm_option_practice_gives_cdr" :  "Practice Reduces Interval", 
-		"mcm_option_max_cdr" :  "Maximum Interval CDR", 
+		"mcm_option_practice_gives_cdr" :  "Practice Reduces Time", 
+		"mcm_option_max_cdr" :  "Maximum Reduction", 
 		"mcm_option_min_learn_chance" :  "Min Learn Chance", 
 		"mcm_option_max_learn_chance" :  "Max Learn Chance", 
 		"mcm_option_chance_scales_with_spell_level" :  "Chance Scales w/Spell Level", 
@@ -131,7 +131,7 @@
 		"hint_maxChanceStudy" :  "Maximum chance per night to learn a spell from books you've read or spells you've discovered. Defaults to 80%.", 
 		"hint_minChanceDiscover" :  "Minimum chance per night to discover a new spell, adding it to the study list without the need for a book. Defaults to 0%.", 
 		"hint_maxChanceDiscover" :  "Maximum chance per night to discover a new spell, adding it to the study list without the need for a book. Defaults to 10%.", 
-		"hint_maxConsecutiveFailures" :  "Maximum consecutive failures before automatically succeeding. Set to 0 for unlimited failures. Not recommended for use with option to learn multiple spells at once - script counts only total failures, not per-spell. Defaults to 3.", 
+		"hint_maxConsecutiveFailures" :  "Maximum consecutive failures before automatically succeeding. Set to 0 for unlimited failures. Defaults to 3.", 
 		"hint_autoNoviceLearning" :  "Required skill difference to always succeed when learning spells. At 0, no difference is required - e.g. Apprentice Destruction means you'll never fail at learning Apprentice and Novice spells. At 25, an Apprentice of Destruction will only never fail at learning Novice spells. Defaults to 50.", 
 		"hint_noviceLearningEnabled" :  "When enabled, the difference between your skill in a school and the level of the spell you're trying to learn can result in an automatic success. The required difference to ensure this success is configurable below. Defaults to on.", 
 		"hint_autoSuccessBypassesLimit" :  "Spells learned via the above option do not count towards the daily limit. Default off. This can result in learning many spells per attempt.", 
@@ -149,7 +149,7 @@
 		"hint_export" :  "Export/backup spell study list to FISS XML.", 
 		"hint_import" :  "Import/restore spell study list from FISS XML.", 
 		"hint_customLocation" :  "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell.", 
-		"hint_studyInterval" :  "How many days must pass between learning attempts. Default is 0.65.", 
+		"hint_studyInterval" :  "How many days must pass between learning and discovery attempts. Default is 0.65.", 
 		"hint_enthir" :  "Whether or not Enthir will keep a stock of items related to this mod. Defaults to yes.", 
 		"hint_spawnItems" :  "Whether or not items are added to loot lists, causing them to spawn as loot. Defaults to yes.", 
 		"hint_tooDifficultDiff" :  "The difference in skill tier required to automatically fail learning. Default is 75 - a novice will automatically fail to learn expert+ level spells.", 
@@ -159,7 +159,7 @@
 		"hint_cdrEnabled" :  "When enabled, casting up to 100 spells will not only increase your chance to learn spells, but will also reduce the cooldown between learnings. Defaults to on.", 
 		"hint_cdr" :  "The maximum percentage by which the cooldown can be reduced. Defaults to 25%.", 
 		"hint_maxFailsSucceeds" :  "When enabled, reaching the maximum failure limit will cause you to succeed as long as it isn't prevented by something like the skill difference option. When off, the spell will be moved to the bottom of your list instead. Defaults to off.", 
-		"hint_dynamicDiff" :  "When enabled, the chance to learn a spell also depends on its own difficulty relative to your skill. Defaults to on.", 
+		"hint_dynamicDiff" :  "When enabled, the chance to learn a spell also depends on its own difficulty relative to your skill. Makes learning spells twice your magical skill level about twice as hard, or half your skill level about two times easier. Defaults to on.", 
 		"hint_moveto_top" :  "Moves the selected spell to the top of the list.", 
 		"hint_move_up" :  "Moves up the selected spell.", 
 		"hint_move_down" :  "Moves down the selected spell.", 
@@ -199,8 +199,11 @@
 		"hint_discover_on_study" : "When enabled, using the 'Study' power will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
 		"hint_learn_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on.",
 		"hint_discover_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
-		"mcm_message_removed_items_reload" : "Done removing items from lists. Please save and reload."
-    },
+		"mcm_message_removed_items_reload" : "Done removing items from lists. Please save and reload.",
+		"mcm_message_multiple_consecutive_exclusive" : "Learning multiple spells at once and limiting maximum consecutive failures are mutually exclusive. Your settings have been changed accordingly.",
+		"hint_already_studied" : "Whether or not you have already recieved the bonus from using the 'Study' power this cycle.",
+		"hint_study_is_rest" : "Whether or not using the 'Study' power will enable the player to attempt to learn spells. Defaults to on. When off, the power gives a significant bonus to their learning chance based on the amount of notes carried instead, once per learning cycle."
+	},
     "int" :{
         "menu_lang_id" : 0
     }

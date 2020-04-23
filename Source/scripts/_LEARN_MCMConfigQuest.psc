@@ -114,6 +114,7 @@ int learnOnStudyOID
 int discoverOnStudyOID
 int learnOnSleepOID 
 int discoverOnSleepOID
+int alreadyStudiedOID
 
 int[] spellListStates; 0=count,1=pageCount;2=currentPageIndex,3=pageItemIndex
 int[] spellOidList
@@ -266,9 +267,9 @@ event OnPageReset(string page)
 			endIf
 			if (_LEARN_StudyIsRest.GetValue() == 0)
 				if (_LEARN_LastDayStudied.GetValue() == 1)
-					AddTextOption(__l("mcm_current_study_used", "Already Studied: "), __l("mcm_true", "True"), OPTION_FLAG_NONE)
+					alreadyStudiedOID = AddTextOption(__l("mcm_current_study_used", "Already Studied: "), __l("mcm_true", "True"), OPTION_FLAG_NONE)
 				else
-					AddTextOption(__l("mcm_current_study_used", "Already Studied: "), __l("mcm_false", "False"), OPTION_FLAG_NONE)
+					alreadyStudiedOID = AddTextOption(__l("mcm_current_study_used", "Already Studied: "), __l("mcm_false", "False"), OPTION_FLAG_NONE)
 				endIf
 			endIf
 		endif
@@ -290,15 +291,13 @@ event OnPageReset(string page)
 		    AddHeaderOption(__l("mcm_header_sleep_current_discovery", "Current Spell Discovery Status"), 0)
             infoDiscoverOID = AddTextOption(__l("mcm_current_discovery_chance", "Chance for Discovery: "), __f1("{0}%", _LEARN_Strings.SubStringSafe(((ControlScript.baseChanceToDiscover() * 100) as String),0,5)), OPTION_FLAG_NONE)
             infoSchoolOID = AddTextOption(__l("mcm_current_school", "Current School of Interest: "), ControlScript.topSchoolToday(), OPTION_FLAG_NONE) 
-            if (!ControlScript.cooldownDiscoverLearnEqual())
-                int t = (controlscript.hours_before_next_ok_to_discover() as int)
-                if t == 0
-                    AddTextOption(__l("mcm_current_discover_now", "You can try discovering now!"), "", OPTION_FLAG_NONE)
-                elseIf t == 1
-                    AddTextOption(__f1(__l("mcm_current_discover_1h", "You can try discovering in 1h."), t), "", OPTION_FLAG_NONE)
-                else
-                    AddTextOption(__f1(__l("mcm_current_discover_Xh", "You can try discovering in {0}h."), t), "", OPTION_FLAG_NONE)
-                endIf
+            int t = (controlscript.hours_before_next_ok_to_discover() as int)
+            if t == 0
+                AddTextOption(__l("mcm_current_discover_now", "You can try discovering now!"), "", OPTION_FLAG_NONE)
+            elseIf t == 1
+                AddTextOption(__f1(__l("mcm_current_discover_1h", "You can try discovering in 1h."), t), "", OPTION_FLAG_NONE)
+            else
+                AddTextOption(__f1(__l("mcm_current_discover_Xh", "You can try discovering in {0}h."), t), "", OPTION_FLAG_NONE)
             endIf
 			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_backup_restore", "Backup/Restore Spell List"), 0)
@@ -307,18 +306,19 @@ event OnPageReset(string page)
         endIf
     elseIf (page == Pages[1])
         SetCursorFillMode(TOP_TO_BOTTOM) ;starts are 0
-        AddHeaderOption(__l("mcm_header_spell_learning_options", "Spell Learning Options"), 0)
-		if (isEnabled)
+        if (isEnabled)
+            ; _LEARN_StudyInterval.GetValue(), __l("mcm_x_day(s)", "{2} Day(s)")
+            StudyIntervalOID = AddSliderOption(__l("mcm_option_sleep_interval", "Days Between Chances"), _LEARN_StudyInterval.GetValue(), "{2}", OPTION_FLAG_NONE)
+            AddHeaderOption(__l("mcm_header_spell_learning_options", "Spell Learning Options"), 0)
 			minChanceStudyOID = AddSliderOption(__l("mcm_option_min_learn_chance", "Min Learn Chance"), _LEARN_MinChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
             maxChanceStudyOID = AddSliderOption(__l("mcm_option_max_learn_chance", "Max Learn Chance"), _LEARN_MaxChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
 			dynamicDiffOID = AddToggleOption(__l("mcm_option_chance_scales_with_spell_level", "Chance Depends on Spell Level"), _LEARN_DynamicDifficulty.GetValue(), OPTION_FLAG_NONE)
-			StudyIntervalOID = AddSliderOption(__l("mcm_option_sleep_interval", "Time Between Learnings"), _LEARN_StudyInterval.GetValue(), __l("mcm_x_day(s)", "{2} Day(s)"), OPTION_FLAG_NONE)
 			intervalCDRenabledOID = AddToggleOption(__l("mcm_option_practice_gives_cdr", "Practice Reduces Time"), _LEARN_IntervalCDREnabled.GetValue(), OPTION_FLAG_NONE)
 			if (_LEARN_IntervalCDREnabled.GetValue() == 1)
 				intervalCdrOID = AddSliderOption(__l("mcm_option_max_cdr", "Maximum Reduction"), _LEARN_IntervalCDR.GetValue(), "{0}%", OPTION_FLAG_NONE)
 			else
 				AddEmptyOption()
-			endIf
+            endIf
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
@@ -396,7 +396,7 @@ event OnPageReset(string page)
             ; Can investigate when putting together quiet mode.
             AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
 			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
-            AddEmptyOption()
+            ;AddEmptyOption()
             AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
 			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
 			AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
@@ -651,7 +651,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
     If (a_option == studyIntervalOID)
         SetSliderDialogStartValue(_LEARN_StudyInterval.GetValue())
         SetSliderDialogDefaultValue(0.65)
-        SetSliderDialogRange(0, 4)
+        SetSliderDialogRange(0, 7)
         SetSliderDialogInterval(0.01)
         return
     EndIf
@@ -679,6 +679,10 @@ Event OnOptionSliderAccept(Int a_option, Float a_value)
     If (a_option == maxConsecutiveFailuresOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
         _LEARN_MaxFailsBeforeCycle.SetValue(a_value)
+        if (_LEARN_ParallelLearning.GetValue() != 1 && a_value > 0)
+            _LEARN_ParallelLearning.SetValue(1)
+            Debug.MessageBox(__l("mcm_message_multiple_consecutive_exclusive", "Learning multiple spells at once and limiting maximum consecutive failures are mutually exclusive. Your settings have been changed accordingly."))
+        endIf
 		forcepagereset()
         return
     EndIf
@@ -698,6 +702,10 @@ Event OnOptionSliderAccept(Int a_option, Float a_value)
 	If (a_option == parallelLearningOID)   
         SetSliderOptionValue(a_option, a_value, "{0}", false)
         _LEARN_ParallelLearning.SetValue(a_value)
+        if (_LEARN_MaxFailsBeforeCycle.GetValue() != 0 && a_value > 1)
+            _LEARN_MaxFailsBeforeCycle.SetValue(0)
+            Debug.MessageBox(__l("mcm_message_multiple_consecutive_exclusive", "Learning multiple spells at once and limiting maximum consecutive failures are mutually exclusive. Your settings have been changed accordingly."))
+        endIf
 		forcepagereset()
         return
     EndIf
@@ -740,13 +748,13 @@ Event OnOptionSliderAccept(Int a_option, Float a_value)
     EndIf
 	
 	If (a_option == tooDifficultDeltaOID)   
-        SetSliderOptionValue(a_option, a_value, "{2}", false)
+        SetSliderOptionValue(a_option, a_value, "{0}", false)
         _LEARN_TooDifficultDelta.SetValue(a_value)
         return
     EndIf
 	
 	If (a_option == intervalCdrOID)
-        SetSliderOptionValue(a_option, a_value, "{2}", false)
+        SetSliderOptionValue(a_option, a_value, "{0}", false)
         _LEARN_IntervalCDR.SetValue(a_value)
         return
     EndIf
@@ -898,7 +906,7 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == maxChanceDiscoverOID)
         SetInfoText(__l("hint_maxChanceDiscover", "Maximum chance per night to discover a new spell, adding it to the study list without the need for a book. Defaults to 10%."))
     ElseIf (Option == maxConsecutiveFailuresOID)
-        SetInfoText(__l("hint_maxConsecutiveFailures", "Maximum consecutive failures before automatically succeeding. Set to 0 for unlimited failures. Not recommended for use with option to learn multiple spells at once - script counts only total failures, not per-spell. Defaults to 3."))
+        SetInfoText(__l("hint_maxConsecutiveFailures", "Maximum consecutive failures before automatically succeeding. Set to 0 for unlimited failures. Defaults to 3."))
     ElseIf (Option == autoNoviceLearningOID)
         SetInfoText(__l("hint_autoNoviceLearning", "Required skill difference to always succeed when learning spells. At 0, no difference is required - e.g. Apprentice Destruction means you'll never fail at learning Apprentice and Novice spells. At 25, an Apprentice of Destruction will only never fail at learning Novice spells. Defaults to 50."))
 	ElseIf (Option == noviceLearningEnabledOID)
@@ -934,7 +942,7 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == CustomLocationOID)
         setInfoText(__l("hint_customLocation", "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell."))
     ElseIf (Option == studyIntervalOID)
-        setInfoText(__l("hint_studyInterval", "How many days must pass between learning attempts. Default is 0.65."))
+        setInfoText(__l("hint_studyInterval", "How many days must pass between learning and discovery attempts. Default is 0.65."))
 	ElseIf (Option == enthirSellsOID) ; unused
         setInfoText(__l("hint_enthir", "Whether or not Enthir will keep a stock of items related to this mod. Defaults to yes."))
 	ElseIf (Option == spawnItemsOID)
@@ -954,7 +962,7 @@ Event OnOptionHighlight(int option)
 	ElseIf (Option == maxFailsAutoSucceedsOID)
 		setInfoText(__l("hint_maxFailsSucceeds", "When enabled, reaching the maximum failure limit will cause you to succeed as long as it isn't prevented by something like the skill difference option. When off, the spell will be moved to the bottom of your list instead. Defaults to on."))
 	ElseIf (Option == dynamicDiffOID)
-		setInfoText(__l("hint_dynamicDiff", "When enabled, the chance to learn a spell also depends on its own difficulty relative to your skill. Defaults to on."))
+		setInfoText(__l("hint_dynamicDiff", "When enabled, the chance to learn a spell also depends on its own difficulty relative to your skill. Makes learning spells twice your magical skill level about twice as hard, or half your skill level about two times easier. Defaults to on."))
 	ElseIf (Option == nootropicStatusOID)
 		setInfoText(__l("hint_drug_status", "Your current level of toxicity from consuming Dreadmilk and Shadowmilk. As it increases, so does the chance of overdose on consumption. Decreases over time with rest."))
 	ElseIf (Option == tutorStatusOID)
@@ -962,7 +970,7 @@ Event OnOptionHighlight(int option)
 	ElseIf (Option == attunementStatusOID)
 		setInfoText(__l("hint_attunement_status", "Amount of spell learning attempts left before you can change your custom study location with the Attunement spell."))
 	ElseIf (Option == studyIsRestOID)
-		setInfoText(__l("hint_study_is_rest", "Whether or not using the 'Study' power will enable the player to attempt to learn spells. Defaults to on. When off, the power gives a significant bonus to their learning chance instead, once per learning cycle."))
+		setInfoText(__l("hint_study_is_rest", "Whether or not using the 'Study' power will enable the player to attempt to learn spells. Defaults to on. When off, the power gives a significant bonus to their learning chance based on the amount of notes carried instead, once per learning cycle."))
 	ElseIf (Option == studyRequiresNotesOID)
 		setInfoText(__l("hint_study_requires_notes", "Whether or not using the 'Study' power requires having notes in the inventory. Defaults to on."))
 	ElseIf (Option == removeSpellsOID)
@@ -983,10 +991,8 @@ Event OnOptionHighlight(int option)
         setInfoText(__l("hint_learn_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on."))
     ElseIf (Option == discoverOnSleepOID)
 		setInfoText(__l("hint_discover_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on. "))
-learnOnStudyOID = AddToggleOption(__l("mcm_option_learn_on_study", "Learn when Studying"), _LEARN_LearnOnStudy.GetValue(), OPTION_FLAG_NONE)
-discoverOnStudyOID = AddToggleOption(__l("mcm_option_discover_on_study", "Discover when Studying"), _LEARN_DiscoverOnStudy.GetValue(), OPTION_FLAG_NONE)
-learnOnSleepOID = AddToggleOption(__l("mcm_option_learn_on_sleep", "Learn when Sleeping"), _LEARN_LearnOnSleep.GetValue(), OPTION_FLAG_NONE)
-discoverOnSleepOID = AddToggleOption(__l("mcm_option_discover_on_sleep", "Discover when Sleeping"), _LEARN_DiscoverOnSleep.GetValue(), OPTION_FLAG_NONE)
+    ElseIf (Option == alreadyStudiedOID)
+        setInfoText(__l("hint_already_studied", "Whether or not you have already recieved the bonus from using the 'Study' power this cycle."))
     EndIf
 EndEvent
 

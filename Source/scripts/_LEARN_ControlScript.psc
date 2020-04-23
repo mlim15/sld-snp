@@ -165,14 +165,6 @@ bool function EnableNotification(int id, bool v)
     return v
 endFunction
 
-bool function cooldownDiscoverLearnEqual()
-    if (LastLearnTime == LastDiscoverTime)
-        return true
-    else
-        return false
-    endIf
-endFunction
-
 ; === Version and upgrade management
 int function GetVersion()
     return 173; v 1.7.3
@@ -936,9 +928,6 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
     ; If it is, then adjust the returned chance accordingly to make it more/less likely to learn the spell.
     ; This only applies to spell learning, not discovery, so a passed bool lets us disable it.
 	if (_LEARN_DynamicDifficulty.GetValue() == 1 && !discovering)
-        ; Get level of spell effect being learned
-        int magicLevel = 0
-		magicLevel = eff.GetSkillLevel()
         ; Get player skill of specific school
         float sskill = 0
         sskill = PlayerRef.GetActorValue(magicSchool)
@@ -948,20 +937,32 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         ; Using same 1/3 and 2/3 proportions as for learning, make the value used to represent 
         ; the player's overall skill for this calculation
         fskill = (0.66*sskill) + (0.33*tskill)
+        ; Get level of spell effect being learned
+        float magicLevel = 0
+        magicLevel = eff.GetSkillLevel()
+        ; If it's a novice spell, set it to 12.5 so we don't divide by zero later.
+        ; Setting it to 1 seems to make sense until you realize we are later
+        ; multiplying by the player's skill level if we do that. So we'll go 
+        ; for halfway to apprentice, so learning apprentice spells is still twice
+        ; as hard with adjustment.
+        if (magicLevel == 0)
+            magicLevel = 12.5
+        endIf
         ; Calculate proportion of player skill to spell difficulty
-		float skillDiff = 0
+        float skillDiff = 0
+        ; it's impossible for fskill to be 0 so we won't worry about that
         skillDiff = magicLevel/fskill
         ; Use skilldiff to change returned chance to learn.
         ; when your skill is lower than spell level, skillDiff is >1
         ; when your skill is higher, skillDiff is <1
         ; fChance is used as the upper bound in rollToLearn()
         ; so making it bigger makes learning more likely.
-        fChance = fChance*skillDiff
+        fChance = fChance/skillDiff
         ; Make sure we don't go over or below max/min chance
-        if (fChance < minchance)
-            fChance = minchance
-        elseIf (fChance > maxchance)
-            fChance = maxchance
+        if (fChance < minchance/100)
+            fChance = minchance/100
+        elseIf (fChance > maxchance/100)
+            fChance = maxchance/100
         endIf
     endIf
     return fChance
