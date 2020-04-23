@@ -369,14 +369,9 @@ event OnPageReset(string page)
 	elseIf(page == Pages[3])
 		SetCursorFillMode(TOP_TO_BOTTOM) ;starts are 0
 		if (isEnabled)
-			AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
-			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
-			AddEmptyOption()
-			AddHeaderOption(__l("mcm_header_item_options", "Spell Book Options"), 0)
-			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
-            collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
-			AddEmptyOption()
             AddHeaderOption(__l("mcm_header_study_options", "Sleeping and Studying Options"), 0)
+            learnOnSleepOID = AddToggleOption(__l("mcm_option_learn_on_sleep", "Learn when Sleeping"), _LEARN_LearnOnSleep.GetValue(), OPTION_FLAG_NONE)
+            discoverOnSleepOID = AddToggleOption(__l("mcm_option_discover_on_sleep", "Discover when Sleeping"), _LEARN_DiscoverOnSleep.GetValue(), OPTION_FLAG_NONE)
             studyRequiresNotesOID = AddToggleOption(__l("mcm_option_study_notes", "'Study' Requires Notes"), _LEARN_StudyRequiresNotes.GetValue(), OPTION_FLAG_NONE)
             studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "'Study' Learns/Discovers"), _LEARN_StudyIsRest.GetValue(), OPTION_FLAG_NONE)
             if (_LEARN_StudyIsRest.GetValue() == 1)
@@ -386,23 +381,28 @@ event OnPageReset(string page)
                 AddEmptyOption()
                 AddEmptyOption()
             endIf
-            learnOnSleepOID = AddToggleOption(__l("mcm_option_learn_on_sleep", "Learn when Sleeping"), _LEARN_LearnOnSleep.GetValue(), OPTION_FLAG_NONE)
-            discoverOnSleepOID = AddToggleOption(__l("mcm_option_discover_on_sleep", "Discover when Sleeping"), _LEARN_DiscoverOnSleep.GetValue(), OPTION_FLAG_NONE)
+            AddEmptyOption()
+            AddHeaderOption(__l("mcm_header_item_options", "Spell Book Options"), 0)
+			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
+            collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
 		SetCursorPosition(1) ; Move cursor to top right position
 		if (isEnabled)
 			; These options seem to be broken?
-			; Can investigate when putting together quiet mode.
-			AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
+            ; Can investigate when putting together quiet mode.
+            AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
+			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
+			AddEmptyOption()
+			AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0) ; not implemented
+			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
+            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
+            AddEmptyOption()
+            AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
 			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "When Consuming Spell Books"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
 			AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "When Adding Spell Notes"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
             ;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
-            AddEmptyOption()
-			AddHeaderOption(__l("mcm_header_spell_book_options", "Item Spawning Options"), 0) ; not implemented
-			;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
-			spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
 			AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
 			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
