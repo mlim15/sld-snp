@@ -1247,7 +1247,7 @@ function LearnSelectedSpell()
     if realIndex < 0
         return
     endIf
-    ControlScript.forceLearnSpellAt(realIndex)
+    ControlScript.forceLearnSpellAt(realIndex, true)
     UpdateListAfterSpellRemoved(realIndex)
 endFunction
 

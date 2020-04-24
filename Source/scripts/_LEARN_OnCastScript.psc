@@ -14,7 +14,7 @@ Bool modDisabled = false
 
 function OnInit()
     if (Self.GetActorReference())
-        PlayerRef.AddSpell(PracticeSpell, true)
+        PlayerRef.AddSpell(PracticeSpell, false)
     endif
 endFunction
 

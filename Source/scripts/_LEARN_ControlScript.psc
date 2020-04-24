@@ -227,7 +227,7 @@ function UpgradeVersion()
 			_LEARN_TooDifficultEnabled.SetValue(0)
 		endIf
 		; Add study power
-		PlayerRef.AddSpell(_LEARN_StudyPower, true)
+		PlayerRef.AddSpell(_LEARN_StudyPower, false)
 		; Fix attunement cooldown
 		if (GameDaysPassed.GetValue() >= 7)
 			_LEARN_LastSetHome.SetValue(GameDaysPassed.GetValue() - 7)
@@ -444,11 +444,11 @@ Spell function spell_list_removeAt(int index)
     return tmp
 endFunction
 
-bool function forceLearnSpellAt(int index)
+bool function forceLearnSpellAt(int index, bool showNotification)
     Spell spellToLearn = spell_list_removeAt(index)
     if spellToLearn
         if !PlayerRef.HasSpell(spellToLearn)
-            PlayerRef.AddSpell(spellToLearn)
+            PlayerRef.AddSpell(spellToLearn, showNotification)
             return true
         endIf
     endIf
@@ -1156,7 +1156,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	; if passed bool forceSuccess is true, just succeed
 	if (forceSuccess)
 		Debug.Notification(formatString1(__l("notification_effortless_learn", "{0} came effortlessly to you."), sp.GetName()))
-		forceLearnSpellAt(fifoindex)
+		forceLearnSpellAt(fifoindex, false)
 		iFailuresToLearn = 0
 		return
 	EndIf
@@ -1164,7 +1164,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	; Otherwise, roll to learn the spell
 	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp))) 
 		Debug.Notification(formatString1(__l("notification_learn_spell", "It all makes sense now! Learned {0}."), sp.GetName()))
-		forceLearnSpellAt(fifoindex)
+		forceLearnSpellAt(fifoindex, false)
 		iFailuresToLearn = 0 
 	Else 
 		iFailuresToLearn = iFailuresToLearn + 1
@@ -1325,7 +1325,7 @@ function doLearning()
 		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
 			; ...then automatically learn the spell.
 			Debug.Notification(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()))
-			forceLearnSpellAt(0)
+			forceLearnSpellAt(0, false)
 			iFailuresToLearn = 0
 			alreadyLearnedSpells = alreadyLearnedSpells + 1
 		else ; Otherwise it's supposed to just move the spell to the bottom of the list.
