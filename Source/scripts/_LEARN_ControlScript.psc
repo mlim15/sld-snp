@@ -46,6 +46,9 @@ GlobalVariable property _LEARN_maxNotes auto
 GlobalVariable property _LEARN_maxNotesBonus auto
 String[] effortLabels
 
+_LEARN_enthirChestAlias property enthirChestAlias auto
+_LEARN_tolfdirChestAlias property tolfdirChestAlias auto
+
 Keyword property LocTypeTemple auto
 Location property WinterholdCollegeLocation auto
 Keyword property LocTypePlayerHouse auto
@@ -715,6 +718,10 @@ function SpawnItemsInWorld(); TODO Test.
         addLlToListIfMissing(LootWarlockSpellTomes00All15, LootWarlockRandom, 1, 1)
         addLlToListIfMissing(LootWarlockSpellTomes00All15, LootRandomBanditWizard, 1, 1)
         addLlToListIfMissing(LootWarlockSpellTomes00All15, LootForswornRandomWizard, 1, 1)
+        ; Ensure aliases are pointing at Tolfdir and Enthir's merchant chests to add items to their stores
+        enthirChestAlias.OnInit()
+        ; ForceRefIfEmpty()
+        tolfdirChestAlias.OnInit()
     endIf
 EndFunction
 
@@ -735,14 +742,13 @@ function RemoveItemsFromWorld()
         LitemSpellTomes00Conjuration.Revert()
         ; Attunement tome
         LitemSpellTomes25Alteration.Revert()
-        ; Drugs
+        ; Drugs, spell tomes
         LootWarlockRandom.Revert()
         LootRandomBanditWizard.Revert()
         LootForswornRandomWizard.Revert()
-        ; Add more spell tome spawns to some mage enemies
-        LootWarlockRandom.Revert()
-        LootRandomBanditWizard.Revert()
-        LootForswornRandomWizard.Revert()
+        ; Remove items from enthir and tolfdir's inventories
+        enthirChestAlias.RemoveItems()
+        tolfdirChestAlias.RemoveItems()
 endFunction
 
 function OnInit()
