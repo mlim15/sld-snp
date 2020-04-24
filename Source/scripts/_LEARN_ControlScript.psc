@@ -444,11 +444,11 @@ Spell function spell_list_removeAt(int index)
     return tmp
 endFunction
 
-bool function forceLearnSpellAt(int index, bool showNotification)
+bool function forceLearnSpellAt(int index, bool useVanillaNotification)
     Spell spellToLearn = spell_list_removeAt(index)
     if spellToLearn
         if !PlayerRef.HasSpell(spellToLearn)
-            PlayerRef.AddSpell(spellToLearn, showNotification)
+            PlayerRef.AddSpell(spellToLearn, useVanillaNotification)
             return true
         endIf
     endIf
@@ -1156,7 +1156,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	; if passed bool forceSuccess is true, just succeed
 	if (forceSuccess)
 		Debug.Notification(formatString1(__l("notification_effortless_learn", "{0} came effortlessly to you."), sp.GetName()))
-		forceLearnSpellAt(fifoindex, false)
+		forceLearnSpellAt(fifoindex, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
 		iFailuresToLearn = 0
 		return
 	EndIf
@@ -1164,7 +1164,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	; Otherwise, roll to learn the spell
 	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp))) 
 		Debug.Notification(formatString1(__l("notification_learn_spell", "It all makes sense now! Learned {0}."), sp.GetName()))
-		forceLearnSpellAt(fifoindex, false)
+		forceLearnSpellAt(fifoindex, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
 		iFailuresToLearn = 0 
 	Else 
 		iFailuresToLearn = iFailuresToLearn + 1
@@ -1323,9 +1323,11 @@ function doLearning()
 		sp = spell_fifo_peek()
 		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp, 0))) 
 		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
-			; ...then automatically learn the spell.
-			Debug.Notification(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()))
-			forceLearnSpellAt(0, false)
+            ; ...then automatically learn the spell.
+            if (VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST] == 1)
+                Debug.Notification(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()))
+            endIf
+			forceLearnSpellAt(0, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
 			iFailuresToLearn = 0
 			alreadyLearnedSpells = alreadyLearnedSpells + 1
 		else ; Otherwise it's supposed to just move the spell to the bottom of the list.
