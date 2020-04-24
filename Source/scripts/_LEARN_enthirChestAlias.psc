@@ -2,6 +2,7 @@ ScriptName _LEARN_enthirChestAlias extends ReferenceAlias
 
 _LEARN_ControlScript property ControlScript auto
 GlobalVariable property _LEARN_SpawnItems auto
+GlobalVariable property _LEARN_EnthirSells auto
 ObjectReference property MerchantWCollegeEnthirChest auto
 ;GlobalVariable property GameDaysPassed auto
 
@@ -20,7 +21,7 @@ ObjectReference chest
 
 Event OnInit()
     chest = MerchantWCollegeEnthirChest
-    if (_LEARN_SpawnItems.GetValue() == 1)
+    if (_LEARN_EnthirSells.GetValue() == 1)
         if (chest.GetItemCount(_LEARN_DreadmilkRecipeBook) == 0)
             chest.AddItem(_LEARN_DreadmilkRecipeBook, 1, true)
         endIf
@@ -37,7 +38,7 @@ endEvent
 Event OnUpdateGameTime()
     chest = MerchantWCollegeEnthirChest
     ; Only if SpawnItems setting is enabled
-    if (_LEARN_SpawnItems.GetValue() == 1)
+    if (_LEARN_EnthirSells.GetValue() == 1)
         ; If sold some shadowmilk/dreadmilk, replenish by 1 per day
         if (chest.GetItemCount(_LEARN_Dreadmilk) < 3)
             chest.AddItem(_LEARN_Dreadmilk, 1, true)
@@ -79,7 +80,7 @@ function RemoveItems()
 endFunction
 
 Event OnReset()
-    if (_LEARN_SpawnItems.GetValue() == 1)
+    if (_LEARN_EnthirSells.GetValue() == 1)
         OnInit()
     else
         RemoveItems()

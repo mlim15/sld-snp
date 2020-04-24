@@ -46,6 +46,7 @@ GlobalVariable property _LEARN_maxNotes auto
 GlobalVariable property _LEARN_maxNotesBonus auto
 String[] effortLabels
 
+GlobalVariable property _LEARN_EnthirSells auto
 _LEARN_enthirChestAlias property enthirChestAlias auto
 _LEARN_tolfdirChestAlias property tolfdirChestAlias auto
 
@@ -718,7 +719,10 @@ function SpawnItemsInWorld(); TODO Test.
         addLlToListIfMissing(LootWarlockSpellTomes00All15, LootWarlockRandom, 1, 1)
         addLlToListIfMissing(LootWarlockSpellTomes00All15, LootRandomBanditWizard, 1, 1)
         addLlToListIfMissing(LootWarlockSpellTomes00All15, LootForswornRandomWizard, 1, 1)
-        ; Ensure aliases are pointing at Tolfdir and Enthir's merchant chests to add items to their stores
+    endIf
+    if (_LEARN_EnthirSells.GetValue() == 1)
+        ; Re-run each alias's on init script. It will run its own checks and
+        ; do what needs to be done
         enthirChestAlias.OnInit()
         ; ForceRefIfEmpty()
         tolfdirChestAlias.OnInit()

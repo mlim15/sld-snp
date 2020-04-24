@@ -38,6 +38,7 @@ GlobalVariable property _LEARN_EffortScaling auto
 GlobalVariable property _LEARN_AutoSuccessBypassesLimit auto
 GlobalVariable property _LEARN_TooDifficultEnabled auto
 GlobalVariable property _LEARN_TooDifficultDelta auto
+GlobalVariable property _LEARN_EnthirSells auto
 GlobalVariable property _LEARN_SpawnItems auto
 GlobalVariable property _LEARN_PotionBypass auto
 GlobalVariable property _LEARN_IntervalCDR auto
@@ -105,8 +106,8 @@ int attunementStatusOID
 int studyRequiresNotesOID
 int studyIsRestOID
 int shutUpOID ; unused
-int spawnItemsOID ; unused
-int enthirSellsOID ; unused
+int spawnItemsOID
+int enthirSellsOID
 int removeSpellsOID
 int removePowerOID
 int removeStatusEffectsOID
@@ -213,8 +214,7 @@ Event OnConfigClose()
         ;removeModSpells()
         ControlScript.RemoveItemsFromWorld()
 		disableModEffects() ; You can never be too sure
-		; Then stop the quest. This should automatically remove items from enthir (?)
-		; as well as stop the script from running on sleep.
+		; Then stop the quest. This will de-register all updates on aliases etc and stop script from running on sleep.
 		_LEARN_SpellControlQuest.Stop()
         disableModEffects() ; beat a dead horse
     EndIf
@@ -389,15 +389,15 @@ event OnPageReset(string page)
             AddHeaderOption(__l("mcm_header_item_options", "Item Options"), 0)
 			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
-            ;enthirSellsOID = AddToggleOption(__l("mcm_option_potion_bypass_auto_fail", "Enthir Sells Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE) ; not implemented
             maxNotesBonusOID = AddSliderOption(__l("mcm_option_max_notes_bonus", "Highest Chance Given by Notes"), _LEARN_maxNotesBonus.GetValue(), "{0}%", OPTION_FLAG_NONE)
             maxNotesOID = AddSliderOption(__l("mcm_option_max_notes", "Max Per-School Notes Counted"), _LEARN_maxNotes.GetValue(), __l("mcm_x_g", "{0}g"), OPTION_FLAG_NONE)
+            enthirSellsOID = AddToggleOption(__l("mcm_option_enthir_sells", "College Members Sell Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
+            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
 		SetCursorPosition(1) ; Move cursor to top right position
 		if (isEnabled)
-            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
             AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
 			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
             ;AddEmptyOption()
@@ -876,6 +876,8 @@ event OnOptionSelect(int option)
         SetToggleOptionValue(option, toggleLearnOnSleep(), False)
     ElseIf (Option == discoverOnSleepOID)
         SetToggleOptionValue(option, toggleDiscoverOnSleep(), False)
+    ElseIf (Option == enthirSellsOID)
+        SetToggleOptionValue(option, toggleEnthirSells(), False)
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -975,8 +977,8 @@ Event OnOptionHighlight(int option)
         setInfoText(__l("hint_customLocation", "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell."))
     ElseIf (Option == studyIntervalOID)
         setInfoText(__l("hint_studyInterval", "How many days must pass between learning and discovery attempts. Default is 0.65."))
-	ElseIf (Option == enthirSellsOID) ; unused
-        setInfoText(__l("hint_enthir", "Whether or not Enthir will keep a stock of items related to this mod. Defaults to yes."))
+	ElseIf (Option == enthirSellsOID)
+        setInfoText(__l("hint_enthir", "Whether or not Enthir and Tolfdir will keep a stock of items related to this mod. Defaults to yes."))
 	ElseIf (Option == spawnItemsOID)
         setInfoText(__l("hint_studyInterval", "Whether or not items are added to loot lists, causing them to spawn as loot. Defaults to yes."))
 	ElseIf (Option == tooDifficultDeltaOID)
@@ -1627,6 +1629,15 @@ bool function toggleDiscoverOnSleep()
         return false
     endif
     _LEARN_DiscoverOnSleep.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleEnthirSells()
+    if (_LEARN_EnthirSells.GetValue())
+        _LEARN_EnthirSells.SetValue(0)
+        return false
+    endif
+    _LEARN_EnthirSells.SetValue(1)
     return True
 EndFunction
 
