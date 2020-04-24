@@ -392,7 +392,7 @@ event OnPageReset(string page)
             maxNotesBonusOID = AddSliderOption(__l("mcm_option_max_notes_bonus", "Highest Chance Given by Notes"), _LEARN_maxNotesBonus.GetValue(), "{0}%", OPTION_FLAG_NONE)
             maxNotesOID = AddSliderOption(__l("mcm_option_max_notes", "Max Per-School Notes Counted"), _LEARN_maxNotes.GetValue(), __l("mcm_x_g", "{0}g"), OPTION_FLAG_NONE)
             enthirSellsOID = AddToggleOption(__l("mcm_option_enthir_sells", "College Members Sell Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
-            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
+            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Mod Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf

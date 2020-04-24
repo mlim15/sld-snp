@@ -39,7 +39,7 @@
 		"mcm_option_scaling" :  "Bonus Scaling Type", 
 		"mcm_current_location_none" :  "Undefined", 
 		"mcm_option_set_home" :  "Set Custom Study Location", 
-		"mcm_option_spawn_items_in_world" : "Spawn Items as Loot",
+		"mcm_option_spawn_items_in_world" : "Spawn Mod Items as Loot",
 		"mcm_current_blood_toxicity" :  "Current Bloodstream Toxicity: ", 
 		"mcm_option_potion_toxicity" :  "Potion Toxicity", 
 		"mcm_header_notifications" :  "Notifications", 
