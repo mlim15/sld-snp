@@ -56,7 +56,6 @@ I have basically added all of the features and options that I thought were inter
 
 * I am still planning on trying to implement a "quiet" mode at some point to disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
 * Adding randomized messages instead of the same message every time might also be nice.
-* Replacing the alias used to spawn items in Enthir's inventory with something scriptable/configurable
 
 Known Problems
 ----------
