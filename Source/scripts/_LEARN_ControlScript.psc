@@ -134,6 +134,18 @@ string property SPELL_SCHOOL_RESTORATION = "Restoration" autoReadOnly
 int property NOTIFICATION_REMOVE_BOOK = 0 autoReadOnly
 int property NOTIFICATION_ADD_SPELL_NOTE = 1 autoReadOnly
 int property NOTIFICATION_ADD_SPELL_LIST = 2 autoReadOnly
+int property NOTIFICATION_ADD_SPELL_LIST_FAIL = 3 autoReadOnly
+int property NOTIFICATION_LEARN_SPELL = 4 autoReadOnly
+int property NOTIFICATION_LEARN_FAIL = 5 autoReadOnly
+int property NOTIFICATION_MOVING_ON = 6 autoReadOnly
+int property NOTIFICATION_DISCOVERY = 7 autoReadOnly
+int property NOTIFICATION_DREADMILK = 8 autoReadOnly
+int property NOTIFICATION_DREAM = 9 autoReadOnly
+int property NOTIFICATION_STUDY = 10 autoReadOnly
+int property NOTIFICATION_SPIRIT_TUTOR = 11 autoReadOnly
+int property NOTIFICATION_TOO_SOON = 12 autoReadOnly
+int property NOTIFICATION_ERROR = 13 autoReadOnly
+int property NOTIFICATION_FORCE_DISPLAY = 14 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
@@ -172,13 +184,45 @@ bool function EnableNotification(int id, bool v)
     return v
 endFunction
 
+function notify(String msg, int controlIndex)
+    if (VisibleNotifications[controlIndex])
+        Debug.Notification(msg)
+    endIf
+endFunction
+
 ; === Version and upgrade management
 int function GetVersion()
-    return 174; v 1.7.4
+    return 175; v 1.7.5
 endFunction
 
 function UpgradeVersion()
     bool displayedUpgradeNotice = false
+    if (currentVersion < 175)
+        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.5")
+		if (!displayedUpgradeNotice)
+			; don't display multiple upgrade messages
+			Debug.Notification(msg)
+			displayedUpgradeNotice = true
+		endIf
+        Debug.Trace(msg)
+        ; Change default notification setting to prepare for better notifications
+        VisibleNotifications = new int[15]
+        VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
+        VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 0
+        VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST] = 1
+        VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST_FAIL] = 1
+        VisibleNotifications[NOTIFICATION_LEARN_SPELL] = 1
+        VisibleNotifications[NOTIFICATION_LEARN_FAIL] = 1
+        VisibleNotifications[NOTIFICATION_MOVING_ON] = 1
+        VisibleNotifications[NOTIFICATION_DISCOVERY] = 1
+        VisibleNotifications[NOTIFICATION_DREADMILK] = 1
+        VisibleNotifications[NOTIFICATION_DREAM] = 1
+        VisibleNotifications[NOTIFICATION_SPIRIT_TUTOR] = 1
+        VisibleNotifications[NOTIFICATION_STUDY] = 1
+        VisibleNotifications[NOTIFICATION_TOO_SOON] = 1
+        VisibleNotifications[NOTIFICATION_ERROR] = 1
+        VisibleNotifications[NOTIFICATION_FORCE_DISPLAY] = 1
+    endIf
     if (currentVersion < 174)
 		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.4")
 		if (!displayedUpgradeNotice)
@@ -196,12 +240,6 @@ function UpgradeVersion()
             _LEARN_maxNotes.SetValue(1800)
             _LEARN_maxNotesBonus.SetValue(20)
         endIf  
-        ; Change default notification setting to prepare for better notifications
-        ; Section setting these has been removed from 1.7.2 below
-        VisibleNotifications = new int[3]
-        VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
-        VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 0
-        VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST] = 1
     endIf
 	if (currentVersion < 173)
 		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
@@ -987,7 +1025,6 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
     float fcasts
     float fnotes
     float fChance
-    ; Debug.Notification(magicSchool) 
     fskill = PlayerRef.GetActorValue(magicSchool)
     if magicSchool == SPELL_SCHOOL_ALTERATION
         fcasts = _LEARN_CountAlteration.GetValue()
@@ -1155,7 +1192,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 
 	; if passed bool forceSuccess is true, just succeed
 	if (forceSuccess)
-		Debug.Notification(formatString1(__l("notification_effortless_learn", "{0} came effortlessly to you."), sp.GetName()))
+		notify(formatString1(__l("notification_effortless_learn", "{0} came effortlessly to you."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
 		forceLearnSpellAt(fifoindex, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
 		iFailuresToLearn = 0
 		return
@@ -1163,12 +1200,12 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	
 	; Otherwise, roll to learn the spell
 	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp))) 
-		Debug.Notification(formatString1(__l("notification_learn_spell", "It all makes sense now! Learned {0}."), sp.GetName()))
+		notify(formatString1(__l("notification_learn_spell", "It all makes sense now! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
 		forceLearnSpellAt(fifoindex, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
 		iFailuresToLearn = 0 
 	Else 
 		iFailuresToLearn = iFailuresToLearn + 1
-		Debug.Notification(formatString1(__l("notification_fail_spell", "{0} still makes no sense..."), sp.GetName()))
+        notify(formatString1(__l("notification_fail_spell", "{0} still makes no sense..."), sp.GetName()), NOTIFICATION_LEARN_FAIL)
 	EndIf
 EndFunction
 
@@ -1232,13 +1269,13 @@ bool function debugCheck(Spell sp, int fifoindex)
 	MagicEffect eff
 	; Debug checks - make sure spell and spell effect exists, get spell school
 	if (! sp)
-		Debug.MessageBox(__l("message_spell_learning_bad_reference", "[Spell Learning] Error learning spell, removing entry from list."))
+		notify(__l("message_spell_learning_bad_reference", "[Spell Learning] Error learning spell, removing entry from list."), NOTIFICATION_ERROR)
 		spell_list_removeAt(fifoindex) ; TODO something better to handle spell mod disappearance ?
 		return false
 	endif
 	eff = sp.GetNthEffectMagicEffect(0)
 	if (!eff)
-		Debug.Notification(__l("notification_unknown_spell", "[Spell Learning] Unknown spell in learning list - other spell mod removed?"))
+		notify(__l("notification_unknown_spell", "[Spell Learning] Unknown spell in learning list - other spell mod removed?"), NOTIFICATION_ERROR)
 		return false
 	else
 		return true
@@ -1324,8 +1361,8 @@ function doLearning()
 		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp, 0))) 
 		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
             ; ...then automatically learn the spell.
-            if (VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST] == 1)
-                Debug.Notification(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()))
+            if (VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST])
+                notify(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
             endIf
 			forceLearnSpellAt(0, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
 			iFailuresToLearn = 0
@@ -1333,7 +1370,7 @@ function doLearning()
 		else ; Otherwise it's supposed to just move the spell to the bottom of the list.
 			MoveSpellToBottom(0)
 			iFailuresToLearn = 0
-			Debug.Notification(formatString1(__l("notification_moving_on", "Not making any progress on {0}... trying other spells."), sp.GetName()))
+            notify(formatString1(__l("notification_moving_on", "Not making any progress on {0}... trying other spells."), sp.GetName()), NOTIFICATION_MOVING_ON)
 		endIf
 	endIf
 	
@@ -1370,7 +1407,7 @@ function doLearning()
 				sp = spell_fifo_peek(currentSpell)
 				if(cannotLearn(sp, currentSpell) && _LEARN_TooDifficultEnabled.GetValue() == 1)
 					MoveSpellToBottom(currentSpell)
-					Debug.Notification(formatString1(__l("notification_impossible_spell", "{0} is too difficult. Trying other spells first."), sp.GetName()))
+					notify(formatString1(__l("notification_impossible_spell", "{0} is too difficult. Trying other spells first."), sp.GetName()), NOTIFICATION_MOVING_ON)
 					insideCount = insideCount + 1
 					; test to see if we've iterated through the whole list, meaning all spells are too hard.
 					if ((currentSpell+insideCount) >= spell_fifo_get_count())
@@ -1433,7 +1470,7 @@ Spell function doDiscovery()
     Spell inventedsp = inventedbook.getspell()
     
     if inventedsp == None
-        Debug.Notification(__l("notification_spell_invention_bug", "ERROR: A spell tome in your game has no spell associated with it."))
+        notify(__l("notification_spell_invention_bug", "[Spell Learning] Error: A spell tome in your game has no linked spell."), NOTIFICATION_ERROR)
         ; Reset discovery timer
         LastDiscoverTime = GameDaysPassed.GetValue()
         return None
@@ -1447,7 +1484,7 @@ Spell function doDiscovery()
     EndWhile
     
     if (inventedsp && (! (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp))))
-        Debug.Notification(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you: {0}!"), inventedsp.GetName()))
+        notify(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you: {0}!"), inventedsp.GetName()), NOTIFICATION_DISCOVERY)
         spell_fifo_push(inventedsp)
         Bookextension.setreadWFB(inventedbook, true)
     EndIf
@@ -1461,13 +1498,13 @@ function doDream()
     float fRand = 1
     fRand = Utility.RandomFloat(0.0, 1.0)
     if (fRand < 0.01)
-        Debug.Notification(__l("notification_dreamt_Julianos", "You dreamt that Julianos was watching over you."))
+        notify(__l("notification_dreamt_Julianos", "You dreamt that Julianos was watching over you."), NOTIFICATION_DREAM)
         _LEARN_CountBonus.SetValue(100)
     ElseIf (fRand < 0.02)
-        Debug.Notification(__l("notification_dreamt_flying", "You dreamt that you were flying over Solstheim."))
+        notify(__l("notification_dreamt_flying", "You dreamt that you were flying over Solstheim."), NOTIFICATION_DREAM)
         _LEARN_CountBonus.SetValue(30)
     ElseIf (fRand < 0.03)
-        Debug.Notification(__l("notification_dreamt_exam", "You had a nightmare about being lost forever in a plane of Oblivion."))
+        notify(__l("notification_dreamt_exam", "You had a nightmare about being lost forever in a plane of Oblivion."), NOTIFICATION_DREAM)
         _LEARN_CountBonus.SetValue(-40)
     endif
 endFunction
@@ -1497,7 +1534,7 @@ Event OnSleepStop(Bool abInterrupted)
 	; Test conditions for doing absolutely nothing
     if (abInterrupted)
         ; If sleep was interrupted. 
-        Debug.Notification(__l("notification_sleep_interrupted", "Your sleep was interrupted."))
+        notify(__l("notification_sleep_interrupted", "Your sleep was interrupted."), NOTIFICATION_FORCE_DISPLAY)
         return
     endIf
 
@@ -1508,7 +1545,7 @@ Event OnSleepStop(Bool abInterrupted)
         doLearning()
     elseIf (_LEARN_LearnOnSleep.GetValue() == 1 && hours_before_next_ok_to_learn() > 0)
         ; This is really the only mandatory "nothing happened" style notification so most other things have been removed
-        Debug.Notification(__l("notification_slept_too_soon", "Your mind isn't settled enough yet to learn any spells..."))
+        notify(__l("notification_slept_too_soon", "Your mind isn't settled enough yet to learn any spells..."), NOTIFICATION_TOO_SOON)
     endIf
     if (_LEARN_DiscoverOnSleep.GetValue() == 1 && hours_before_next_ok_to_discover() <= 0)
         doDiscovery()
@@ -1522,7 +1559,7 @@ Event OnSleepStop(Bool abInterrupted)
             float fRand = 0
             fRand = Utility.RandomFloat(0.0, 1.0)
             if (fRand > (0.2 - 0.1*_LEARN_consecutiveDreadmilk.GetValue()))
-                Debug.Notification(__l("notification_no_more_dreadmilk_addiction", "You're finally starting to feel your dreadmilk craving wane."))
+                notify(__l("notification_no_more_dreadmilk_addiction", "You're finally starting to feel your dreadmilk craving wane."), NOTIFICATION_DREADMILK)
                 PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
             endif
         endif
@@ -1532,7 +1569,7 @@ Event OnSleepStop(Bool abInterrupted)
             _LEARN_consecutiveDreadmilk.Mod(-1)
             if (_LEARN_consecutiveDreadmilk.GetValue() <= 0 && !PlayerRef.HasMagicEffect(AlchDreadmilkEffect))
                 _LEARN_consecutiveDreadmilk.SetValue(0)
-                Debug.Notification(__l("notification_dreadmilk_out_of_system", "All the Dreadmilk is finally out of your system..."))
+                notify(__l("notification_dreadmilk_out_of_system", "All the Dreadmilk is finally out of your system..."), NOTIFICATION_DREADMILK)
                 if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
                     PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
                 endIf

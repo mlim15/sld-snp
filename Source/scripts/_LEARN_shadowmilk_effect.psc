@@ -27,7 +27,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
     if (_LEARN_ConsecutiveDreadmilk.GetValue() > 5)
         fRand = Utility.RandomFloat(0, 1.0)
         if ((fRand / 4) < ((_LEARN_DreadstareLethality.GetValue() / 100) + (_LEARN_ConsecutiveDreadmilk.GetValue() / 40)))
-            Debug.Notification(__l("notification_dreadmilk_overdosed", "You have overdosed."))
+            ControlScript.notify(__l("notification_dreadmilk_overdosed", "You have overdosed."), ControlScript.NOTIFICATION_DREADMILK)
 			overdose = true
 			ShadowmilkOverdose.Cast(PlayerRef, PlayerRef)
         endif
@@ -40,7 +40,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 
 	; Tell player it won't stave off dreadstare if it's the first one they drank with the effect
     if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && !overdose && !PlayerRef.HasMagicEffect(AlchShadowmilkEffect))
-        Debug.Notification(__l("notification_dreadmilk_feels_bad_man", "You feel a little better, but it's not enough..."))
+        ControlScript.notify(__l("notification_dreadmilk_feels_bad_man", "You feel a little better, but it's not enough..."), ControlScript.NOTIFICATION_DREADMILK)
     endif
 	
 	; Increase blood toxicity if it's above 0.5 (i.e. dreadmilk has been used)

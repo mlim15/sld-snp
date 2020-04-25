@@ -29,7 +29,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 
 	; Check this configurable option separately, it's independent of other conditions
 	if (_LEARN_StudyRequiresNotes.GetValue() == 1 && ControlScript.getTotalNotes() == 0)
-		Debug.Notification(__l("notification_study_no_notes", "You can't study without any notes..."))
+		ControlScript.notify(__l("notification_study_no_notes", "You can't study without any notes..."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	endIf
 
@@ -42,34 +42,34 @@ Event OnEffectStart(Actor Target, Actor Caster)
 	; Check other conditions to not play animation or do anything at all.
 	if (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 1 && _LEARN_DiscoverOnStudy.GetValue() == 0 && ControlScript.spell_fifo_get_count() == 0)
 		; If Learning is on, discovery is off, but there's no spells on the list, don't waste the cooldown.
-		Debug.Notification(__l("notification_study_no_spells", "You don't have any spell ideas to research right now."))
+		ControlScript.notify(__l("notification_study_no_spells", "You don't have any spell ideas to research right now."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 1 && _LEARN_DiscoverOnStudy.GetValue() == 1 && ControlScript.hours_before_next_ok_to_learn() > 0 && ControlScript.hours_before_next_ok_to_discover() > 0)
 		; If learning and discovery is on but they're both on cooldown
 		; If it's possible to do either one we want the animation to play
-		Debug.Notification(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."))
+		ControlScript.notify(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 1 && ControlScript.hours_before_next_ok_to_learn() > 0)
 		; If just discovery is on but it's on cooldown
-		Debug.Notification(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."))
+		ControlScript.notify(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_DiscoverOnStudy.GetValue() == 1 && ControlScript.hours_before_next_ok_to_discover() > 0)
 		; If just learning is on but it's on cooldown
-		Debug.Notification(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."))
+		ControlScript.notify(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf 	(_LEARN_StudyIsRest.GetValue() == 0 && _LEARN_LastDayStudied.GetValue() == 1)
 		; If studyIsRest is off, then it's providing the once per cycle bonus. We just need to
 		; check if the player already got that bonus.
-		Debug.Notification(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."))
+		ControlScript.notify(__l("notification_studied_too_soon", "Your mind isn't yet settled enough to do more research."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf (PlayerRef.IsInCombat())
-		Debug.Notification(__l("notification_study_in_combat", "You can't study in combat!"))
+		ControlScript.notify(__l("notification_study_in_combat", "You can't study in combat!"), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf (PlayerRef.IsTrespassing())
-		Debug.Notification(__l("notification_study_trespassing", "You'll surely be discovered if you stop to study here!"))
+		ControlScript.notify(__l("notification_study_trespassing", "You'll surely be discovered if you stop to study here!"), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	elseIf (PlayerRef.IsSwimming())
-		Debug.Notification(__l("notification_study_swimming", "You'll ruin your notes if you try to study here!"))
+		ControlScript.notify(__l("notification_study_swimming", "You'll ruin your notes if you try to study here!"), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
 	endIf
 
@@ -105,7 +105,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		if (_LEARN_LearnOnStudy.GetValue() == 1 && ControlScript.hours_before_next_ok_to_learn() <= 0)
 			ControlScript.doLearning()
 		elseIf (_LEARN_LearnOnStudy.GetValue() == 1 && ControlScript.hours_before_next_ok_to_learn() > 0)
-			Debug.Notification(__l("notification_studied_no_learn", "You couldn't make any progress on your spell list."))
+			ControlScript.notify(__l("notification_studied_no_learn", "You couldn't make any progress on your spell list."), ControlScript.NOTIFICATION_TOO_SOON)
 		endIf
 		if (_LEARN_DiscoverOnStudy.GetValue() == 1 && ControlScript.hours_before_next_ok_to_discover() <= 0)
 			ControlScript.doDiscovery()
@@ -115,7 +115,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		; This is for no learning/no discovery - a once-per-cycle bonus to chance is added instead
 		_LEARN_CountBonus.Mod(ControlScript.getNotesBonus(ControlScript.getTotalNotes(), false))
 		_LEARN_LastDayStudied.SetValue(1)
-		Debug.Notification(__l("notification_study_progress", "You feel you've made some progress."))
+		ControlScript.notify(__l("notification_study_progress", "You feel you've made some progress."), ControlScript.NOTIFICATION_STUDY)
 	endIf
 	
 endEvent

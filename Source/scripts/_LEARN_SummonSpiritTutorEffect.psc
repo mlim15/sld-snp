@@ -1,7 +1,7 @@
 Scriptname _LEARN_SummonSpiritTutorEffect extends ActiveMagicEffect  
 
 _LEARN_ControlScript property ControlScript  auto
-;GlobalVariable property GameHour auto
+GlobalVariable property GameHour auto
 GlobalVariable property GameDaysPassed auto
 Actor property PlayerRef auto
 GlobalVariable property _LEARN_CountBonus auto
@@ -27,13 +27,16 @@ endFunction
 
 Event OnEffectStart(Actor Target, Actor Caster)
 
-    ; This debug message will never appear anyway because the spell has a built-in condition with the time,
-    ; and if it fails that condition, the spell is never cast so this script doesn't ever start.
-    ;Int Std = math.Floor(GameHour.GetValue())
-    ;if ! (Std <= 3 || Std == 23)
-    ;    Debug.Notification(__l("notification_spirit_summon only at midnight", "The ritual only has effect around midnight..."))
-    ;    Return
-    ;EndIf
+    Int Std = math.Floor(GameHour.GetValue())
+    if !(Std <= 3)
+        ControlScript.notify(__l("notification_spirit_summon only at midnight", "The tutor's dark knowledge can only be shared at midnight..."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
+        Return
+	EndIf
+	
+	if (_LEARN_AlreadyUsedTutor.GetValue() == 1)
+		ControlScript.notify(__l("notification_spirit_summon_already", "The tutor's dark knowledge cannot be understood again so soon..."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
+        Return
+	endIf
 
     int instanceID = IntroSoundFX.play((target as objectReference))
     introFX.apply()
@@ -55,7 +58,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 
     Utility.waitmenumode(5)
     _LEARN_CountBonus.Mod(100) ; same bonus as shadowmilk
-    debug.notification(__l("notification_spirit_glimpsed", "The dark whispers give a glimpse of the unfathomable..."))
+    ControlScript.notify(__l("notification_spirit_glimpsed", "The dark whispers give a glimpse of the unfathomable..."), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
     
     game.EnablePlayerControls()
 	
@@ -66,25 +69,25 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		; 5% chance to become addicted to Dreadmilk
 		if (!PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
 			PlayerRef.AddSpell(_LEARN_DiseaseDreadmilk)
-			Debug.Notification(__l("notification_spirit_need_more_sudden", "You suddenly feel an excruciating yearning for Dreadmilk..."))
+			ControlScript.notify(__l("notification_spirit_need_more_sudden", "You suddenly feel an excruciating yearning for Dreadmilk..."), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
 		endIf
 		_LEARN_ConsecutiveDreadmilk.Mod(2)
 	elseIf (fRand > 0.9)
 		; forget the last spell on your list
 		ControlScript.spell_fifo_remove_last()
-		Debug.Notification(__l("notification_spirit_forgot_spell", "You've forgotten something... but what?"))
+		ControlScript.notify(__l("notification_spirit_forgot_spell", "You've forgotten something... but what?"), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
 	elseIf (fRand > 0.8)
 		; lose gold
 		PlayerRef.RemoveItem(Game.getform(0xF), 500)
-		Debug.Notification(__l("notification_spirit_lost_money", "Your pockets suddenly feel lighter."))
+		ControlScript.notify(__l("notification_spirit_lost_money", "Your pockets suddenly feel lighter."), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
 	elseIf (fRand > 0.6)
 		; reduce max destro and resto for 1 in-game day
 		_LEARN_TutorPriceSp.Cast(PlayerRef, PlayerRef)
-		Debug.Notification(__l("notification_spirit_drained", "You suddenly feel very drained..."))
+		ControlScript.notify(__l("notification_spirit_drained", "You suddenly feel very drained..."), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
 	elseIf (fRand > 0.4)
 		; reduce max health and magicka for 1 in-game day
 		_LEARN_TutorPriceSp2.Cast(PlayerRef, PlayerRef)
-		Debug.Notification(__l("notification_spirit_weaker", "You suddenly feel very tired..."))
+		ControlScript.notify(__l("notification_spirit_weaker", "You suddenly feel very tired..."), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
 	endIf
 
 	; Prevent using tutor again until next spell learn attempt

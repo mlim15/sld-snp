@@ -26,7 +26,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
     if (_LEARN_ConsecutiveDreadmilk.GetValue() > 0)
         fRand = Utility.RandomFloat(0, 1.0)
         if (fRand < (_LEARN_DreadstareLethality.getValue() / 100) + (_LEARN_ConsecutiveDreadmilk.GetValue()/10))
-            Debug.Notification(__l("dreadmilk_overdosed", "You have overdosed."))
+            ControlScript.notify(__l("dreadmilk_overdosed", "You have overdosed."), ControlScript.NOTIFICATION_DREADMILK)
 			overdose = true
 			DreadmilkOverdose.Cast(PlayerRef, PlayerRef)
         endif
@@ -35,7 +35,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 	; Immediate relief of withdrawal symptoms if you're not dying
     if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && !overdose)
         PlayerRef.RemoveSpell(_LEARN_DiseaseDreadmilk)
-        Debug.Notification(__l("dreadmilk_feels good", "Your withdrawal symptoms are relieved - for now..."))
+        ControlScript.notify(__l("dreadmilk_feels good", "Your withdrawal symptoms are relieved - for now..."), ControlScript.NOTIFICATION_DREADMILK)
     endif
 	
 	; Increase blood toxicity
@@ -54,7 +54,7 @@ Event OnEffectFinish(Actor Target, Actor Caster)
 	; Addiction will always return if it has been used while blood is toxic.
 	; Otherwise there is a 50% chance to get addicted.
 	if ((!PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk) && (!PlayerRef.HasMagicEffect(AlchDreadmilkEffect) && (fRand > 0.5))) || (_LEARN_ConsecutiveDreadmilk.GetValue() > 0 && (!PlayerRef.HasMagicEffect(AlchDreadmilkEffect))))
-		Debug.Notification(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."))
+		ControlScript.notify(__l("dreadmilk_need more", "You feel an excruciating yearning for more Dreadmilk..."), ControlScript.NOTIFICATION_DREADMILK)
 		PlayerRef.AddSpell(_LEARN_DiseaseDreadmilk)
 	endif
 	

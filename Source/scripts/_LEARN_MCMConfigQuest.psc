@@ -66,6 +66,8 @@ Spell property _LEARN_SetHomeSp auto
 MagicEffect Property AlchDreadmilkEffect auto
 MagicEffect Property AlchShadowmilkEffect auto
 MagicEffect property _LEARN_ShadowmilkHangover auto
+_LEARN_enthirChestAlias property enthirChestAlias auto
+_LEARN_tolfdirChestAlias property tolfdirChestAlias auto
 
 ;OID is OptionID (for posterity)
 int minChanceStudyOID
@@ -153,14 +155,15 @@ endEvent
 
 ; === Tab Definitions
 function InternalPrepare()
-    if (!Pages || Pages.Length < 4)
-        Pages = new string[4]
+    if (!Pages || Pages.Length < 5)
+        Pages = new string[5]
     endIf
     _useLocalizationLib = ControlScript.CanUseLocalizationLib
     Pages[0] = __l("mcm_tab_status", "Current Status")
     Pages[1] = __l("mcm_tab_learning","Learning and Discovery")
 	Pages[2] = __l("mcm_tab_spell_list", "Manage Spell List")
-	Pages[3] = __l("mcm_tab_miscellaneous", "Miscellaneous")
+    Pages[3] = __l("mcm_tab_miscellaneous", "Items and Functionality")
+    Pages[4] = __l("mcm_tab_notifications", "Notifications")
 endFunction
 
 event OnGameReload()
@@ -310,9 +313,8 @@ event OnPageReset(string page)
 			fissImportOID = AddTextOption(__l("mcm_option_import", "Import from FISS"), __l("mcm_import_fiss", "Click"), OPTION_FLAG_NONE)
         endIf
     elseIf (page == Pages[1])
-        SetCursorFillMode(TOP_TO_BOTTOM) ;starts are 0
+        SetCursorFillMode(TOP_TO_BOTTOM)
         if (isEnabled)
-            ; _LEARN_StudyInterval.GetValue(), __l("mcm_x_day(s)", "{2} Day(s)")
             StudyIntervalOID = AddSliderOption(__l("mcm_option_sleep_interval", "Days Between Chances"), _LEARN_StudyInterval.GetValue(), "{2}", OPTION_FLAG_NONE)
             AddHeaderOption(__l("mcm_header_spell_learning_options", "Spell Learning Options"), 0)
 			minChanceStudyOID = AddSliderOption(__l("mcm_option_min_learn_chance", "Min Learn Chance"), _LEARN_MinChanceStudy.GetValue(), "{0}%", OPTION_FLAG_NONE)
@@ -372,7 +374,7 @@ event OnPageReset(string page)
     elseIf (page == Pages[2])
         CreatePageSpellList()
 	elseIf(page == Pages[3])
-		SetCursorFillMode(TOP_TO_BOTTOM) ;starts are 0
+		SetCursorFillMode(TOP_TO_BOTTOM)
 		if (isEnabled)
             AddHeaderOption(__l("mcm_header_study_options", "Sleeping and Studying Options"), 0)
             learnOnSleepOID = AddToggleOption(__l("mcm_option_learn_on_sleep", "Learn when Sleeping"), _LEARN_LearnOnSleep.GetValue(), OPTION_FLAG_NONE)
@@ -391,28 +393,52 @@ event OnPageReset(string page)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
             maxNotesBonusOID = AddSliderOption(__l("mcm_option_max_notes_bonus", "Highest Chance Given by Notes"), _LEARN_maxNotesBonus.GetValue(), "{0}%", OPTION_FLAG_NONE)
             maxNotesOID = AddSliderOption(__l("mcm_option_max_notes", "Max Per-School Notes Counted"), _LEARN_maxNotes.GetValue(), __l("mcm_x_g", "{0}g"), OPTION_FLAG_NONE)
-            enthirSellsOID = AddToggleOption(__l("mcm_option_enthir_sells", "College Members Sell Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
-            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Mod Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
+
 		else
 			AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
 		endIf
 		SetCursorPosition(1) ; Move cursor to top right position
-		if (isEnabled)
+        if (isEnabled)
+            AddHeaderOption(__l("mcm_header_spawn_options", "Spawning Options"), 0)
+            enthirSellsOID = AddToggleOption(__l("mcm_option_enthir_sells", "College Members Sell Mod Items"), _LEARN_EnthirSells.GetValue(), OPTION_FLAG_NONE)
+            spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Mod Items as Loot"), _LEARN_SpawnItems.GetValue(), OPTION_FLAG_NONE)
             AddHeaderOption(__l("mcm_header_drug_options", "Nootropic Alchemy Options"), 0)
 			dreadstareLethalityOID = AddSliderOption(__l("mcm_option_potion_toxicity", "Potion Toxicity"), _LEARN_DreadstareLethality.GetValue(), "{0}%", OPTION_FLAG_NONE)
-            ;AddEmptyOption()
-            AddHeaderOption(__l("mcm_header_notifications", "Notifications"))
-			AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "Vanilla Book Removal Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
-            AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "Vanilla Notes Added Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
-            AddToggleOptionST("ShowAddSpellListNotification", __l("mcm_notification_add_spell_list", "When (not) Adding Spell to List"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST]) 
-            ;AddToggleOptionST("QuietMode", __l("mcm_shut_up_notifications", "Quiet Mode"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATIONS_ALL]) ; not implemented
+            AddEmptyOption()
 			AddHeaderOption(__l("mcm_header_add_remove_effects", "Add / Remove Spells and Effects"))
 			removeSpellsOID = AddTextOption(__l("mcm_remove_spells", "CLICK: Remove all SLD mod spells"), "", OPTION_FLAG_NONE)
 			removePowerOID = AddTextOption(__l("mcm_remove_power", "CLICK: Remove 'Study' ability"), "", OPTION_FLAG_NONE)
 			removeStatusEffectsOID = AddTextOption(__l("mcm_purge_effects", "CLICK: Remove status effects"), "", OPTION_FLAG_NONE)
 			addPowerOID = AddTextOption(__l("mcm_add_power", "CLICK: Add 'Study' ability"), "", OPTION_FLAG_NONE)
-			addStatusTrackerOID = AddTextOption(__l("mcm_add_tracker", "CLICK: Add tracking status effect"), "", OPTION_FLAG_NONE)
-		endIf
+            addStatusTrackerOID = AddTextOption(__l("mcm_add_tracker", "CLICK: Add tracking status effect"), "", OPTION_FLAG_NONE)
+        endIf
+    elseIf(page == Pages[4])
+        SetCursorFillMode(TOP_TO_BOTTOM)
+        if (isEnabled)
+            AddHeaderOption(__l("mcm_header_item_spell_notifications", "Item and Spell Notifications"))
+            AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "Vanilla Book Removal Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
+            AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "Vanilla Notes Added Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
+            AddEmptyOption()
+            AddToggleOptionST("ShowAddSpellListNotification", __l("mcm_notification_add_spell_list", "Adding Spell to List"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST]) 
+            AddToggleOptionST("ShowFailAddSpellListNotification", __l("mcm_notification_add_spell_fail", "Already Knew Spell"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST_FAIL])
+            AddToggleOptionST("ShowLearnSpellNotification", __l("mcm_notification_learn", "Learned Spell"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_LEARN_SPELL])
+            AddToggleOptionST("ShowFailLearnSpellNotification", __l("mcm_notification_learn_fail", "Failed to Learn Spell"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_LEARN_FAIL])
+            AddToggleOptionST("ShowDiscoverNotification", __l("mcm_notification_discover", "Discovered Spell"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_DISCOVERY])
+            AddToggleOptionST("ShowSkipNotification", __l("mcm_notification_skip", "Skipping Spell"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_MOVING_ON])
+            AddToggleOptionST("ShowTooSoonNotification", __l("mcm_notification_too_soon", "Too Soon to Learn"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_TOO_SOON])
+        else
+            AddTextOption(__l("mcm_current_disabled", "Mod is disabled."), "", OPTION_FLAG_NONE)
+        endIf
+        SetCursorPosition(1) ; Move cursor to top right position
+        if (isEnabled)
+            AddHeaderOption(__l("mcm_header_effect_notifications", "Effect Notifications"))
+            AddToggleOptionST("ShowDreamNotification", __l("mcm_notification_dream", "Dream Effects"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_DREAM])
+            AddToggleOptionST("ShowStudyNotification", __l("mcm_notification_study", "Post-Study Effects"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_STUDY])
+            AddToggleOptionST("ShowDreadmilkNotification", __l("mcm_notification_dreadmilk", "Nootropic-Related Effects"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_DREADMILK])
+            AddToggleOptionST("ShowTutorNotification", __l("mcm_notification_tutor", "Post-Tutor Effects"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_SPIRIT_TUTOR])
+            AddEmptyOption()
+            AddToggleOptionST("ShowErrorNotification", __l("mcm_notification_error", "Error Messages"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ERROR])
+        endIf
 	endIf
 endEvent
 
@@ -837,6 +863,8 @@ event OnOptionSelect(int option)
         if (_LEARN_SpawnItems.GetValue() == 0)
             ControlScript.RemoveItemsFromWorld()
             Debug.MessageBox(__l("mcm_message_removed_items_reload", "Done removing items from lists. Please save and reload. If you don't, any other scripts that have altered these lists won't have their changes registered until you do so."))
+        Else
+            ControlScript.SpawnItemsInWorld()
         endIf
 	ElseIf (Option == potionBypassOID)
 		SetToggleOptionValue(option, togglePotionBypass(), False)
@@ -855,9 +883,6 @@ event OnOptionSelect(int option)
         forcepagereset()
 	ElseIf (Option == studyRequiresNotesOID)
 		SetToggleOptionValue(option, toggleStudyRequiresNotes(), False)
-	; FOR DEBUGGING ONLY COMMENT THIS OUT WHEN RELEASING
-	;ElseIf (Option == infoStudyOID)
-	;	addModSpells()
 	ElseIf (Option == removeSpellsOID)
 		removeModSpells()
 	ElseIf (Option == removePowerOID)
@@ -878,6 +903,8 @@ event OnOptionSelect(int option)
         SetToggleOptionValue(option, toggleDiscoverOnSleep(), False)
     ElseIf (Option == enthirSellsOID)
         SetToggleOptionValue(option, toggleEnthirSells(), False)
+        enthirChestAlias.OnReset()
+        tolfdirChestAlias.OnReset()
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -1451,20 +1478,6 @@ state ShowRemoveBookNotification
 	endEvent    
 endState
 
-state ShowAddSpellListNotification
-	event OnSelectST()
-		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST))
-	endEvent
-
-	event OnDefaultST()
-		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST, true))
-	endEvent
-
-    event OnHighlightST()
-        SetInfoText(__l("hint_notification_add_spell", "Custom notifications when the mod adds a new spell to the list, deconstructs a tome, et cetera. Will include information about note addition if vanilla notification is off. Enabled by default."))
-	endEvent    
-endState
-
 state ShowAddSpellNoteNotification
 	event OnSelectST()
 		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ADD_SPELL_NOTE))
@@ -1475,7 +1488,175 @@ state ShowAddSpellNoteNotification
 	endEvent
 
     event OnHighlightST()
-        SetInfoText(__l("hint_notification_add_note", "Vanilla item add notification when adding notes to inventory. Defaults to off."))
+        SetInfoText(__l("hint_notification_add_note", "Vanilla item add notification when adding notes to inventory. Disabled by default."))
+	endEvent    
+endState
+
+state ShowAddSpellListNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_add_spell", "Notifications when a new spell is added to the list by deconstructing a tome. Includes information about note addition if vanilla notification is off. Defaults to on."))
+	endEvent    
+endState
+
+state ShowFailAddSpellListNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST_FAIL))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ADD_SPELL_LIST_FAIL, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_add_spell_fail", "Notifications when a spell cannot be added to the research list because you already know it or are already studying it. When enabled, includes information about note addition if the vanilla notification is off. Defaults to on."))
+    endEvent    
+endState
+
+state ShowLearnSpellNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_LEARN_SPELL))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_LEARN_SPELL, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_learn", "Notifications when your character successfully learns a spell. Defaults to on."))
+	endEvent    
+endState
+
+state ShowFailLearnSpellNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_LEARN_FAIL))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_LEARN_FAIL, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_learn_fail", "Notifications when your character fails at learning a spell. Defaults to on."))
+	endEvent    
+endState
+
+state ShowDiscoverNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_DISCOVERY))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_DISCOVERY, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_discover", "Notifications when a new spell has been added to your list via the discovery system. Defaults to on."))
+	endEvent    
+endState
+
+state ShowSkipNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_MOVING_ON))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_MOVING_ON, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_moving_on", "Notifications when your character skips a spell due to impossibility or reaching the maximum amount of failures. Defaults to on."))
+	endEvent    
+endState
+
+state ShowTooSoonNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_TOO_SOON))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_TOO_SOON, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_too_soon", "Notifications when you performed an action (e.g. sleeping or studying) too soon and couldn't use it to learn or discover new spells. Defaults to on."))
+	endEvent    
+endState
+
+state ShowDreamNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_DREAM))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_DREAM, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_dream", "Notifications if you have a dream when sleeping. Defaults to on. Turning off the notifications will not turn off the system."))
+	endEvent    
+endState
+
+state ShowStudyNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_STUDY))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_STUDY, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_study", "Post-study notification. Note that this does not affect spell learning or discovery notifications. Defaults to on."))
+	endEvent    
+endState
+
+state ShowDreadmilkNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_DREADMILK))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_DREADMILK, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_dreadmilk", "Notifications regarding Dreadmilk, Shadowmilk, addiction, your blood toxicity, or overdose. Defaults to on."))
+	endEvent    
+endState
+
+state ShowTutorNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_SPIRIT_TUTOR))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_SPIRIT_TUTOR, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_tutor", "Notifications hinting at the effects of the Daedric Tutor spell. Defaults to on."))
+	endEvent    
+endState
+
+state ShowErrorNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_ERROR))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_ERROR, true))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_error", "Error messages. You shouldn't ever see these unless mods are misbehaving or have been removed. Defaults to on."))
 	endEvent    
 endState
 

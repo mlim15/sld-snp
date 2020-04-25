@@ -32,7 +32,7 @@ Event OnInit()
             chest.AddItem(_LEARN_SpellTomeSummonSpiritTutor, 1, true)
         endIf
     endIf
-    OnUpdateGameTime()
+    RegisterForSingleUpdateGameTime(1) ; If calling immediately, can be exploited by repeated saving and reloading
 endEvent
 
 Event OnUpdateGameTime()
