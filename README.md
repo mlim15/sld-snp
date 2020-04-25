@@ -48,9 +48,3 @@ Installation
 As usual, you can install the mod by adding the zip file from [GitHub's Releases page](https://github.com/mlim15/Skyrim_Spell_Learning/releases) to Mod Organizer or whatever tool you prefer. Alternatively, drag its contents to your Data folder.
 
 Once you get in-game, the mod will set itself up without your intervention. Note that the mod only removes spellbooks when they enter your inventory. This means you can still read books that you already had in your inventory before you installed the mod to instantly learn the spells, as in vanilla. If you want to learn those spells with the mod instead, just drop the books on the floor and pick them up. Then the mod will process them according to your configuration.
-
-Known Problems
-----------
-
-* For some reason, it can sometimes literally take several minutes of real time for the MCM menu to be registered. I don't know why this happens but the mod is still functional while the menu is inaccessible. Just be aware.
-* The way Skyrim handles picking up books seems to mean that if you drop a stack of them on the floor, picking up that stack only adds one copy to your inventory. As a result, dropping notes on the floor and picking them up will result in you losing all but one of the notes you dropped. So don't drop your notes on the ground.
