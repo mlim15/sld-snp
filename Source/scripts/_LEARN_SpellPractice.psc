@@ -101,38 +101,32 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
 		endIf
 	endIf
     
-    ; Notify player if they already knew the spell if vanilla notifications are off
-    if (!cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
-        if (cs.spell_fifo_has_ref(sp))
-            if (_LEARN_CollectNotes.GetValue())
-                cs.notify(__fs2(__l("notification_spell_not_added_studying_notes", "Already studying {0}. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
-            else
-                cs.notify(__fs1(__l("notification_spell_not_added_studying", "Already studying {0}."), sp.GetName()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
-            endIf
+    ; Notify with additional note information if vanilla note notifications are off
+    if (cs.spell_fifo_has_ref(sp))
+        if ((_LEARN_CollectNotes.GetValue()) && !(cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE]))
+            cs.notify(__fs2(__l("notification_spell_not_added_studying_notes", "Already studying {0}. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
+        else
+            cs.notify(__fs1(__l("notification_spell_not_added_studying", "Already studying {0}."), sp.GetName()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
         endIf
     endIf
 
-    ; Notify player if they already knew the spell if vanilla notifications are off
-    if (!cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
-        if (PlayerRef.HasSpell(sp))
-            if (_LEARN_CollectNotes.GetValue())
-                cs.notify(__fs2(__l("notification_spell_not_added_notes", "Already knew {0}. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
-            else
-                cs.notify(__fs1(__l("notification_spell_not_added", "Already knew {0}."), sp.GetName()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
-            endIf
+    ; Notify with additional note information if vanilla note notifications are off
+    if (PlayerRef.HasSpell(sp))
+        if ((_LEARN_CollectNotes.GetValue()) && !(cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE]))
+            cs.notify(__fs2(__l("notification_spell_not_added_notes", "Already knew {0}. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
+        else
+            cs.notify(__fs1(__l("notification_spell_not_added", "Already knew {0}."), sp.GetName()), cs.NOTIFICATION_ADD_SPELL_LIST_FAIL)
         endIf
     endIf
 
     ; add spell to the todo list if not already known or in list
 	if (!PlayerRef.HasSpell(sp) && !cs.spell_fifo_has_ref(sp))
         cs.spell_fifo_push(sp)
-        ; Notify if vanilla notifications are off
-        if (!cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE])
-            if (_LEARN_CollectNotes.GetValue())
-                cs.notify(__fs2(__l("notification_spell_added_notes", "{0} added to study list. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()), cs.NOTIFICATION_ADD_SPELL_LIST)
-            else
-                cs.notify(__fs1(__l("notification_spell_added", "{0} added to study list."), sp.GetName()), cs.NOTIFICATION_ADD_SPELL_LIST)
-            endIf
+        ; Notify with additional note information if vanilla note notifications are off
+        if (_LEARN_CollectNotes.GetValue() && (!cs.VisibleNotifications[cs.NOTIFICATION_ADD_SPELL_NOTE]))
+            cs.notify(__fs2(__l("notification_spell_added_notes", "{0} added to study list. Tome deconstructed into {1} notes."), sp.GetName(), akBook.GetGoldValue()), cs.NOTIFICATION_ADD_SPELL_LIST)
+        else
+            cs.notify(__fs1(__l("notification_spell_added", "{0} added to study list."), sp.GetName()), cs.NOTIFICATION_ADD_SPELL_LIST)
         endIf
 		if (cs.canAutoLearn(sp, cs.spell_fifo_get_ref(sp)) && (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1))
 			; if the spell is eligible for automatic success, move it to the top of the list.

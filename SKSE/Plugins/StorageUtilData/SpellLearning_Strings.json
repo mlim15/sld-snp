@@ -245,7 +245,9 @@
 		"hint_notification_discover" : "Notifications when a new spell has been added to your list via the discovery system. Defaults to on.",
 		"hint_notification_learn_fail" : "Notifications when your character fails at learning a spell. Defaults to on.",
 		"hint_notification_learn" : "Notifications when your character successfully learns a spell. Defaults to on.",
-		"hint_notification_add_spell_fail" : "Notifications when a spell cannot be added to the research list because you already know it or are already studying it. When enabled, includes information about note addition if the vanilla notification is off. Defaults to on."
+		"hint_notification_add_spell_fail" : "Notifications when a spell cannot be added to the research list because you already know it or are already studying it. When enabled, includes information about note addition if the vanilla notification is off. Defaults to on.",
+		"mcm_notification_vanilla_add_spell" : "Vanilla Spell Added Notification",
+		"hint_notification_vanilla_add_spell" : "The game's default 'X added' notification when the character learns a new spell. Defaults to off."
 	},
     "int" :{
         "menu_lang_id" : 0

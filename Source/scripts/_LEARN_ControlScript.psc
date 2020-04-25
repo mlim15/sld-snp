@@ -145,6 +145,7 @@ int property NOTIFICATION_STUDY = 10 autoReadOnly
 int property NOTIFICATION_SPIRIT_TUTOR = 11 autoReadOnly
 int property NOTIFICATION_TOO_SOON = 12 autoReadOnly
 int property NOTIFICATION_ERROR = 13 autoReadOnly
+int property NOTIFICATION_VANILLA_ADD_SPELL = 13 autoReadOnly
 int property NOTIFICATION_FORCE_DISPLAY = 14 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
@@ -209,6 +210,7 @@ function UpgradeVersion()
         VisibleNotifications = new int[15]
         VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
         VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 0
+        VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL] = 0
         VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST] = 1
         VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST_FAIL] = 1
         VisibleNotifications[NOTIFICATION_LEARN_SPELL] = 1
@@ -1193,7 +1195,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	; if passed bool forceSuccess is true, just succeed
 	if (forceSuccess)
 		notify(formatString1(__l("notification_effortless_learn", "{0} came effortlessly to you."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
-		forceLearnSpellAt(fifoindex, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
+		forceLearnSpellAt(fifoindex, (VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL]))
 		iFailuresToLearn = 0
 		return
 	EndIf
@@ -1201,7 +1203,7 @@ function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
 	; Otherwise, roll to learn the spell
 	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp))) 
 		notify(formatString1(__l("notification_learn_spell", "It all makes sense now! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
-		forceLearnSpellAt(fifoindex, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
+		forceLearnSpellAt(fifoindex, (VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL]))
 		iFailuresToLearn = 0 
 	Else 
 		iFailuresToLearn = iFailuresToLearn + 1
@@ -1361,10 +1363,8 @@ function doLearning()
 		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp, 0))) 
 		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
             ; ...then automatically learn the spell.
-            if (VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST])
-                notify(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
-            endIf
-			forceLearnSpellAt(0, !(VisibleNotifications[NOTIFICATION_ADD_SPELL_LIST]))
+            notify(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
+			forceLearnSpellAt(0, (VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL]))
 			iFailuresToLearn = 0
 			alreadyLearnedSpells = alreadyLearnedSpells + 1
 		else ; Otherwise it's supposed to just move the spell to the bottom of the list.

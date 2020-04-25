@@ -16,6 +16,7 @@ Potion property _LEARN_Shadowmilk auto
 Book property _LEARN_DreadmilkRecipeBook auto
 Book property _LEARN_ShadowmilkRecipeBook auto
 Book property _LEARN_SpellTomeSummonSpiritTutor auto
+Book property _LEARN_SetHomeSpBook auto
 
 ObjectReference chest
 
@@ -83,6 +84,8 @@ Event OnReset()
     if (_LEARN_EnthirSells.GetValue() == 1)
         OnInit()
     else
+        ; Attunement was in Enthir's inventory prior to v1.7.5. Remove if present
+        chest.RemoveItem(_LEARN_SetHomeSpBook, chest.GetItemCount(_LEARN_SetHomeSpBook), true)
         RemoveItems()
     endIf
 EndEvent
