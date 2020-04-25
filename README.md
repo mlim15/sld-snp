@@ -49,14 +49,6 @@ As usual, you can install the mod by adding the zip file from [GitHub's Releases
 
 Once you get in-game, the mod will set itself up without your intervention. Note that the mod only removes spellbooks when they enter your inventory. This means you can still read books that you already had in your inventory before you installed the mod to instantly learn the spells, as in vanilla. If you want to learn those spells with the mod instead, just drop the books on the floor and pick them up. Then the mod will process them according to your configuration.
 
-Development Status
-----------
-
-I have basically added all of the features and options that I thought were interesting, and at this point the level of polish is satisfactory to me.
-
-* I am still planning on trying to implement a "quiet" mode at some point to disables most/all messages from the mod, for players that don't like messages being spammed at the top left corner. This doesn't bother me unless it's excessive, but I can understand it's immersion breaking.
-* Adding randomized messages instead of the same message every time might also be nice.
-
 Known Problems
 ----------
 
