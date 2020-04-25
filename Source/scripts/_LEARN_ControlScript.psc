@@ -145,8 +145,8 @@ int property NOTIFICATION_STUDY = 10 autoReadOnly
 int property NOTIFICATION_SPIRIT_TUTOR = 11 autoReadOnly
 int property NOTIFICATION_TOO_SOON = 12 autoReadOnly
 int property NOTIFICATION_ERROR = 13 autoReadOnly
-int property NOTIFICATION_VANILLA_ADD_SPELL = 13 autoReadOnly
-int property NOTIFICATION_FORCE_DISPLAY = 14 autoReadOnly
+int property NOTIFICATION_VANILLA_ADD_SPELL = 14 autoReadOnly
+int property NOTIFICATION_FORCE_DISPLAY = 15 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
@@ -207,7 +207,7 @@ function UpgradeVersion()
 		endIf
         Debug.Trace(msg)
         ; Change default notification setting to prepare for better notifications
-        VisibleNotifications = new int[15]
+        VisibleNotifications = new int[16]
         VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
         VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 0
         VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL] = 0
