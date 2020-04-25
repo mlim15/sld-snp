@@ -418,6 +418,7 @@ event OnPageReset(string page)
             AddHeaderOption(__l("mcm_header_item_spell_notifications", "Item and Spell Notifications"))
             AddToggleOptionST("ShowRemoveBookNotification", __l("mcm_notification_remove_book", "Vanilla Book Removal Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_REMOVE_BOOK])
             AddToggleOptionST("ShowAddSpellNoteNotification", __l("mcm_notification_add_spell_note", "Vanilla Notes Added Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_NOTE])
+            AddToggleOptionST("ShowAddSpellNotification", __l("mcm_notification_vanilla_add_spell", "Vanilla Spell Added Notification"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_VANILLA_ADD_SPELL])
             AddEmptyOption()
             AddToggleOptionST("ShowAddSpellListNotification", __l("mcm_notification_add_spell_list", "Adding Spell to List"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST]) 
             AddToggleOptionST("ShowFailAddSpellListNotification", __l("mcm_notification_add_spell_fail", "Already Knew Spell"), ControlScript.VisibleNotifications[ControlScript.NOTIFICATION_ADD_SPELL_LIST_FAIL])
@@ -1657,6 +1658,20 @@ state ShowErrorNotification
 
     event OnHighlightST()
         SetInfoText(__l("hint_notification_error", "Error messages. You shouldn't ever see these unless mods are misbehaving or have been removed. Defaults to on."))
+	endEvent    
+endState
+
+state ShowAddSpellNotification
+	event OnSelectST()
+		SetToggleOptionValueST(ControlScript.ToggleNotification(ControlScript.NOTIFICATION_VANILLA_ADD_SPELL))
+	endEvent
+
+	event OnDefaultST()
+		SetToggleOptionValueST(ControlScript.EnableNotification(ControlScript.NOTIFICATION_VANILLA_ADD_SPELL, false))
+	endEvent
+
+    event OnHighlightST()
+        SetInfoText(__l("hint_notification_vanilla_add_spell", "The game's default 'X added' notification when the character learns a new spell. Defaults to off."))
 	endEvent    
 endState
 
