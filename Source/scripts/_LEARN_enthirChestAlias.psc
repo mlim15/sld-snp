@@ -38,6 +38,8 @@ endEvent
 
 Event OnUpdateGameTime()
     chest = MerchantWCollegeEnthirChest
+    ; Attunement was in Enthir's inventory prior to v1.7.5. Remove if present
+    chest.RemoveItem(_LEARN_SetHomeSpBook, chest.GetItemCount(_LEARN_SetHomeSpBook), true)
     ; Only if SpawnItems setting is enabled
     if (_LEARN_EnthirSells.GetValue() == 1)
         ; If sold some shadowmilk/dreadmilk, replenish by 1 per day
@@ -84,8 +86,6 @@ Event OnReset()
     if (_LEARN_EnthirSells.GetValue() == 1)
         OnInit()
     else
-        ; Attunement was in Enthir's inventory prior to v1.7.5. Remove if present
-        chest.RemoveItem(_LEARN_SetHomeSpBook, chest.GetItemCount(_LEARN_SetHomeSpBook), true)
         RemoveItems()
     endIf
 EndEvent
