@@ -138,13 +138,13 @@
 		"hint_noviceLearningEnabled" :  "When enabled, the difference between your skill in a school and the level of the spell you're trying to learn can result in an automatic success. The required difference to ensure this success is configurable below. Defaults to on.", 
 		"hint_autoSuccessBypassesLimit" :  "Spells learned via the above option do not count towards the daily limit. Default off. This can result in learning many spells per attempt.", 
 		"hint_dreadstareLethality" :  "Base chance to overdose when consuming Dreadmilk. Defaults to 10%. Increased by your bloodstream toxicity.", 
-		"hint_parallelLearning" :  "Choose how many spells from the top of your list you will attempt to learn on each attempt. Keep in mind that when combined with drugs and a high max learning chance, this can be overpowered. 1 is default.", 
+		"hint_parallelLearning" :  "Choose how many spells from the top of your list you will attempt to learn on each attempt. Keep in mind that when combined with drugs and a high max learning chance, this can be overpowered. It is recommended to turn off learning failure notifications when learning lots of spells to prevent failure message spam. 1 is default.", 
 		"hint_harderParallel" :  "When learning multiple spells at once, divide the chance to learn by the amount of spells being learned to help preserve a similar speed. Recommended, defaults to on.", 
 		"hint_bonusScale" :  "Multiplier applied to the roleplaying bonus to chance of learning/discovering. This means casting spells relevant to your study, hoarding relevant spell notes, sleeping or studying at the College and temples, consuming nootropics, etc. Default is 1.0. Raising this can make it unreasonably easy to learn spells.", 
 		"hint_infoStudy" :  "Current chance to learn a spell from books (rolled after next night). Cast spells of the same school to improve. (Displays 0 if study list is empty.)", 
 		"hint_infoDiscover" :  "Current chance to discover a new spell and add it to the study list on an eligible rest. Cast spells of your current school of interest, use potions, or collect more notes to improve.", 
 		"hint_infoSchool" :  "Current magical school of interest.", 
-		"hint_collectNotes" :  "Whether or not to deconstruct removed books into scraps. Keeping a large collection of spell notes improves the roleplaying bonus for spell learning chance. Scraps are equal in value to the book. Default is enabled.", 
+		"hint_collectNotes" :  "Whether or not to deconstruct removed books into scraps. Keeping a large collection of spell notes improves the roleplaying bonus for spell learning chance. The number of scraps generated depends on your skill in relation to the spell, with the maximum amount generated being equal to the base value of the book. Default is enabled.", 
 		"hint_removeBooks" :  "Whether or not to remove spell books from inventory when added, to prevent vanilla 'insta-learn'. Default is enabled. Disabling this may cause errors if the mod tries to teach you a spell you learn with the vanilla functionality.", 
 		"hint_preferedSchool" :  "Set this to the school of magic you want to discover spells from. Default is Automatic, which uses your most cast school from that day.", 
 		"hint_effortScaling" :  "The way effort scales when rolling for successful learning. Default is Tough Start, which is harsher to those with poorer magical skills and less roleplaying bonus.", 
@@ -199,9 +199,9 @@
 		"mcm_option_learn_on_sleep" : "Learn when Sleeping",
 		"mcm_option_discover_on_sleep" : "Discover when Sleeping",
 		"hint_learn_on_study" : "When enabled, using the 'Study' power will cause you to attempt to learn new spells off your spell list. Defaults to on.",
-		"hint_discover_on_study" : "When enabled, using the 'Study' power will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
+		"hint_discover_on_study" : "When enabled, using the 'Study' power will cause you to attempt to discover a new spell, adding it to the study list without the need for a book. Defaults to on.",
 		"hint_learn_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on.",
-		"hint_discover_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on.",
+		"hint_discover_on_sleep" : "When enabled, sleeping in a bed will cause you to attempt to discover a new spell, adding it to the study list without the need for a book. Defaults to on.",
 		"mcm_message_removed_items_reload" : "Done removing items from lists. Please save and reload.",
 		"mcm_message_multiple_consecutive_exclusive" : "Learning multiple spells at once and limiting maximum consecutive failures are mutually exclusive. Your settings have been changed accordingly.",
 		"hint_already_studied" : "Whether or not you have already recieved the bonus from using the 'Study' power this cycle.",
@@ -247,7 +247,9 @@
 		"hint_notification_learn" : "Notifications when your character successfully learns a spell. Defaults to on.",
 		"hint_notification_add_spell_fail" : "Notifications when a spell cannot be added to the research list because you already know it or are already studying it. When enabled, includes information about note addition if the vanilla notification is off. Defaults to on.",
 		"mcm_notification_vanilla_add_spell" : "Vanilla Spell Added Notification",
-		"hint_notification_vanilla_add_spell" : "The game's default 'X added' notification when the character learns a new spell. Defaults to off."
+		"hint_notification_vanilla_add_spell" : "The game's default 'X added' notification when the character learns a new spell. Defaults to off.",
+		"hint_add_to_list" : "Whether or not unknown spells are added to the research list when its spell tome enters your inventory. If you only want to use this mod's spell discovery features, turn this and 'Remove Spell Tomes' off and disable spell learning failure notifications. Defaults to on.",
+		"mcm_option_add_to_list" : "Add Unknown Spells to List"
 	},
     "int" :{
         "menu_lang_id" : 0

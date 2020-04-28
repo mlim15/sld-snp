@@ -57,12 +57,14 @@ GlobalVariable property _LEARN_DiscoverOnStudy auto
 GlobalVariable property _LEARN_LearnOnStudy auto
 GlobalVariable property _LEARN_maxNotes auto
 GlobalVariable property _LEARN_maxNotesBonus auto
+GlobalVariable property _LEARN_AddSpellsToList auto
 MagicEffect Property _LEARN_PracticeEffect auto
 Spell property _LEARN_DiseaseDreadmilk auto
 Spell property _LEARN_PracticeAbility auto
 Spell property _LEARN_StudyPower auto
 Spell property _LEARN_SummonSpiritTutor auto
 Spell property _LEARN_SetHomeSp auto
+Spell property _LEARN_SpellsToLearn auto
 MagicEffect Property AlchDreadmilkEffect auto
 MagicEffect Property AlchShadowmilkEffect auto
 MagicEffect property _LEARN_ShadowmilkHangover auto
@@ -122,6 +124,7 @@ int discoverOnSleepOID
 int alreadyStudiedOID
 int maxNotesOID
 int maxNotesBonusOID
+int addToListOID
 
 int[] spellListStates; 0=count,1=pageCount;2=currentPageIndex,3=pageItemIndex
 int[] spellOidList
@@ -389,7 +392,8 @@ event OnPageReset(string page)
                 AddEmptyOption()
             endIf
             AddHeaderOption(__l("mcm_header_item_options", "Item Options"), 0)
-			removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
+            removeOID = AddToggleOption(__l("mcm_option_remove_books", "Auto-Remove Spell Books"), _LEARN_RemoveSpellBooks.GetValue(), OPTION_FLAG_NONE)
+            ;addToListOID = AddToggleOption(__l("mcm_option_add_to_list", "Add Unknown Spells to List"), _LEARN_AddSpellsToList.GetValue(), OPTION_FLAG_NONE)
             collectOID = AddToggleOption(__l("mcm_option_collect_notes", "Create Study Notes from Books"), _LEARN_CollectNotes.GetValue(), OPTION_FLAG_NONE)
             maxNotesBonusOID = AddSliderOption(__l("mcm_option_max_notes_bonus", "Highest Chance Given by Notes"), _LEARN_maxNotesBonus.GetValue(), "{0}%", OPTION_FLAG_NONE)
             maxNotesOID = AddSliderOption(__l("mcm_option_max_notes", "Max Per-School Notes Counted"), _LEARN_maxNotes.GetValue(), __l("mcm_x_g", "{0}g"), OPTION_FLAG_NONE)
@@ -545,7 +549,11 @@ function purgeStatusEffects()
 	; status effects and powers
 	if (PlayerRef.HasSpell(_LEARN_PracticeAbility))
 		PlayerRef.RemoveSpell(_LEARN_PracticeAbility)
-	endIf
+    endIf
+	; status effects and powers
+	if (PlayerRef.HasSpell(_LEARN_SpellsToLearn))
+		PlayerRef.RemoveSpell(_LEARN_SpellsToLearn)
+    endIf
 endFunction
 
 function removePower()
@@ -557,7 +565,8 @@ endFunction
 function addStatusTracker()
 	if (!PlayerRef.HasSpell(_LEARN_PracticeAbility))
 		PlayerRef.AddSpell(_LEARN_PracticeAbility)
-	endIf
+    endIf
+    ControlScript.updateSpellLearningEffect()
 endFunction
 
 function addModSpells()
@@ -609,7 +618,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
 
     If (a_option == maxConsecutiveFailuresOID)
         SetSliderDialogStartValue(_LEARN_MaxFailsBeforeCycle.GetValue())
-        SetSliderDialogDefaultValue(3)
+        SetSliderDialogDefaultValue(2)
         SetSliderDialogRange(0, 10)
         SetSliderDialogInterval(1)
         return
@@ -713,7 +722,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
 
     If (a_option == maxNotesOID)
         SetSliderDialogStartValue(_LEARN_maxNotes.GetValue())
-        SetSliderDialogDefaultValue(2000)
+        SetSliderDialogDefaultValue(750)
         SetSliderDialogRange(1, 10000)
         SetSliderDialogInterval(1)
         return
@@ -878,7 +887,7 @@ event OnOptionSelect(int option)
 	ElseIf (Option == dynamicDiffOID)
 		SetToggleOptionValue(option, toggleDynamicDifficulty(), False)
 	ElseIf (Option == maxFailsAutoSucceedsOID)
-		SetToggleOptionValue(option, toggleMaxFailsAutoSucceeds(), False)
+		SetToggleOptionValue(option, toggleMaxFailsAutoSucceeds(), True)
 	ElseIf (Option == studyIsRestOID)
         SetToggleOptionValue(option, toggleStudyIsRest(), False)
         forcepagereset()
@@ -906,6 +915,8 @@ event OnOptionSelect(int option)
         SetToggleOptionValue(option, toggleEnthirSells(), False)
         enthirChestAlias.OnReset()
         tolfdirChestAlias.OnReset()
+    ElseIf (Option == addToListOID)
+        SetToggleOptionValue(option, toggleAddToList(), False)
     ElseIf (Option == fissExportOID)
         fiss = getFISS()
         if (fiss == None)
@@ -978,7 +989,7 @@ Event OnOptionHighlight(int option)
 	ElseIf (Option == dreadstareLethalityOID)
         SetInfoText(__l("hint_dreadstareLethality", "Base chance to overdose when consuming Dreadmilk. Defaults to 10%. Increased by your bloodstream toxicity."))
 	ElseIf (Option == parallelLearningOID)
-        SetInfoText(__l("hint_parallelLearning", "Choose how many spells from the top of your list you will try to learn on each attempt. Keep in mind that when combined with drugs and a high max learning chance, this can be overpowered. 1 is default."))
+        SetInfoText(__l("hint_parallelLearning", "Choose how many spells from the top of your list you will try to learn on each attempt. Keep in mind that when combined with drugs and a high max learning chance, this can be overpowered. It is recommended to turn off learning failure notifications when learning lots of spells to prevent failure message spam. 1 is default."))
 	ElseIf (Option == harderParallelOID)
         SetInfoText(__l("hint_harderParallel", "When learning multiple spells at once, divide the chance to learn by the amount of spells being learned to help preserve a similar speed. Recommended, defaults to on."))
     ElseIf (Option == bonusScaleOID)
@@ -990,7 +1001,7 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == infoSchoolOID)
         SetInfoText(__l("hint_infoSchool", "Current magical school of interest."))
     ElseIf (Option == collectOID)
-        SetInfoText(__l("hint_collectNotes", "Whether or not to deconstruct removed books into scraps. Keeping a large collection of spell notes improves the roleplaying bonus for spell learning chance. Scraps are equal in value to the book. Default is enabled."))
+        SetInfoText(__l("hint_collectNotes", "Whether or not to deconstruct removed books into scraps. Keeping a large collection of spell notes improves the roleplaying bonus for spell learning chance. The number of scraps generated depends on your skill in relation to the spell, with the maximum amount generated being equal to the base value of the book.  Default is enabled."))
     ElseIf (Option == removeOID)
         SetInfoText(__l("hint_removeBooks", "Whether or not to remove spell books from inventory when added, to prevent vanilla 'insta-learn'. Default is enabled. Disabling this may cause errors if the mod tries to teach you a spell you learn with the vanilla functionality.")) 
     ElseIf (Option == forceSchoolOID)
@@ -1048,17 +1059,19 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == learnOnStudyOID)
 		setInfoText(__l("hint_learn_on_study", "When enabled, using the 'Study' power will cause you to attempt to learn new spells off your spell list. Defaults to on."))
     ElseIf (Option == discoverOnStudyOID)
-        setInfoText(__l("hint_discover_on_study", "When enabled, using the 'Study' power will cause you to attempt to discover and add new spells to your spell list. Defaults to on."))
+        setInfoText(__l("hint_discover_on_study", "When enabled, using the 'Study' power will cause you to attempt to discover a new spell, adding it to the study list without the need for a book. Defaults to on."))
     ElseIf (Option == learnOnSleepOID)
         setInfoText(__l("hint_learn_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to learn new spells off your spell list. Defaults to on."))
     ElseIf (Option == discoverOnSleepOID)
-		setInfoText(__l("hint_discover_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to discover and add new spells to your spell list. Defaults to on. "))
+		setInfoText(__l("hint_discover_on_sleep", "When enabled, sleeping in a bed will cause you to attempt to discover a new spell, adding it to the study list without the need for a book. Defaults to on. "))
     ElseIf (Option == alreadyStudiedOID)
         setInfoText(__l("hint_already_studied", "Whether or not you have already recieved the bonus from using the 'Study' power this cycle."))
     ElseIf (Option == maxNotesBonusOID)
         setInfoText(__l("hint_max_notes_bonus", "The highest possible total chance provided by school-specific notes in your inventory. If the study power is not used for learning or discovery, it will provide a bonus maxed at half of this value. Default is 33%."))
     ElseIf (Option == maxNotesOID)
         setInfoText(__l("hint_max_notes", "The value of school-specific notes required to reach the above maximum bonus chance. If the study power is not used for learning or discovery, it will require 5 times this number of any notes to give its max modifier. Defaults to 2000g."))
+    ElseIf (Option == addToListOID)
+        setInfoText(__l("hint_add_to_list", "Whether or not unknown spells are added to the research list when its spell tome enters your inventory. If you only want to use this mod's spell discovery features, turn this and 'Auto-Remove Spell Books' off and disable spell learning failure notifications. Keep 'Learn when Sleeping/Studying' on or you won't be able to learn discovered spells. Defaults to on."))
     EndIf
 EndEvent
 
@@ -1834,6 +1847,15 @@ bool function toggleEnthirSells()
         return false
     endif
     _LEARN_EnthirSells.SetValue(1)
+    return True
+EndFunction
+
+bool function toggleAddToList()
+    if (_LEARN_AddSpellsToList.GetValue())
+        _LEARN_AddSpellsToList.SetValue(0)
+        return false
+    endif
+    _LEARN_AddSpellsToList.SetValue(1)
     return True
 EndFunction
 

@@ -72,6 +72,7 @@ Spell property _LEARN_PracticeAbility auto
 Spell property _LEARN_SummonSpiritTutor auto
 Spell property _LEARN_SetHomeSp auto
 Spell property _LEARN_StudyPower auto
+Spell property _LEARN_SpellsToLearn auto
 Book property _LEARN_SpellTomeSummonSpiritTutor auto
 Book property _LEARN_SetHomeSpBook auto
 
@@ -193,11 +194,21 @@ endFunction
 
 ; === Version and upgrade management
 int function GetVersion()
-    return 175; v 1.7.5
+    return 176; v 1.7.6
 endFunction
 
 function UpgradeVersion()
     bool displayedUpgradeNotice = false
+    if (currentVersion < 176)
+        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.6")
+		if (!displayedUpgradeNotice)
+			; don't display multiple upgrade messages
+			Debug.Notification(msg)
+			displayedUpgradeNotice = true
+		endIf
+        Debug.Trace(msg)
+        updateSpellLearningEffect()
+    endIf
     if (currentVersion < 175)
         string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.5")
 		if (!displayedUpgradeNotice)
@@ -234,7 +245,7 @@ function UpgradeVersion()
 		endIf
         Debug.Trace(msg)
         ; When upgrading, keep old default note scaling values
-        ; These were not previously user-configurable
+        ; These were not previously user-configurable so they need to be specified here
         if (currentVersion == 172)
             _LEARN_maxNotes.SetValue(10000)
             _LEARN_maxNotesBonus.SetValue(10)
@@ -423,6 +434,10 @@ Spell function spell_fifo_push(Spell s)
     iTail += 1
     _spells[iTail] = s
     iCount += 1
+    ; Since this is the main way spells are added to the list,
+    ; let's update the spell learning effect once here instead of in every
+    ; place we might add new spells to the list
+    updateSpellLearningEffect()
     return s
 EndFunction
 
@@ -489,6 +504,10 @@ bool function forceLearnSpellAt(int index, bool useVanillaNotification)
     if spellToLearn
         if !PlayerRef.HasSpell(spellToLearn)
             PlayerRef.AddSpell(spellToLearn, useVanillaNotification)
+            ; All spell learning in the mod goes through this method so
+            ; we can remove the spell learning effect that lets
+            ; the player know there are spells to learn here if needed.
+            updateSpellLearningEffect()
             return true
         endIf
     endIf
@@ -887,7 +906,10 @@ float function getNotesBonus(float notes, bool schoolSpecific)
 	; up to max of 33% of 33% of final effort).
 	; The number of notes possessed by the player is related to the value of the spells they have read.
 	; So this value is normalized by comparing the value of a core spellbook 
-	; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
+    ; (in this case Candlelight) to accomodate some mods which alter the spell tome values. 
+    ; To be honest I am really unsure if this step is necessary, because the amount of notes spawning
+    ; in the player's inventory should already be adjusted in this way. But I suppose it can't hurt,
+    ; and surely there is a reason it was originally added, so let's keep it.
     Book refCandleLight = Game.GetForm(0x0009E2A7) as Book
     float priceFactor = refCandleLight.GetGoldValue() / 44
     notes = notes / pricefactor
@@ -902,8 +924,8 @@ float function getNotesBonus(float notes, bool schoolSpecific)
     ; is capped at a default of 50, or a defualt of 1/6 of total final effort, and is only given by the 
     ; study power when it's not used for learning/discovery.
 	; Thus a school-specific note bonus will be capped at 100, or 1/3 of the total final effort.
-	; Getting the default max value of 100 requires carrying a default of 2000g worth of notes for the relevant school.
-    if(schoolSpecific)
+	; Getting the default max value of 100 requires carrying a default of _LEARN_maxNotes (default 750g) worth of notes for the relevant school.
+    if (schoolSpecific)
         maxNotesBonusRaw = _LEARN_maxNotesBonus.GetValue()*3
         maxNotes = _LEARN_maxNotes.GetValue()
     else
@@ -921,8 +943,8 @@ float function getNotesBonus(float notes, bool schoolSpecific)
     ; Testing Notes
     ; After testing, diminishing returns is the only model that really makes the power worth using, so we'll go with just that.
     ; The code for the other scaling methods is below. Linear is OK but the power doesn't feel worth using until you have a lot of notes,
-    ; and I haven't set up a way to independently configure the bonus chance scaling for notes - nor am I sure I want to. This was the original
-    ; design and it does seem to work fine. The problem is this number was always "double scaled", first through this diminishing returns method
+    ; and I haven't set up a way to configure the bonus chance scaling for notes independently from scaling of other effort components - nor am I sure I want to. This was the original
+    ; design and it does seem to work fine. The problem is this number was always "double scaled", first through this diminishing returns method here
     ; and then later by the effort scaler using the s-curve (or now another method). Let's not fix what isn't broken.
     ;if (_LEARN_EffortScaling.GetValue() == 0) ; If set to punishing start, s-curve.
         ;float percentMaxNotes = 0
@@ -1022,34 +1044,9 @@ float function calcCDReffort()
 	return ((mycasts)/100) 
 endFunction
 
-float function baseChanceBySchool(string magicSchool, float minchance, float maxchance, MagicEffect eff, bool discovering)
-    float fskill
-    float fcasts
-    float fnotes
-    float fChance
-    fskill = PlayerRef.GetActorValue(magicSchool)
-    if magicSchool == SPELL_SCHOOL_ALTERATION
-        fcasts = _LEARN_CountAlteration.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesAlteration)
-    elseIf magicSchool == SPELL_SCHOOL_CONJURATION
-        fcasts = _LEARN_CountConjuration.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesConjuration)
-    elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
-        fcasts = _LEARN_CountDestruction.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesDestruction)
-    elseIf magicSchool == SPELL_SCHOOL_ILLUSION
-        fcasts = _LEARN_CountIllusion.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesIllusion)
-    elseIf magicSchool == SPELL_SCHOOL_RESTORATION
-        fcasts = _LEARN_CountRestoration.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration)
-    endIf    
-    ; Get the chance from effort calculations, scaling as configured.
-    fChance = scaleEffort(calcEffort(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
-	; Check to see if dynamic difficulty is enabled.
-    ; If it is, then adjust the returned chance accordingly to make it more/less likely to learn the spell.
-    ; This only applies to spell learning, not discovery, so a passed bool lets us disable it.
-	if (_LEARN_DynamicDifficulty.GetValue() == 1 && !discovering)
+float function getSkillDiffFactor(String magicSchool, MagicEffect eff)
+        float fskill
+        fskill = PlayerRef.GetActorValue(magicSchool)
         ; Get player skill of specific school
         float sskill = 0
         sskill = PlayerRef.GetActorValue(magicSchool)
@@ -1074,11 +1071,44 @@ float function baseChanceBySchool(string magicSchool, float minchance, float max
         float skillDiff = 0
         ; it's impossible for fskill to be 0 so we won't worry about that
         skillDiff = magicLevel/fskill
+        return skillDiff
+endFunction
+
+float function baseChanceBySchool(string magicSchool, float minchance, float maxchance, MagicEffect eff, bool discovering)
+    float fskill
+    fskill = PlayerRef.GetActorValue(magicSchool)
+    float fcasts
+    float fnotes
+    float fChance
+    if magicSchool == SPELL_SCHOOL_ALTERATION
+        fcasts = _LEARN_CountAlteration.GetValue()
+        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesAlteration)
+    elseIf magicSchool == SPELL_SCHOOL_CONJURATION
+        fcasts = _LEARN_CountConjuration.GetValue()
+        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesConjuration)
+    elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
+        fcasts = _LEARN_CountDestruction.GetValue()
+        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesDestruction)
+    elseIf magicSchool == SPELL_SCHOOL_ILLUSION
+        fcasts = _LEARN_CountIllusion.GetValue()
+        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesIllusion)
+    elseIf magicSchool == SPELL_SCHOOL_RESTORATION
+        fcasts = _LEARN_CountRestoration.GetValue()
+        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration)
+    endIf    
+    ; Get the chance from effort calculations, scaling as configured.
+    fChance = scaleEffort(calcEffort(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
+	; Check to see if dynamic difficulty is enabled.
+    ; If it is, then adjust the returned chance accordingly to make it more/less likely to learn the spell.
+    ; This only applies to spell learning, not discovery, so a passed bool lets us disable it.
+	if (_LEARN_DynamicDifficulty.GetValue() == 1 && !discovering)
         ; Use skilldiff to change returned chance to learn.
         ; when your skill is lower than spell level, skillDiff is >1
         ; when your skill is higher, skillDiff is <1
         ; fChance is used as the upper bound in rollToLearn()
         ; so making it bigger makes learning more likely.
+        float skillDiff = 1
+        skillDiff = getSkillDiffFactor(magicSchool, eff)
         fChance = fChance/skillDiff
         ; Make sure we don't go over or below max/min chance
         if (fChance < minchance/100)
@@ -1472,7 +1502,7 @@ Spell function doDiscovery()
     if inventedsp == None
         notify(__l("notification_spell_invention_bug", "[Spell Learning] Error: A spell tome in your game has no linked spell."), NOTIFICATION_ERROR)
         ; Reset discovery timer
-        LastDiscoverTime = GameDaysPassed.GetValue()
+        ;LastDiscoverTime = GameDaysPassed.GetValue()
         return None
     endif
     
@@ -1486,6 +1516,7 @@ Spell function doDiscovery()
     if (inventedsp && (! (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp))))
         notify(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you: {0}!"), inventedsp.GetName()), NOTIFICATION_DISCOVERY)
         spell_fifo_push(inventedsp)
+        updateSpellLearningEffect()
         Bookextension.setreadWFB(inventedbook, true)
     EndIf
     
@@ -1526,6 +1557,16 @@ function doReset()
     ; otherwise it wouldn't be refreshed until the next load game.
     ; checks in the function ensure everything is only added once, so it does no harm.
     SpawnItemsInWorld() 
+endFunction
+
+function updateSpellLearningEffect()
+    if ((iCount <= 0) && (PlayerRef.hasSpell(_LEARN_SpellsToLearn)))
+        ; If there are no more spells to learn and the player has the effect, remove it.
+        PlayerRef.removeSpell(_LEARN_SpellsToLearn)
+    elseIf ((iCount > 0) && !(PlayerRef.hasSpell(_LEARN_SpellsToLearn)))
+        ; If there are spells to learn and the player doesn't have the effect, add it silently.
+        PlayerRef.addSpell(_LEARN_SpellsToLearn, false)
+    endIf
 endFunction
 
 ; === Tracked player events
