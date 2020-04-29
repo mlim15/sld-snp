@@ -27,7 +27,6 @@ Book property _LEARN_SpellNotesConjuration auto
 Book property _LEARN_SpellNotesDestruction auto
 Book property _LEARN_SpellNotesIllusion auto
 Book property _LEARN_SpellNotesRestoration auto
-Book property MGRDestructionFinal auto
 
 String function __l(String keyName, String defaultValue = "")
     return cs.__l(keyName, defaultValue)
