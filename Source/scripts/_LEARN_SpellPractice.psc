@@ -27,6 +27,7 @@ Book property _LEARN_SpellNotesConjuration auto
 Book property _LEARN_SpellNotesDestruction auto
 Book property _LEARN_SpellNotesIllusion auto
 Book property _LEARN_SpellNotesRestoration auto
+Book property MGRDestructionFinal auto
 
 String function __l(String keyName, String defaultValue = "")
     return cs.__l(keyName, defaultValue)
@@ -68,14 +69,24 @@ function OnSpellCast(Form akForm)
 endFunction
 
 function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+    ; If the added item isn't a book, do nothing
     Book akBook = akBaseItem as Book
     if (! akBook)
         Return
     EndIf
+    ; If it's not a book that is flagged to teach a spell, do nothing
     Spell sp = akBook.GetSpell()
     if (! sp)
         Return
     endif
+    ; Don't do anything with quest essential spellbooks.
+    ; This seems to be the only example so far, but we'll see. This is because
+    ; completing the quest is actually scripted via an OnEquip event for the Power of the Elements
+    ; book that teaches the Fire Storm spell. (It also immediately deletes itself and replaces itself
+    ; with a non-spell-tome copy that has all of the text in it.)
+    if (akBaseItem.GetName() == "Power of the Elements")
+        return
+    endIf
     TryAddSpellBook(akBook, sp, aiItemCount)
 EndFunction
 
