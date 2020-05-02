@@ -44,6 +44,9 @@ GlobalVariable property _LEARN_DiscoverOnSleep auto
 GlobalVariable property _LEARN_LearnOnSleep auto
 GlobalVariable property _LEARN_maxNotes auto
 GlobalVariable property _LEARN_maxNotesBonus auto
+GlobalVariable property _LEARN_ReturnTomes auto
+GlobalVariable property _LEARN_ResearchSpells auto
+GlobalVariable property _LEARN_RemoveUnknownOnly auto
 String[] effortLabels
 
 GlobalVariable property _LEARN_EnthirSells auto
@@ -122,6 +125,7 @@ int iMaxSize
 int iCount
 Form[] _spells
 int currentVersion; save active version
+FormList property _LEARN_removedTomes auto
 
 bool property CanUseLocalizationLib = false auto;
 int property LIST_HEAD_SPARE_COUNT = 8 autoReadOnly
@@ -192,13 +196,172 @@ function notify(String msg, int controlIndex)
     endIf
 endFunction
 
+; === Tome management
+float function takeNotes(Book tome)
+    Spell sp = tome.GetSpell()
+    MagicEffect eff = sp.GetNthEffectMagicEffect(0)
+    String magicSchool = eff.GetAssociatedSkill() 
+    float skillDiff = getSkillDiffFactor(magicSchool, eff)*2
+    ; If overall player skill is 50 and the spell is level 25, skillDiff will return 1/2 by default.
+    ; If player skill is 25 and spell level is 50, it will return 2. 
+    ; If player skill and spell level are equal, it returns 1.
+    ; Multiplying by 2 means that later when we divide, the generated notes are according to our
+    ; value design: at equal skill and spell level, half the notes are generated.
+    ; We want to cap the factor to not go below 1 so that the notes generated are never more than the base value.
+    ; We also want to cap the penalty so that the player never gets less than 1/4 of the base value.
+    ; This 1/4 base value scenario only happens when player skill is less than half that of the spell level 
+    ; (e.g. novice learning adept, apprentice learning expert).
+    if (skillDiff < 1)
+        skillDiff = 1
+    elseIf (skillDiff > 4)
+        skillDiff = 4
+    endIf
+    ; Scale the value of notes generated according to skill difference
+    float value = 1
+    value = (tome.GetGoldValue()/skillDiff)
+    if magicSchool == SPELL_SCHOOL_ALTERATION
+        PlayerRef.addItem(_LEARN_SpellNotesAlteration, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
+    elseIf magicSchool == SPELL_SCHOOL_CONJURATION
+        PlayerRef.addItem(_LEARN_SpellNotesConjuration, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+    elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
+        PlayerRef.addItem(_LEARN_SpellNotesDestruction, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
+    elseIf magicSchool == SPELL_SCHOOL_ILLUSION
+        PlayerRef.addItem(_LEARN_SpellNotesIllusion, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+    elseIf magicSchool == SPELL_SCHOOL_RESTORATION
+        PlayerRef.addItem(_LEARN_SpellNotesRestoration, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
+    endIf
+    ; Return the value of the created notes in case we want to notify some other way
+    return value
+endFunction
+
+function addTomeToList(Book newTome)
+    ; Add the passed tome to the list of tomes we've
+    ; removed if it isn't in the list
+    if (_LEARN_removedTomes.Find(newTome) == -1)
+        _LEARN_removedTomes.AddForm(newTome)
+    endIf
+endFunction
+
+function removeTomeFromList(Book toRemove)
+    ; removing tomes from the formlist isn't strictly necessary
+    ; because spells can't be learned twice through the mod anyway,
+    ; so there's no chance to return the same book twice.
+    ; formlists also have no realistic max limit.
+    ; however, some people claim they act erratically after 255 entries.
+    ; this function does work, but it isn't currently used
+    ; to ensure that notes are never given for the same book twice, period,
+    ; whether the user turns off spell book removal or not.
+    _LEARN_removedTomes.RemoveAddedForm(toRemove)
+endFunction
+
+function returnTomeAndPurge(Spell sp)
+    ; Look for a tome in the list that has the passed spell
+    int count = 0
+    while (count < _LEARN_removedTomes.GetSize())
+        Book tomeToReturn = (_LEARN_removedTomes.GetAt(count) as Book)
+        if (tomeToReturn.GetSpell() == sp)
+            ; If we find the right tome in the list, add it to player inventory.
+            PlayerRef.AddItem(tomeToReturn, 1, true)
+            ;removeTomeFromList(tomeToReturn)
+            return
+        endIf
+        count += 1
+    endWhile
+    ; If we don't find it print a warning to papyrus log. This could be for lots of reasons and isn't necessarily something to worry about.
+    Debug.trace("[Spell Learning] Warning: Cannot return tome for learned spell, not in list of removed tomes. This could be because the spell was added to the list with an earlier version of the mod, because the option to remove tomes is off but the option to return tomes has been turned on, or simply because the spell was discovered instead of read.")
+endFunction
+
+function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
+    float value = 0
+    ; if option to leave known spell tomes alone is on and the player knows the spell,
+    ; do absolutely nothing
+    if ((_LEARN_RemoveUnknownOnly.GetValue()) && (PlayerRef.HasSpell(akBook.GetSpell())))
+        return
+    endIf
+    ; maybe remove book
+    if (_LEARN_RemoveSpellBooks.GetValue())
+        PlayerRef.removeItem(akBook, aiItemCount, !VisibleNotifications[NOTIFICATION_REMOVE_BOOK])
+        ; maybe add tome to list of removed tomes
+        if (_LEARN_ReturnTomes.GetValue())
+            addTomeToList(akBook)
+        endIf
+    EndIf
+	; maybe add notes if we removed the book
+    if (_LEARN_CollectNotes.GetValue() && _LEARN_RemoveSpellBooks.GetValue())
+        value = takeNotes(akBook)
+    endIf
+    
+    if (spell_fifo_has_ref(sp))
+        if ((_LEARN_CollectNotes.GetValue()) && !(VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) && (_LEARN_RemoveSpellBooks.GetValue()))
+            ; Notify with additional note information if vanilla note notifications are off
+            notify(formatString2(__l("notification_spell_not_added_studying_notes", "Already studying {0}. Tome deconstructed into {1} notes."), sp.GetName(), (value as int) as String), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+        else
+            ; We don't check if spell learning is on here, but we do below. This is because we need to notify when the player buys a tome for a spell they are currently discovering even if learning is off.
+            notify(formatString1(__l("notification_spell_not_added_studying", "Already studying {0}."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+        endIf
+    endIf
+
+    if (PlayerRef.HasSpell(sp))
+        if ((_LEARN_CollectNotes.GetValue()) && !(VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) && (_LEARN_RemoveSpellBooks.GetValue()))
+            ; Notify with additional note information if vanilla note notifications are off
+            notify(formatString2(__l("notification_spell_not_added_notes", "Already knew {0}. Tome deconstructed into {1} notes."), sp.GetName(), (value as int) as String), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+        elseif (_LEARN_ResearchSpells.GetValue())
+            notify(formatString1(__l("notification_spell_not_added", "Already knew {0}."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+        endIf
+    endIf
+
+    if (_LEARN_ResearchSpells.GetValue())
+        ; add spell to the todo list if not already known or in list
+        if (!PlayerRef.HasSpell(sp) && !spell_fifo_has_ref(sp))
+            spell_fifo_push(sp)
+            if (_LEARN_CollectNotes.GetValue() && (!VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) && (_LEARN_RemoveSpellBooks.GetValue()))
+                ; Notify with additional note information if vanilla note notifications are off
+                notify(formatString2(__l("notification_spell_added_notes", "{0} added to study list. Tome deconstructed into {1} notes."), sp.GetName(), (value as int) as String), NOTIFICATION_ADD_SPELL_LIST)
+            else
+                notify(formatString1(__l("notification_spell_added", "{0} added to study list."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST)
+            endIf
+            if (canAutoLearn(sp, spell_fifo_get_ref(sp)) && (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1))
+                ; if the spell is eligible for automatic success, move it to the top of the list.
+                MoveSpellToTop(spell_fifo_get_ref(sp))
+            endIf
+        endIf
+    endIf
+    
+	; note that setting books as read does not work in SSE,
+	; as the skse extension used in LE has not been ported.
+	; this is unfortunate but it's not a loss in comparison with vanilla,
+	; which doesn't display which books are read in the menu anyway.
+	; sucks for those who got used to that convenience in SkyUI though.
+	bool isRead = akBook.isRead()
+    if (bookExtensionEnabled() && !isRead)
+        BookExtension.SetReadWFB(akBook, true)
+    endIf
+endFunction 
+
 ; === Version and upgrade management
 int function GetVersion()
-    return 176; v 1.7.6
+    return 177; v 1.7.7
 endFunction
 
 function UpgradeVersion()
     bool displayedUpgradeNotice = false
+    if (currentVersion < 177)
+        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.7")
+		if (!displayedUpgradeNotice)
+			; don't display multiple upgrade messages
+			Debug.Notification(msg)
+			displayedUpgradeNotice = true
+		endIf
+        Debug.Trace(msg)
+        ; Remove books is now not presented in the menu and is instead tied to "Enable Spell Learning functionality".
+        if (currentversion >= 172 && _LEARN_RemoveSpellBooks.GetValue() == 0)
+            ; if upgrading from an earlier version and disrupting current settings, let them know what we are changing
+            Debug.Notification(__l("notification_update_177_changed", "[Spell Learning] Update has turned back on spell book removal."))
+        endIf
+        ; Enable both options to ensure they are linked as currently designed.
+        _LEARN_RemoveSpellBooks.SetValue(1)
+        _LEARN_ResearchSpells.SetValue(1)
+    endIf
     if (currentVersion < 176)
         string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.6")
 		if (!displayedUpgradeNotice)
@@ -267,9 +430,9 @@ function UpgradeVersion()
 		effortLabels[0] = "Tough Start"
 		effortLabels[1] = "Diminishing Returns"
 		effortLabels[2] = "Linear"
-		; If user is upgrading from the last version, disable new options to not disrupt
-		; existing functionality for users. Unfortunately cannot cover older versions than
-		; that because it was only 1.7.2 that introduced versioning
+		; If user is upgrading from the last version, disable new options even if they are
+        ; now enabled by default to not disrupt existing functionality for users.
+		; Unfortunately cannot cover older versions because it was 1.7.2 that introduced versioning
 		if (currentVersion == 172)
 			_LEARN_DynamicDifficulty.SetValue(0)
 			_LEARN_IntervalCDREnabled.SetValue(0)
@@ -508,6 +671,10 @@ bool function forceLearnSpellAt(int index, bool useVanillaNotification)
             ; we can remove the spell learning effect that lets
             ; the player know there are spells to learn here if needed.
             updateSpellLearningEffect()
+            ; Give the book back to the player if we are configured to do that.
+            if (_LEARN_ReturnTomes.GetValue() == 1)
+                returnTomeAndPurge(spellToLearn)                
+            endIf
             return true
         endIf
     endIf
@@ -1515,8 +1682,14 @@ Spell function doDiscovery()
     
     if (inventedsp && (! (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp))))
         notify(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you: {0}!"), inventedsp.GetName()), NOTIFICATION_DISCOVERY)
-        spell_fifo_push(inventedsp)
-        updateSpellLearningEffect()
+        ; If spell learning is enabled, add the discovered spell to the list.
+        ; If spell learning is disabled, instantly learn the discovered spell.
+        if (_LEARN_ResearchSpells.GetValue())
+            spell_fifo_push(inventedsp)
+            updateSpellLearningEffect()
+        else
+            PlayerRef.AddSpell(inventedsp, false)
+        endIf
         Bookextension.setreadWFB(inventedbook, true)
     EndIf
     

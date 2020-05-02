@@ -33,12 +33,6 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		return
 	endIf
 
-	; Check to see if player's settings made sense.
-	if (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 0 && _LEARN_DiscoverOnStudy.GetValue() == 0)
-		; If both learning and discovery are off, StudyIsRest should be off.
-		_LEARN_StudyIsRest.SetValue(0)
-	endIf
-
 	; Check other conditions to not play animation or do anything at all.
 	if (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 1 && _LEARN_DiscoverOnStudy.GetValue() == 0 && ControlScript.spell_fifo_get_count() == 0)
 		; If Learning is on, discovery is off, but there's no spells on the list, don't waste the cooldown.
@@ -113,7 +107,11 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		ControlScript.doReset()
 	else
 		; This is for no learning/no discovery - a once-per-cycle bonus to chance is added instead
-		_LEARN_CountBonus.Mod(ControlScript.getNotesBonus(ControlScript.getTotalNotes(), false))
+		if (_LEARN_StudyRequiresNotes.GetValue())
+			_LEARN_CountBonus.Mod(ControlScript.getNotesBonus(ControlScript.getTotalNotes(), false))
+		else
+			_LEARN_CountBonus.Mod(15) 
+		endIf
 		_LEARN_LastDayStudied.SetValue(1)
 		ControlScript.notify(__l("notification_study_progress", "You feel you've made some progress."), ControlScript.NOTIFICATION_STUDY)
 	endIf
