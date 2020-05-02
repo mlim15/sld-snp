@@ -83,11 +83,8 @@ event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
     ; be possible if we still gave them notes onitemadded under this scenario. A check
     ; has been added to the onitemadded to only give the notes
     if ((akBaseObject as Book)) ; if it's a book
-        Debug.notification("Book opened")
         if ((akBaseObject as Book).GetSpell()) ; and it's a spellbook
-            Debug.notification("It's a spell book")
             if (cs._LEARN_CollectNotes.GetValue() == 1) ; and settings are right
-                Debug.notification("Going to add notes")
                 cs.takeNotes(akBaseObject as Book) ; then add notes
                 cs.addTomeToList(akBaseObject as Book); and add to list of tomes we've removed so we don't give notes on subsequent reads
             endIf
