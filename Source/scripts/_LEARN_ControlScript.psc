@@ -1496,12 +1496,15 @@ bool function canAutoLearn(Spell sp, int fifoindex)
 	; initialize more variables now that we know they really exist
 	eff = sp.GetNthEffectMagicEffect(0)
 	magicSchool = eff.GetAssociatedSkill()
-	magicLevel = eff.GetSkillLevel()
-	fskill = PlayerRef.GetActorValue(magicSchool)
+    magicLevel = eff.GetSkillLevel()
+    ; Take into account skill in other magickal schools,
+    ; 2/3 relevant school and 1/3 general
+    fskill = PlayerRef.GetActorValue(magicSchool)
+    pskill = (0.33*getAverageSkill())+(0.66*fskill)
 	if ((pskill - _LEARN_AutoNoviceLearning.GetValue()) >= magicLevel)
-		return True
+		return True ; Automatic learning success
 	Else
-		return False
+		return False ; Have to attempt to learn
 	EndIf
 EndFunction
 
@@ -1517,7 +1520,7 @@ bool function cannotLearn(Spell sp, int fifoindex)
 	int magicLevel = 100
 	float fskill = 0
 	float pskill = 0
-	; debug check to ensure everything still exists
+	; debug check to ensure everything exists
 	if (!debugCheck(sp, fifoindex))
 		return True
 	endif
@@ -1526,11 +1529,14 @@ bool function cannotLearn(Spell sp, int fifoindex)
 	eff = sp.GetNthEffectMagicEffect(0)
 	magicSchool = eff.GetAssociatedSkill()
 	magicLevel = (eff.GetSkillLevel())
-	fskill = PlayerRef.GetActorValue(magicSchool)
-	if (pskill > (_LEARN_TooDifficultDelta.GetValue() - magicLevel))
-		return True
+    ; Take into account skill in other magickal schools,
+    ; 2/3 relevant school and 1/3 general
+    fskill = PlayerRef.GetActorValue(magicSchool)
+    pskill = (0.33*getAverageSkill())+(0.66*fskill)
+	if (pskill < (magicLevel - _LEARN_TooDifficultDelta.GetValue()))
+		return True ; Automatic learning failure
 	Else
-		return False
+		return False ; Can attempt to learn
 	EndIf
 EndFunction
 
