@@ -723,7 +723,7 @@ Event OnOptionSliderOpen(Int a_option)    ; SLIDERS
 	
 	If (a_option == tooDifficultDeltaOID)
         SetSliderDialogStartValue(_LEARN_TooDifficultDelta.GetValue())
-        SetSliderDialogDefaultValue(50)
+        SetSliderDialogDefaultValue(30)
         SetSliderDialogRange(5, 100)
         SetSliderDialogInterval(5)
         return
