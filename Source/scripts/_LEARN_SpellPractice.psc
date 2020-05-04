@@ -72,6 +72,10 @@ function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRef
 EndFunction
 
 event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
+    ; if equipped object is not a book, do nothing.
+    if !(akBaseObject as Book)
+        return
+    endIf
     if (cs._LEARN_removedTomes.Find(akBaseObject as Book) != -1)
         ; try to do this fast and first to avoid a race condition with the game
         ; adding the spell to the player before we check if it's the first read or not

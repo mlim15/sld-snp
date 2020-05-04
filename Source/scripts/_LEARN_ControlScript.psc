@@ -1773,8 +1773,7 @@ Event OnSleepStop(Bool abInterrupted)
 
     ; All the functionality tied to a sleep-specific cooldown
     if (hours_before_next_ok_to_sleep() <= 0)
-        ; Chance to heal Dreadstare disease (this is only on rest, not on study so 
-        ; it's not broken out into the "reset" function)
+        ; Chance to heal Dreadstare disease
         if (PlayerRef.HasSpell(_LEARN_DiseaseDreadmilk))
             float fRand = 0
             fRand = Utility.RandomFloat(0.0, 1.0)
