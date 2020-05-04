@@ -41,7 +41,7 @@ The mod requires [SKSE](https://skse.silverlock.org/) to function. If you want t
 Compatibility
 -------------
 
-The Spell Learning features should be compatible with any spell. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds its spells to these lists will be compatible. Most spell mods do so.
+The Spell Learning features should be compatible with any spell that is learned through a tome. The Spell Discovery feature uses the game's leveled loot lists, so any spell mod that adds its spells to these lists will be compatible. Most spell mods do so.
 
 Installation
 -------------
