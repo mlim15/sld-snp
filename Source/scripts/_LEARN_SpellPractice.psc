@@ -72,15 +72,6 @@ function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRef
 EndFunction
 
 event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
-    ; if equipped object is not a book, do nothing.
-    if !(akBaseObject as Book)
-        return
-    endIf
-    if (cs._LEARN_removedTomes.Find(akBaseObject as Book) != -1)
-        ; try to do this fast and first to avoid a race condition with the game
-        ; adding the spell to the player before we check if it's the first read or not
-        return
-    endIf
     ; If we are supposed to generate notes but not remove books, then generate notes here
     ; when the book is consumed for insta-learn functionality. This prevents the player
     ; from duplicating notes by dropping/picking up the book many times, which would
@@ -89,8 +80,10 @@ event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
     if ((akBaseObject as Book)) ; if it's a book
         if ((akBaseObject as Book).GetSpell()) ; and it's a spellbook
             if (cs._LEARN_CollectNotes.GetValue() == 1) ; and settings are right
-                cs.takeNotes(akBaseObject as Book) ; then add notes
-                cs.addTomeToList(akBaseObject as Book); and add to list of tomes we've removed so we don't give notes on subsequent reads
+                if (cs._LEARN_removedTomes.Find(akBaseObject as Book) != -1); and we haven't already given notes for it
+                    cs.takeNotes(akBaseObject as Book) ; then add notes
+                    cs.addTomeToList(akBaseObject as Book); and add to list of tomes we've removed so we don't give notes on subsequent reads
+                endIf
             endIf
         endIf
     endIf
