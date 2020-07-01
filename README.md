@@ -36,7 +36,7 @@ Then I found this mod. It was a great balance... but it felt somewhat unpolished
 Requirements
 ------------
 
-The mod requires [SKSE](https://skse.silverlock.org/) to function. If you want to backup and restore your spell list, you will also need [FISS](https://www.nexusmods.com/skyrimspecialedition/mods/13956). For localization support, you'll also need [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048).
+The mod requires [SKSE](https://skse.silverlock.org/) to function. For backup and restoration of your spell list, the mod uses [FISS](https://www.nexusmods.com/skyrimspecialedition/mods/13956). You'll also need [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048), which the mod uses for localization support and more.
 
 Compatibility
 -------------
