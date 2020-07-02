@@ -1,8 +1,8 @@
 scriptName _LEARN_SpellPractice extends ActiveMagicEffect
 ; This script is attached to the player via the mod's Spell Learning status effect.
-; Its functions could be tracked via the quest, but this method is slightly more modula
+; Its functions could be tracked via the quest, but this method is slightly more modular
 ; It is responsible for tracking spell casts by school, as well as 
-; detecing and removing books when they enter the player's inventory.
+; detecting and removing books when they enter the player's inventory.
 
 _LEARN_ControlScript property cs auto
 GlobalVariable property _LEARN_CountAlteration auto
