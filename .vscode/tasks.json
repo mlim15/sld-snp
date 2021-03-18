@@ -15,7 +15,7 @@
                     "quoting": "strong"
                 },
                 {
-                    "value": "-import=${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\Spell Learning and Discovery Development\\Source\\scripts;${config:papyrus.skyrimSpecialEdition.installPath}\\Data\\Scripts\\Source;${config:papyrus.skyrimSpecialEdition.installPath}\\Data\\Source\\Scripts;${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\PapyrusUtil\\Source\\Scripts",
+                    "value": "-import=${config:papyrus.skyrimSpecialEdition.installPath}\\MO\\mods\\Spell Learning and Discovery Development\\Source\\scripts;${config:papyrus.skyrimSpecialEdition.installPath}\\Data\\Source\\Scripts",
                     "quoting": "strong"
                 },
                 {

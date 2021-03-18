@@ -49,6 +49,20 @@ GlobalVariable property _LEARN_ResearchSpells auto
 GlobalVariable property _LEARN_RemoveUnknownOnly auto
 String[] effortLabels
 
+ObjectReference QASpellTomeContainer
+; Odin
+ObjectReference ODN_Conjuration_Chest
+ObjectReference ODN_Illusion_Chest
+ObjectReference ODN_Restoration_Chest
+ObjectReference ODN_Destruction_Chest
+ObjectReference ODN_Alteration_Chest
+; Apocalypse
+ObjectReference WB_Conjuration_Chest
+ObjectReference WB_Illusion_Chest
+ObjectReference WB_Restoration_Chest
+ObjectReference WB_Destruction_Chest
+ObjectReference WB_Alteration_Chest
+
 GlobalVariable property _LEARN_EnthirSells auto
 _LEARN_enthirChestAlias property enthirChestAlias auto
 _LEARN_tolfdirChestAlias property tolfdirChestAlias auto
@@ -67,6 +81,7 @@ Book property _LEARN_SpellNotesConjuration auto
 Book property _LEARN_SpellNotesDestruction auto
 Book property _LEARN_SpellNotesIllusion auto
 Book property _LEARN_SpellNotesRestoration auto
+Book property _LEARN_SpellNotesGeneric auto
 MagicEffect Property AlchDreadmilkEffect auto
 MagicEffect Property AlchShadowmilkEffect auto
 MagicEffect Property _LEARN_PracticeEffect auto
@@ -118,14 +133,10 @@ LeveledItem[] aIllusionLL
 LeveledItem[] aRestorationLL
 LeveledItem[] aInventSpellsPtr
 
-Spell[] aSpells
-int iHead
-int iTail = -1
-int iMaxSize
-int iCount
-Form[] _spells
 int currentVersion; save active version
 FormList property _LEARN_removedTomes auto
+FormList property _LEARN_alreadyLearned auto
+FormList property _LEARN_learningList auto
 
 bool property CanUseLocalizationLib = false auto;
 int property LIST_HEAD_SPARE_COUNT = 8 autoReadOnly
@@ -153,7 +164,6 @@ int property NOTIFICATION_ERROR = 13 autoReadOnly
 int property NOTIFICATION_VANILLA_ADD_SPELL = 14 autoReadOnly
 int property NOTIFICATION_FORCE_DISPLAY = 15 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
-bool _canSetBookAsRead
 
 ; === MCM helper functions
 String[] function getEffortLabels()
@@ -163,10 +173,6 @@ endFunction
 String[] function getSchools()
     return aSchools
 EndFunction
-
-bool function bookExtensionEnabled()
-    return _canSetBookAsRead
-endFunction
 
 bool function ToggleNotification(int id)
     if id < 0 || id > VisibleNotifications.Length
@@ -198,43 +204,33 @@ endFunction
 
 ; === Tome management
 float function takeNotes(Book tome)
-    Spell sp = tome.GetSpell()
-    MagicEffect eff = sp.GetNthEffectMagicEffect(0)
-    String magicSchool = eff.GetAssociatedSkill() 
-    float skillDiff = getSkillDiffFactor(magicSchool, eff)*2
-    ; If overall player skill is 50 and the spell is level 25, skillDiff will return 1/2 by default.
-    ; If player skill is 25 and spell level is 50, it will return 2. 
-    ; If player skill and spell level are equal, it returns 1.
-    ; Multiplying by 2 means that later when we divide, the generated notes are according to our
-    ; value design: at equal skill and spell level, half the notes are generated.
-    ; We want to cap the factor to not go below 1 so that the notes generated are never more than the base value.
-    ; We also want to cap the penalty so that the player never gets less than 1/4 of the base value.
-    ; This 1/4 base value scenario only happens when player skill is less than half that of the spell level 
-    ; (e.g. novice learning adept, apprentice learning expert).
-    if (skillDiff < 1)
-        skillDiff = 1
-    elseIf (skillDiff > 4)
-        skillDiff = 4
-    endIf
-    ; Scale the value of notes generated according to skill difference
+    ; For no-SKSE case: generate generic notes because we cannot programatically get spell school, level, or basically
+    ; any information at all out of the book. Keep up to 2/3 value depending on overall skill.
     float value = 1
-    value = (tome.GetGoldValue()/skillDiff)
-    if magicSchool == SPELL_SCHOOL_ALTERATION
-        PlayerRef.addItem(_LEARN_SpellNotesAlteration, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
-    elseIf magicSchool == SPELL_SCHOOL_CONJURATION
-        PlayerRef.addItem(_LEARN_SpellNotesConjuration, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
-    elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
-        PlayerRef.addItem(_LEARN_SpellNotesDestruction, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) 
-    elseIf magicSchool == SPELL_SCHOOL_ILLUSION
-        PlayerRef.addItem(_LEARN_SpellNotesIllusion, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
-    elseIf magicSchool == SPELL_SCHOOL_RESTORATION
-        PlayerRef.addItem(_LEARN_SpellNotesRestoration, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
-    endIf
+    value = tome.GetGoldValue()*(getAverageSkill()/100*(2/3))
+    PlayerRef.addItem(_LEARN_SpellNotesGeneric, value as int, !VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE])
     ; Return the value of the created notes in case we want to notify some other way
     return value
 endFunction
 
-function addTomeToList(Book newTome)
+bool function isSpellBook(Book toCheck)
+    if (QASpellTomeContainer.GetItemCount(toCheck) != 0)
+    elseIf (WB_Conjuration_Chest.GetItemCount(toCheck) != 0 || WB_Illusion_Chest.GetItemCount(toCheck) != 0 || WB_Restoration_Chest.GetItemCount(toCheck) != 0 || WB_Destruction_Chest.GetItemCount(toCheck) != 0 || WB_Alteration_Chest.GetItemCount(toCheck) != 0)
+        return true
+    elseIf (ODN_Conjuration_Chest.GetItemCount(toCheck) != 0 || ODN_Illusion_Chest.GetItemCount(toCheck) != 0 || ODN_Restoration_Chest.GetItemCount(toCheck) != 0 || ODN_Destruction_Chest.GetItemCount(toCheck) != 0 || ODN_Alteration_Chest.GetItemCount(toCheck) != 0)
+        return true
+    else
+        return false
+    endIf
+endFunction
+
+function addTomeToLearningList(Book newTome)
+    if (_LEARN_learningList.Find(newTome) == -1)
+        _LEARN_learningList.AddForm(newTome)
+    endIf
+endFunction
+
+function addTomeToRemovedList(Book newTome)
     ; Add the passed tome to the list of tomes we've
     ; removed if it isn't in the list
     if (_LEARN_removedTomes.Find(newTome) == -1)
@@ -242,99 +238,79 @@ function addTomeToList(Book newTome)
     endIf
 endFunction
 
-function removeTomeFromList(Book toRemove)
-    ; removing tomes from the formlist isn't strictly necessary
-    ; because spells can't be learned twice through the mod anyway,
-    ; so there's no chance to return the same book twice.
-    ; formlists also have no realistic max limit.
-    ; however, some people claim they act erratically after 255 entries.
-    ; this function does work, but it isn't currently used
-    ; to ensure that notes are never given for the same book twice, period,
-    ; whether the user turns off spell book removal or not.
+bool function onLearningList(Book toCheck)
+    if (_LEARN_learningList.Find(toCheck) == -1)
+        return false
+    else
+        return true
+    endIf
+endFunction
+
+bool function alreadyLearned(Book toCheck)
+    if (_LEARN_alreadyLearned.Find(toCheck) == -1)
+        return false
+    else
+        return true
+    endIf
+endFunction
+
+function removeTomeFromLists(Book toRemove)
+    _LEARN_learningList.RemoveAddedForm(toRemove)
     _LEARN_removedTomes.RemoveAddedForm(toRemove)
 endFunction
 
-function returnTomeAndPurge(Spell sp)
+function returnTomeAndPurge(Book toReturn)
     ; Look for a tome in the list that has the passed spell
-    int count = 0
-    while (count < _LEARN_removedTomes.GetSize())
-        Book tomeToReturn = (_LEARN_removedTomes.GetAt(count) as Book)
-        if (tomeToReturn.GetSpell() == sp)
-            ; If we find the right tome in the list, add it to player inventory.
-            PlayerRef.AddItem(tomeToReturn, 1, true)
-            ;removeTomeFromList(tomeToReturn)
-            return
-        endIf
-        count += 1
-    endWhile
+    int index = _LEARN_removedTomes.Find(toReturn)
+    if (index != -1)
+        ; If we find the right tome in the list, add it to player inventory.
+        PlayerRef.AddItem(toReturn, 1, true)
+        removeTomeFromLists(toReturn)
+        return
+    endIf
     ; If we don't find it print a warning to papyrus log. This could be for lots of reasons and isn't necessarily something to worry about.
     Debug.trace("[Spell Learning] Warning: Cannot return tome for learned spell, not in list of removed tomes. This could be because the spell was added to the list with an earlier version of the mod, because the option to remove tomes is off but the option to return tomes has been turned on, or simply because the spell was discovered instead of read.")
 endFunction
 
-function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
+function TryAddSpellBook(Book akBook, int aiItemCount)
     float value = 0
     ; if option to leave known spell tomes alone is on and the player knows the spell,
     ; do absolutely nothing
-    if ((_LEARN_RemoveUnknownOnly.GetValue()) && (PlayerRef.HasSpell(akBook.GetSpell())))
+    if ((_LEARN_RemoveUnknownOnly.GetValue()) && _LEARN_alreadyLearned.Find(akBook) != -1)
         return
     endIf
-    ; maybe remove book
+    ; remove book
     if (_LEARN_RemoveSpellBooks.GetValue())
         PlayerRef.removeItem(akBook, aiItemCount, !VisibleNotifications[NOTIFICATION_REMOVE_BOOK])
-        ; maybe add tome to list of removed tomes
-        if (_LEARN_ReturnTomes.GetValue())
-            addTomeToList(akBook)
-        endIf
+        ; add tome to list of removed tomes
+        addTomeToRemovedList(akBook)
     EndIf
 	; maybe add notes if we removed the book
     if (_LEARN_CollectNotes.GetValue() && _LEARN_RemoveSpellBooks.GetValue())
         value = takeNotes(akBook)
     endIf
     
-    if (spell_fifo_has_ref(sp))
+    if (onLearningList(akBook))
         if ((_LEARN_CollectNotes.GetValue()) && !(VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) && (_LEARN_RemoveSpellBooks.GetValue()))
             ; Notify with additional note information if vanilla note notifications are off
-            notify(formatString2(__l("notification_spell_not_added_studying_notes", "Already studying {0}. Tome deconstructed into {1} notes."), sp.GetName(), (value as int) as String), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+            notify(__l("notification_spell_not_added_studying_notes_no_skse", "Already studying that spell. Tome deconstructed into notes."), NOTIFICATION_ADD_SPELL_LIST_FAIL)
         else
             ; We don't check if spell learning is on here, but we do below. This is because we need to notify when the player buys a tome for a spell they are currently discovering even if learning is off.
-            notify(formatString1(__l("notification_spell_not_added_studying", "Already studying {0}."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST_FAIL)
-        endIf
-    endIf
-
-    if (PlayerRef.HasSpell(sp))
-        if ((_LEARN_CollectNotes.GetValue()) && !(VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) && (_LEARN_RemoveSpellBooks.GetValue()))
-            ; Notify with additional note information if vanilla note notifications are off
-            notify(formatString2(__l("notification_spell_not_added_notes", "Already knew {0}. Tome deconstructed into {1} notes."), sp.GetName(), (value as int) as String), NOTIFICATION_ADD_SPELL_LIST_FAIL)
-        elseif (_LEARN_ResearchSpells.GetValue())
-            notify(formatString1(__l("notification_spell_not_added", "Already knew {0}."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+            notify(__l("notification_spell_not_added_studying_no_skse", "Already studying that spell."), NOTIFICATION_ADD_SPELL_LIST_FAIL)
         endIf
     endIf
 
     if (_LEARN_ResearchSpells.GetValue())
         ; add spell to the todo list if not already known or in list
-        if (!PlayerRef.HasSpell(sp) && !spell_fifo_has_ref(sp))
-            spell_fifo_push(sp)
+        if (!alreadyLearned(akBook) && !onLearningList(akBook))
+            addTomeToLearningList(akBook)
             if (_LEARN_CollectNotes.GetValue() && (!VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE]) && (_LEARN_RemoveSpellBooks.GetValue()))
                 ; Notify with additional note information if vanilla note notifications are off
-                notify(formatString2(__l("notification_spell_added_notes", "{0} added to study list. Tome deconstructed into {1} notes."), sp.GetName(), (value as int) as String), NOTIFICATION_ADD_SPELL_LIST)
+                notify(__l("notification_spell_added_notes_no_skse", "Spell added to study list. Tome deconstructed into notes."), NOTIFICATION_ADD_SPELL_LIST)
             else
-                notify(formatString1(__l("notification_spell_added", "{0} added to study list."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST)
-            endIf
-            if (canAutoLearn(sp, spell_fifo_get_ref(sp)) && (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1))
-                ; if the spell is eligible for automatic success, move it to the top of the list.
-                MoveSpellToTop(spell_fifo_get_ref(sp))
+                notify(__l("notification_spell_added_no_skse", "Added spell to study list."), NOTIFICATION_ADD_SPELL_LIST)
             endIf
         endIf
-    endIf
-    
-	; note that setting books as read does not work in SSE,
-	; as the skse extension used in LE has not been ported.
-	; this is unfortunate but it's not a loss in comparison with vanilla,
-	; which doesn't display which books are read in the menu anyway.
-	; sucks for those who got used to that convenience in SkyUI though.
-	bool isRead = akBook.isRead()
-    if (bookExtensionEnabled() && !isRead)
-        BookExtension.SetReadWFB(akBook, true)
     endIf
 endFunction 
 
@@ -346,7 +322,7 @@ endFunction
 function UpgradeVersion()
     bool displayedUpgradeNotice = false
     if (currentVersion < 177)
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.7")
+        string msg = "[Spell Learning] Installed version 1.7.7"
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
@@ -363,7 +339,7 @@ function UpgradeVersion()
         _LEARN_ResearchSpells.SetValue(1)
     endIf
     if (currentVersion < 176)
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.6")
+        string msg = "[Spell Learning] Installed version 1.7.6"
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
@@ -373,7 +349,7 @@ function UpgradeVersion()
         updateSpellLearningEffect()
     endIf
     if (currentVersion < 175)
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.5")
+        string msg = "[Spell Learning] Installed version 1.7.5"
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
@@ -400,7 +376,7 @@ function UpgradeVersion()
         VisibleNotifications[NOTIFICATION_FORCE_DISPLAY] = 1
     endIf
     if (currentVersion < 174)
-		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.4")
+		string msg = "[Spell Learning] Installed version 1.7.4"
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
@@ -418,7 +394,7 @@ function UpgradeVersion()
         endIf  
     endIf
 	if (currentVersion < 173)
-		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
+		string msg = "[Spell Learning] Installed version 1.7.3"
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
@@ -450,8 +426,7 @@ function UpgradeVersion()
 		endIf
 	endIf
     if (currentVersion < 172)
-        UpgradeSpellList()
-		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.2")
+		string msg = "[Spell Learning] Installed version 1.7.2"
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
@@ -462,27 +437,29 @@ function UpgradeVersion()
     currentVersion = GetVersion()
 endFunction
 
-function UpgradeSpellList()
-    if aSpells || aSpells.Length > 1
-        int i = 0
-        int newCapacity = NihSldUtil.CalculateNextCapacity(iCount)
-        _spells = Utility.CreateFormArray(newCapacity)
-        while i < iCount
-            _spells[i] = aSpells[(iHead + i) % iMaxSize]
-            i += 1
-        EndWhile
-        iHead = 0
-        iTail = iCount - 1
-        iMaxSize = newCapacity
-        aSpells = new Spell[1]; assigning None causes casting error
-    endIf
-endFunction
-
 function InternalPrepare()
 {Maintainence function}
     aSchools[0] = __l("mcm_automatic", "Automatic"); added here for mid-game localization support
-    _canSetBookAsRead = SKSE.GetPluginVersion("BookExtension") != -1
     UpgradeVersion()
+    ; Populate ObjectReferences with chests containing all spell tomes
+    QASpellTomeContainer = Game.GetFormFromFile(0x0C2CD9, "Skyrim.esm") as ObjectReference
+    ; Odin
+    ; Do one and test existence first before populating rest
+    ODN_Conjuration_Chest = Game.GetFormFromFile(0x0B57A6, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+    if (ODN_Conjuration_Chest) ; exists
+        ODN_Illusion_Chest = Game.GetFormFromFile(0x23DA83, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Restoration_Chest = Game.GetFormFromFile(0x2611EE, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Destruction_Chest = Game.GetFormFromFile(0x26B454, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Alteration_Chest = Game.GetFormFromFile(0x275687, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+    endIf
+    ; Apocalypse
+    WB_Conjuration_Chest = Game.GetFormFromFile(0x0B57A6, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+    if (WB_Conjuration_Chest) ; exists
+        WB_Illusion_Chest = Game.GetFormFromFile(0x0B57A8, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Restoration_Chest = Game.GetFormFromFile(0x0B57A9, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Destruction_Chest = Game.GetFormFromFile(0x0B57A7, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Alteration_Chest = Game.GetFormFromFile(0x0A94A1, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+    endIf
     ; Because this function InternalPrepare() is called on every load, we can refresh our LeveledList changes
     ; since they are not persistent in a save when added via script. This function checks
     ; conditions itself, so we don't need to here.
@@ -500,15 +477,6 @@ string function __l(string keyName, string defaultValue = "")
     return defaultValue 
 endFunction
 
-string function formatString1(string source, string p1)
-    return _LEARN_Strings.StringReplaceAll(source, "{0}", p1)
-endFunction
-
-string function formatString2(string source, string p1, string p2)
-    string r = formatString1(source, p1)
-    return _LEARN_Strings.StringReplaceAll(r, "{1}", p2)
-endFunction
-
 int function GetMenuLangId()
     if CanUseLocalizationLib
         return _LEARN_Strings.GetMenuLangId()
@@ -518,155 +486,13 @@ int function GetMenuLangId()
 endFunction
 
 ; === Spell list management
-function SpellListEnsureCapacity(int capacity)
-    if capacity > iMaxSize
-        int newSize = NihSldUtil.CalculateNextCapacity(capacity)
-        if _spells
-            _spells = Utility.ResizeFormArray(_spells, newSize)
-        else
-            _spells = Utility.CreateFormArray(newSize)
-            iTail = -1
-            iHead = 0
-        endIf
-        ;Debug.Trace(_LEARN_Strings.FormatString2("[Spell Learning] Spell capacity increased from {0} to {1}", iMaxSize, newSize))
-        iMaxSize = newSize
-    endIf
-endFunction
-
-int function CopySpells(Form[] targetList, int startIndex, int count)
-{to get spells for paging faster. returns copied spell count}
-    if startIndex < 0 || startIndex >= iCount
-        return 0
-    endIf
-    if count + startIndex > iCount
-        count = iCount - startIndex
-    endIf
-    int i = 0
-    int delta = iHead + startIndex
-    while i < count
-        targetList[i] = _spells[delta + i]
-        i += 1
-    EndWhile
-    return count
-endFunction
-
-int function spell_fifo_get_count()
-    return iCount
-EndFunction
-
-bool function spell_fifo_has_ref(Spell sp)
-    return (iCount > 0 && _spells.Find(sp as Form) >= 0)
-EndFunction
-
-int function spell_fifo_get_ref(Spell sp)
-	if (iCount > 0 && _spells.Find(sp as Form) >= 0)
-		return _spells.Find(sp as Form)
-	Else
-		return 0
-	EndIf
-EndFunction
-
-Spell function spell_fifo_peek(int idx = 0)
-    if idx < 0 || iCount <= idx
-        return None
-    endIf
-    return _spells[iHead + idx] as Spell
-EndFunction
-
-Bool function spell_fifo_poke(int idx, Spell spx)
-    if idx < 0 || iCount <= idx
-        return false
-    endIf
-    _spells[iHead + idx] = spx
-EndFunction
-
-Spell function spell_fifo_remove_last()
-    if iCount == 0
-        return None
-    endIf
-    Spell tmp = _spells[iTail] as Spell
-    _spells[iTail] = None
-    iCount -= 1
-    iTail -= 1
-    return tmp
-EndFunction
-
-Spell function spell_fifo_push(Spell s) 
-    ; add
-    SpellListEnsureCapacity(iTail + 2)
-    iTail += 1
-    _spells[iTail] = s
-    iCount += 1
-    ; Since this is the main way spells are added to the list,
-    ; let's update the spell learning effect once here instead of in every
-    ; place we might add new spells to the list
-    updateSpellLearningEffect()
-    return s
-EndFunction
-
-Spell function spell_fifo_pop()
-    ; remove first item and return it
-    if iCount == 0
-        return None
-    endIf
-    Spell tmp = _spells[iHead] as Spell
-    _spells[iHead] = None
-    iHead += 1
-    iCount -= 1
-    if iHead > LIST_PURGE_AFTER ; we check here to avoid framing
-        PurgeSpellList()
-    endIf
-    return tmp
-EndFunction
-
-Spell function spell_list_removeAt(int index)
-    if index < 0 || index >= iCount
-        return None
-    endIf
-    int realIndex = index + iHead
-    Spell tmp = _spells[realIndex] as Spell
-    bool checkPurge = false
-
-    if realIndex == iHead
-        _spells[iHead] = None
-        iHead += 1
-        iCount -= 1
-        checkPurge = true
-    elseIf realIndex == iTail
-        _spells[iTail] = None
-        iCount -= 1
-        iTail -= 1
-    elseIf (realIndex - iHead) < (iTail - realIndex) ; we move items from start of the list
-        int i = realIndex
-        while i > iHead
-            _spells[i] = _spells[i - 1]
-            i -= 1
-        EndWhile
-        _spells[iHead] = None
-        iHead += 1
-        iCount -= 1
-        checkPurge = true
-    else ; we move items from end of the list
-        int i = realIndex
-        while i < iTail
-            _spells[i] = _spells[i + 1]
-            i += 1
-        EndWhile
-        _spells[iTail] = None
-        iTail -= 1
-        iCount -= 1
-    endIf
-    if checkPurge && iHead > LIST_PURGE_AFTER
-        PurgeSpellList()
-    endIf
-    return tmp
-endFunction
-
 bool function forceLearnSpellAt(int index, bool useVanillaNotification)
-    Spell spellToLearn = spell_list_removeAt(index)
+    Book spellToLearn = _LEARN_learningList.getAt(index) as Book
     if spellToLearn
-        if !PlayerRef.HasSpell(spellToLearn)
-            PlayerRef.AddSpell(spellToLearn, useVanillaNotification)
+        if !alreadyLearned(spellToLearn)
+            PlayerRef.EquipItem(spellToLearn, false, false)
+            _LEARN_alreadyLearned.addForm(spellToLearn)
+            removeTomeFromLists(spellToLearn)
             ; All spell learning in the mod goes through this method so
             ; we can remove the spell learning effect that lets
             ; the player know there are spells to learn here if needed.
@@ -681,270 +507,21 @@ bool function forceLearnSpellAt(int index, bool useVanillaNotification)
     return false
 endFunction
 
-function PurgeSpellList()
-    int spareHead = LIST_HEAD_SPARE_COUNT
-    if iHead < spareHead
-        return
-    endIf
-    ;Debug.Trace("[Spell Learning] Purging head=" + iHead + ",count=" + iCount + ",capacity=" + iMaxSize)
-    int i = spareHead
-    int topIndex = iCount + spareHead
-    int delta = iHead - spareHead
-    while i < topIndex
-        _spells[i] = _spells[i + delta]
-        i += 1
-    EndWhile
-    iTail -= delta
-    iHead = spareHead
-
-    ; add shrink functionality
-    int requestedCapacity = iCount + (2 * spareHead)
-    int calculatedCapacity = NihSldUtil.CalculateNextCapacity(requestedCapacity)
-    if iMaxSize > calculatedCapacity
-        ;Debug.Trace("[Spell Learning] shrinking from" + iMaxSize + " to " + calculatedCapacity)
-        _spells = Utility.ResizeFormArray(_spells, calculatedCapacity)
-        iMaxSize = calculatedCapacity
-    endIf
-    ;Debug.Trace("[Spell Learning] Purge completed head=" + iHead + ",count=" + iCount + ",capacity=" + iMaxSize)
-    ;/ TODO: test this later
-    if CanUseLocalizationLib ; PapyrusUtil is installed
-        _spells = PapyrusUtil.SliceFormArray(_spells, iHead - spareHead, iMaxSize - 1)
-        iMaxSize = _spells.Length
-        iTail -= (iHead - spareHead)
-        iHead = spareHead
-    else
-        int i = spareHead
-        int topIndex = iCount + spareHead
-        int delta = iHead - spareHead
-        while i < topIndex
-            _spells[i] = _spells[i + delta]
-            i += 1
-        EndWhile
-        iTail -= delta
-        iHead = spareHead
-    endIf
-    /;
-endFunction
-
-bool function MoveSpellToTop(int spellIndex)
-    if spellIndex == 0
-        return false
-    endIf
-    int realIndex = spellIndex + iHead
-    Form item = _spells[realIndex]
-    int i
-    if iHead == 0 ;no free space at beginning
-        i = realIndex
-        while i
-            _spells[i] = _spells[i - 1]
-            i -= 1
-        endWhile
-        _spells[iHead] = item
-    else 
-        int lenL = realIndex - iHead
-        int lenR = iTail - realIndex
-        if (lenR < lenL) || (lenR == lenL && iHead > LIST_HEAD_SPARE_COUNT)
-            i = realIndex
-            while i < iTail
-                _spells[i] = _spells[i + 1]
-                i += 1
-            endWhile
-            iTail -= 1
-            iHead -= 1
-            _spells[iHead] = item
-        else
-            i = realIndex
-            while i > iHead
-                _spells[i] = _spells[i - 1]
-                i -= 1
-            endWhile
-            _spells[iHead] = item
-        endIf
-    endIf
-    return true
-endFunction
-
-bool function MoveSpellToBottom(int spellIndex)
-    if spellIndex >= (iCount - 1)
-        return false
-    endIf
-    int realIndex = spellIndex + iHead
-    Form item = _spells[realIndex]
-    int i
-
-    int lenL = realIndex - iHead
-    int lenR = iTail - realIndex
-    
-    if (lenL < lenR)
-        i = realIndex
-        while i > iHead
-            _spells[i] = _spells[i - 1]
-            i -= 1
-        endWhile
-        _spells[iHead] = None
-        iHead += 1
-        SpellListEnsureCapacity(iTail + 2)
-        iTail += 1
-        _spells[iTail] = item
-    else
-        i = realIndex
-        while i < iTail
-            _spells[i] = _spells[i + 1]
-            i += 1
-        endWhile
-        _spells[iTail] = item
-    endIf
-
-    return true
-endFunction
-
-bool function MoveSpellToIndex(int spellIndex, int targetIndex)
-    if spellIndex == targetIndex || spellIndex < 0 || spellIndex >= iCount
-        return false
-    endIf
-    if targetIndex == 0
-        return MoveSpellToTop(spellIndex)
-    elseIf targetIndex >= (iCount - 1)
-        return MoveSpellToBottom(spellIndex)
-    endIf
-
-    int realIndex = spellIndex + iHead
-    int realTargetIndex = targetIndex + iHead
-    Form tmp = _spells[realIndex]
-    int displacement
-    int leftCount
-    int rightCount
-    int i
-    if (targetIndex < spellIndex) ; going left
-        displacement = spellIndex - targetIndex
-        leftCount = targetIndex
-        rightCount = iCount - spellIndex - 1
-        if iHead > 0 && (leftCount + rightCount) < displacement
-            i = iHead
-            while i < realTargetIndex ; moving left array to left
-                _spells[i - 1] = _spells[i]
-                i += 1
-            endWhile
-            iHead -= 1
-            _spells[realTargetIndex - 1] = tmp
-            i = realIndex
-            while i < iTail ; moving right array to left
-                _spells[i] = _spells[i + 1]
-                i += 1
-            endWhile
-            _spells[iTail] = None
-            iTail -= 1
-        else ; move displacement
-            i = realIndex
-            while i > realTargetIndex
-                _spells[i] = _spells[i - 1]
-                i -= 1
-            endWhile
-            _spells[realTargetIndex] = tmp
-        endIf
-    else ; going right
-        displacement = targetIndex - spellIndex
-        leftCount = spellIndex
-        rightCount = iCount - targetIndex - 1
-        if (leftCount + rightCount) < displacement
-            SpellListEnsureCapacity(iTail + 2)
-            i = iTail
-            while i > realTargetIndex ; moving right array to right
-                _spells[i + 1] = _spells[i]
-                i -= 1
-            endWhile
-            iTail += 1
-            _spells[realTargetIndex + 1] = tmp
-            i = realIndex
-            while i > iHead ; moving left array to right
-                _spells[i] = _spells[i - 1]
-                i -= 1
-            endWhile
-            _spells[iHead] = None
-            iHead += 1
-        else
-            i = realIndex
-            while i < realTargetIndex
-                _spells[i] = _spells[i + 1]
-                i += 1
-            endWhile
-            _spells[realTargetIndex] = tmp
-        endIf
-    endIf
-
-    return true
-endFunction
-
-bool function MoveSpellUp(int spellIndex)
-    if spellIndex == 0
-        return false
-    endIf
-    int realIndex = spellIndex + iHead
-    
-    Form tmp = _spells[realIndex]
-    _spells[realIndex] = _spells[realIndex - 1]
-    _spells[realIndex - 1] = tmp
-    return true
-endFunction
-
-bool function MoveSpellDown(int spellIndex)
-    if spellIndex >= (iCount - 1)
-        return false
-    endIf
-    int realIndex = spellIndex + iHead
-    
-    Form tmp = _spells[realIndex]
-    _spells[realIndex] = _spells[realIndex + 1]
-    _spells[realIndex + 1] = tmp
-    return true
-endFunction
-
 ; === Mod initialization functions
-
-function addLlToListIfMissing(LeveledItem listToAdd, LeveledItem list, int level, int count)
-    int i = list.GetNumForms()
-    While (i > 0)
-        Form x
-        x = list.GetNthForm(i)
-        if (x == listToAdd)
-            ; it's is already present in list
-            return
-        EndIf
-        i = i - 1
-    EndWhile
-    ; If we get here, we haven't found the item in the list, so add it.
-    list.addform(listToAdd, level, count)
-endFunction
-
-function addBookToListIfMissing(Book bookToAdd, LeveledItem list, int level, int count)
-    int i = list.GetNumForms()
-    While (i > 0)
-        Book x
-        x = list.GetNthForm(i) as Book
-        if (x == bookToAdd)
-            ; item is already present in list
-            return
-        EndIf
-        i = i - 1
-    EndWhile
-    ; If we get here, we haven't found the item in the list, so add it.
-    list.addform(bookToAdd, level, count)
-endFunction
-
 function SpawnItemsInWorld(); TODO Test.
     if (_LEARN_SpawnItems.GetValue() == 1)
         ; Spirit Tutor tome
-        addBookToListIfMissing(_LEARN_SpellTomeSummonSpiritTutor, LitemSpellTomes00Conjuration, 1, 1)
+        LitemSpellTomes00Conjuration.addform(_LEARN_SpellTomeSummonSpiritTutor, 1, 1)
         ; Attunement tome
-        addBookToListIfMissing(_LEARN_SetHomeSpBook, LitemSpellTomes25Alteration, 1, 1)
+        LitemSpellTomes25Alteration.addform(_LEARN_SetHomeSpBook, 1, 1)
         ; Drugs
-        addLlToListIfMissing(LootLearningDrugs, LootWarlockRandom, 1, 1)
-        addLlToListIfMissing(LootLearningDrugs, LootRandomBanditWizard, 1, 1)
-        addLlToListIfMissing(LootLearningDrugs, LootForswornRandomWizard, 1, 1)
+        LootWarlockRandom.addform(LootLearningDrugs, 1, 1)
+        LootRandomBanditWizard.addform(LootLearningDrugs, 1, 1)
+        LootForswornRandomWizard.addform(LootLearningDrugs, 1, 1)
         ; Add more spell tome spawns to some mage enemies
-        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootWarlockRandom, 1, 1)
-        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootRandomBanditWizard, 1, 1)
-        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootForswornRandomWizard, 1, 1)
+        LootWarlockRandom.addform(LootWarlockSpellTomes00All15, 1, 1)
+        LootRandomBanditWizard.addform(LootWarlockSpellTomes00All15, 1, 1)
+        LootForswornRandomWizard.addform(LootWarlockSpellTomes00All15, 1, 1)
     endIf
     if (_LEARN_EnthirSells.GetValue() == 1)
         ; Re-run each alias's on init script. It will run its own checks and
@@ -1016,7 +593,7 @@ function OnInit()
     aRestorationLL[1] = LitemSpellTomes25Restoration
     aRestorationLL[2] = LitemSpellTomes50Restoration
     aRestorationLL[3] = LitemSpellTomes75Restoration
-    
+
     aInventSpellsPtr = aRestorationLL
     
     RegisterForSleep()
@@ -1121,8 +698,9 @@ float function getNotesBonus(float notes, bool schoolSpecific)
         ;bnot = bnotPercent * maxNotesBonusRaw
     ;if (_LEARN_EffortScaling.GetValue() == 1) ; If diminishing returns scaling method, use x root method with logarithms
         float power = 1
-        power = 1/(Math.log(maxNotes)/Math.log(maxNotesBonusRaw))
-        bnot = Math.pow(notes, power)
+        ; Log is SKSE-dependent
+        ;power = 1/(Math.log(maxNotes)/Math.log(maxNotesBonusRaw))
+        bnot = Math.pow(notes, (1/2))
     ;if(_LEARN_EffortScaling.GetValue() == 2 || _LEARN_EffortScaling.GetValue() == 0) ; Linear scaling for tough start or linear
     ;    bnot = (notes/maxNotes)*maxNotesBonusRaw
     ;endIf
@@ -1211,118 +789,24 @@ float function calcCDReffort()
 	return ((mycasts)/100) 
 endFunction
 
-float function getSkillDiffFactor(String magicSchool, MagicEffect eff)
-        float fskill
-        fskill = PlayerRef.GetActorValue(magicSchool)
-        ; Get player skill of specific school
-        float sskill = 0
-        sskill = PlayerRef.GetActorValue(magicSchool)
-        ; Get average magical skill
-        float tskill = 0
-        tskill = getAverageSkill()
-        ; Using same 1/3 and 2/3 proportions as for learning, make the value used to represent 
-        ; the player's overall skill for this calculation
-        fskill = (0.66*sskill) + (0.33*tskill)
-        ; Get level of spell effect being learned
-        float magicLevel = 0
-        magicLevel = eff.GetSkillLevel()
-        ; If it's a novice spell, set it to 12.5 so we don't divide by zero later.
-        ; Setting it to 1 seems to make sense until you realize we are later
-        ; multiplying chance by the player's skill level if we do that. So we'll go 
-        ; for halfway to apprentice, so learning apprentice spells is still twice
-        ; as hard with adjustment.
-        if (magicLevel == 0)
-            magicLevel = 12.5
-        endIf
-        ; Calculate proportion of player skill to spell difficulty
-        float skillDiff = 0
-        ; it's impossible for fskill to be 0 so we won't worry about that
-        skillDiff = magicLevel/fskill
-        return skillDiff
-endFunction
-
-float function baseChanceBySchool(string magicSchool, float minchance, float maxchance, MagicEffect eff, bool discovering)
-    float fskill
-    fskill = PlayerRef.GetActorValue(magicSchool)
-    float fcasts
-    float fnotes
-    float fChance
-    if magicSchool == SPELL_SCHOOL_ALTERATION
-        fcasts = _LEARN_CountAlteration.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesAlteration)
-    elseIf magicSchool == SPELL_SCHOOL_CONJURATION
-        fcasts = _LEARN_CountConjuration.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesConjuration)
-    elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
-        fcasts = _LEARN_CountDestruction.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesDestruction)
-    elseIf magicSchool == SPELL_SCHOOL_ILLUSION
-        fcasts = _LEARN_CountIllusion.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesIllusion)
-    elseIf magicSchool == SPELL_SCHOOL_RESTORATION
-        fcasts = _LEARN_CountRestoration.GetValue()
-        fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration)
-    endIf    
+float function baseChance(float minchance, float maxchance)
+    float fskill = getAverageSkill()
+    float fcasts = _LEARN_CountRestoration.GetValue()
+    float fnotes = PlayerRef.GetItemCount(_LEARN_SpellNotesGeneric)
     ; Get the chance from effort calculations, scaling as configured.
-    fChance = scaleEffort(calcEffort(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
+    float fChance = scaleEffort(calcEffort(fskill, fcasts, fnotes), minchance / 100, maxchance / 100)
 	; Check to see if dynamic difficulty is enabled.
     ; If it is, then adjust the returned chance accordingly to make it more/less likely to learn the spell.
     ; This only applies to spell learning, not discovery, so a passed bool lets us disable it.
-	if (_LEARN_DynamicDifficulty.GetValue() == 1 && !discovering)
-        ; Use skilldiff to change returned chance to learn.
-        ; when your skill is lower than spell level, skillDiff is >1
-        ; when your skill is higher, skillDiff is <1
-        ; fChance is used as the upper bound in rollToLearn()
-        ; so making it bigger makes learning more likely.
-        float skillDiff = 1
-        skillDiff = getSkillDiffFactor(magicSchool, eff)
-        fChance = fChance/skillDiff
-        ; Make sure we don't go over or below max/min chance
-        if (fChance < minchance/100)
-            fChance = minchance/100
-        elseIf (fChance > maxchance/100)
-            fChance = maxchance/100
-        endIf
-    endIf
     return fChance
 EndFunction
 
-float Function baseChanceToStudy(string magicSchool = "")
-    Magiceffect me
-	if (magicSchool == "")
-        if iCount == 0
-            return 0
-        endif
-        Spell sp = spell_fifo_peek()
-        if (sp == None)
-            return 1
-        endif
-        me = sp.GetNthEffectMagicEffect(0)
-        if (me == None)
-            return 1
-        endif
-        magicSchool = me.GetAssociatedSkill()
-        if (magicSchool == "")
-            return 1
-        endif
-    endif
-    return baseChanceBySchool(magicSchool, _LEARN_MinChanceStudy.GetValue(), _LEARN_MaxChanceStudy.GetValue(), me, false) 
-EndFunction
-
-float Function baseChanceToDiscover(string magicSchool = "")
-	if (magicSchool == "")
-        magicSchool = topSchoolToday()
-    EndIf
-	; Pass an arbitrary magiceffect. It won't be used thanks to the boolean.
-    return baseChanceBySchool(magicSchool, _LEARN_MinChanceDiscover.GetValue(), _LEARN_MaxChanceDiscover.GetValue(), _LEARN_PracticeEffect, true) 
-EndFunction
-
 float function getTotalCasts()
-	return (_LEARN_CountAlteration.GetValue() + _LEARN_CountDestruction.GetValue() + _LEARN_CountConjuration.GetValue() + _LEARN_CountRestoration.GetValue() + _LEARN_CountIllusion.GetValue())
+	return _LEARN_CountRestoration.GetValue()
 endFunction
 
 float function getTotalNotes()
-	return (PlayerRef.GetItemCount(_LEARN_SpellNotesAlteration) + PlayerRef.GetItemCount(_LEARN_SpellNotesConjuration) + PlayerRef.GetItemCount(_LEARN_SpellNotesDestruction) + PlayerRef.GetItemCount(_LEARN_SpellNotesIllusion) + PlayerRef.GetItemCount(_LEARN_SpellNotesRestoration))
+	return PlayerRef.GetItemCount(_LEARN_SpellNotesGeneric)
 endFunction
 
 ; === Time management
@@ -1376,77 +860,28 @@ float function hours_before_next_ok_to_sleep()
 endFunction
 
 ; === Learning and discovery helper functions
-function tryLearnSpell(Spell sp, int fifoIndex, bool forceSuccess)
-    ; Initialize variables
-	float fChance
-	MagicEffect eff
-	String magicSchool = SPELL_SCHOOL_DESTRUCTION
-	; debug check to ensure everything still exists
-	if (!debugCheck(sp, fifoindex))
-		return ; break if debug check fails
-	else
-		eff = sp.GetNthEffectMagicEffect(0)
-		magicSchool = eff.GetAssociatedSkill()
-	endif
-
+function tryLearnSpell(int fifoIndex, bool forceSuccess)
 	; if passed bool forceSuccess is true, just succeed
 	if (forceSuccess)
-		notify(formatString1(__l("notification_effortless_learn", "{0} came effortlessly to you."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
+		notify(__l("notification_effortless_learn", "This spell came effortlessly to you."), NOTIFICATION_LEARN_SPELL)
 		forceLearnSpellAt(fifoindex, (VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL]))
 		iFailuresToLearn = 0
 		return
 	EndIf
 	
 	; Otherwise, roll to learn the spell
-	if ((rollToLearn(baseChanceToStudy(magicSchool),sp) || PlayerRef.HasSpell(sp))) 
-		notify(formatString1(__l("notification_learn_spell", "It all makes sense now! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
+	if ((rollToLearn(baseChance(_LEARN_MinChanceStudy.GetValue(), _LEARN_MaxChanceStudy.GetValue())))) 
+		notify(__l("notification_learn_spell", "It all makes sense now!"), NOTIFICATION_LEARN_SPELL)
 		forceLearnSpellAt(fifoindex, (VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL]))
 		iFailuresToLearn = 0 
 	Else 
-		iFailuresToLearn = iFailuresToLearn + 1
-        notify(formatString1(__l("notification_fail_spell", "{0} still makes no sense..."), sp.GetName()), NOTIFICATION_LEARN_FAIL)
+        iFailuresToLearn = iFailuresToLearn + 1
+        ; TODO decide to keep this notification or not for non-SKSE version, can be somewhat confusing
+        notify(__l("notification_fail_spell", "This spell still makes no sense..."), NOTIFICATION_LEARN_FAIL)
 	EndIf
 EndFunction
 
-String function topSchoolToday()
-    string magicSchool
-    if (_LEARN_ForceDiscoverSchool.GetValue() != 0)
-        magicSchool = aSchools[_LEARN_ForceDiscoverSchool.GetValueInt()]
-    else
-        ; Determine the school PC most used today
-        magicSchool = SPELL_SCHOOL_RESTORATION ; default to Restoration just because.
-        float fTopCount = _LEARN_CountRestoration.getvalue()
-        aInventSpellsPtr = aRestorationLL
-        if (_LEARN_CountDestruction.GetValue() > fTopCount)
-            magicSchool = SPELL_SCHOOL_DESTRUCTION
-        EndIf
-        if (_LEARN_CountConjuration.GetValue() > fTopCount)
-            magicSchool = SPELL_SCHOOL_CONJURATION
-        EndIf
-        if (_LEARN_CountAlteration.GetValue() > fTopCount)
-            magicSchool = SPELL_SCHOOL_ALTERATION
-        EndIf
-        if (_LEARN_CountIllusion.GetValue() > fTopCount)
-            magicSchool = SPELL_SCHOOL_ILLUSION
-        EndIf
-    endif
-
-    if magicSchool == SPELL_SCHOOL_ALTERATION
-        aInventSpellsPtr = aAlterationLL
-    elseIf magicSchool == SPELL_SCHOOL_CONJURATION
-        aInventSpellsPtr = aConjurationLL
-    elseIf magicSchool == SPELL_SCHOOL_DESTRUCTION
-        aInventSpellsPtr = aDestructionLL
-    elseIf magicSchool == SPELL_SCHOOL_ILLUSION
-        aInventSpellsPtr = aIllusionLL
-    elseIf magicSchool == SPELL_SCHOOL_RESTORATION 
-        aInventSpellsPtr = aRestorationLL
-    endIf
-    
-    return magicSchool
-EndFunction
-
-bool function rollToLearn(float fChance, Spell sp)
+bool function rollToLearn(float fChance)
 	Float fRand
 	; ...check to see if HarderParallel is enabled. If it is, divide chance by number of spells being learned.
 	if (_LEARN_HarderParallel.GetValue() != 0) 
@@ -1464,116 +899,31 @@ bool function rollToLearn(float fChance, Spell sp)
 	EndIf
 EndFunction
 
-bool function debugCheck(Spell sp, int fifoindex)
-	MagicEffect eff
-	; Debug checks - make sure spell and spell effect exists, get spell school
-	if (! sp)
-		notify(__l("message_spell_learning_bad_reference", "[Spell Learning] Error learning spell, removing entry from list."), NOTIFICATION_ERROR)
-		spell_list_removeAt(fifoindex) ; TODO something better to handle spell mod disappearance ?
-		return false
-	endif
-	eff = sp.GetNthEffectMagicEffect(0)
-	if (!eff)
-		notify(__l("notification_unknown_spell", "[Spell Learning] Unknown spell in learning list - other spell mod removed?"), NOTIFICATION_ERROR)
-		return false
-	else
-		return true
-	endIf
+function MoveSpellToBottom(int index)
+    Book toMove = _LEARN_learningList.GetAt(index) as Book
+    _LEARN_learningList.RemoveAddedForm(toMove)
+    _LEARN_learningList.AddForm(toMove)
 endFunction
 
-bool function canAutoLearn(Spell sp, int fifoindex)
-    ; Initialize variables
-	MagicEffect eff
-	String magicSchool = SPELL_SCHOOL_DESTRUCTION
-	int magicLevel = 100
-	float fskill = 0
-	float pskill = 0
-	; debug check to ensure everything still exists
-	if (!debugCheck(sp, fifoindex))
-		return False
-	endif
-	; If debug checks are passed, compare spell's level to player's skill and auto learn if eligible.
-	; initialize more variables now that we know they really exist
-	eff = sp.GetNthEffectMagicEffect(0)
-	magicSchool = eff.GetAssociatedSkill()
-    magicLevel = eff.GetSkillLevel()
-    ; Take into account skill in other magickal schools,
-    ; 2/3 relevant school and 1/3 general
-    fskill = PlayerRef.GetActorValue(magicSchool)
-    pskill = (0.33*getAverageSkill())+(0.66*fskill)
-	if ((pskill - _LEARN_AutoNoviceLearning.GetValue()) >= magicLevel)
-		return True ; Automatic learning success
-	Else
-		return False ; Have to attempt to learn
-	EndIf
-EndFunction
-
-bool function cannotLearn(Spell sp, int fifoindex)
-	; First things first: if configured to allow dreadmilk to bypass autofail,
-	; and under the effects of dreadmilk, then just return False.
-	if ((PlayerRef.HasMagicEffect(AlchDreadmilkEffect)) && _LEARN_PotionBypass.GetValue() == 1)
-		return False
-	EndIf
-    ; Initialize variables
-	MagicEffect eff
-	String magicSchool = SPELL_SCHOOL_DESTRUCTION
-	int magicLevel = 100
-	float fskill = 0
-	float pskill = 0
-	; debug check to ensure everything exists
-	if (!debugCheck(sp, fifoindex))
-		return True
-	endif
-	; If debug checks are passed, compare spell's level to player's skill and auto learn if eligible.
-	; initialize more variables now that we know they really exist
-	eff = sp.GetNthEffectMagicEffect(0)
-	magicSchool = eff.GetAssociatedSkill()
-	magicLevel = (eff.GetSkillLevel())
-    ; Take into account skill in other magickal schools,
-    ; 2/3 relevant school and 1/3 general
-    fskill = PlayerRef.GetActorValue(magicSchool)
-    pskill = (0.33*getAverageSkill())+(0.66*fskill)
-	if (pskill < (magicLevel - _LEARN_TooDifficultDelta.GetValue()))
-		return True ; Automatic learning failure
-	Else
-		return False ; Can attempt to learn
-	EndIf
-EndFunction
-
 function doLearning()
-    Spell sp
-    bool emergencyBreaks = false
 	int alreadyLearnedSpells = 0
     ; The main "spell learning" function. Goes through the list according to the player's settings
     ; and attempts to learn new spells.
-
-    ; First things first: If auto-successes bypass the daily limit, then process them all first.
-	if (_LEARN_AutoNoviceLearningEnabled.GetValue() == 1 && _LEARN_AutoSuccessBypassesLimit.GetValue() == 1)
-		int currentSpell = 0
-		while (currentSpell < spell_fifo_get_count())
-			sp = spell_fifo_peek(currentSpell)
-			if(canAutoLearn(sp, currentSpell))
-				tryLearnSpell(sp, currentSpell, true)
-			endIf
-			currentSpell = currentSpell + 1
-		endWhile
-    endIf
-    
-    	; Before the main spell learning cycle, if we've reached the max amount of failures, we'll handle that here first.
+  
+    ; Before the main spell learning cycle, if we've reached the max amount of failures, we'll handle that here first.
 	; As long as the setting is enabled, obviously.
 	if (iFailuresToLearn >= _LEARN_MaxFailsBeforeCycle.GetValue() && _LEARN_MaxFailsBeforeCycle.GetValue() != 0)
-		sp = spell_fifo_peek()
-		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1 && (_LEARN_TooDifficultEnabled.GetValue() == 0 || !cannotLearn(sp, 0))) 
+		if (_LEARN_MaxFailsAutoSucceeds.GetValue() == 1)
 		; If reaching the max amount of fails is supposed to make you auto succeed and it's not an automatic failure for some other reason...
             ; ...then automatically learn the spell.
-            notify(formatString1(__l("notification_fail_upwards", "It's finally coming together! Learned {0}."), sp.GetName()), NOTIFICATION_LEARN_SPELL)
+            notify(__l("notification_fail_upwards_no_skse", "It's finally coming together!"), NOTIFICATION_LEARN_SPELL)
 			forceLearnSpellAt(0, (VisibleNotifications[NOTIFICATION_VANILLA_ADD_SPELL]))
 			iFailuresToLearn = 0
 			alreadyLearnedSpells = alreadyLearnedSpells + 1
 		else ; Otherwise it's supposed to just move the spell to the bottom of the list.
 			MoveSpellToBottom(0)
 			iFailuresToLearn = 0
-            notify(formatString1(__l("notification_moving_on", "Not making any progress on {0}... trying other spells."), sp.GetName()), NOTIFICATION_MOVING_ON)
+            notify(__l("notification_moving_on_no_skse", "Not making any progress on this one... trying other spells."), NOTIFICATION_MOVING_ON)
 		endIf
 	endIf
 	
@@ -1593,44 +943,10 @@ function doLearning()
 			spellLimit = _LEARN_ParallelLearning.GetValue()-alreadyLearnedSpells
 		endIf
 		; while below max daily limit AND not yet at end of list, iterate through and try to learn
-		while (currentSpell < spellLimit && currentSpell < spell_fifo_get_count() && !emergencyBreaks) 
-			; get the current spell
-			sp = spell_fifo_peek(currentSpell)
-			; initialize some variables here.
-			; they are only used in the loop below.
-			; if we initialize them in that loop they'll reset,
-			; so we do it here.
-			bool unbroken = true
-			int insideCount = 0
-			; Loop to repeatedly check to see if top spell is unlearnable.
-			; If it is, move it to the bottom of the list and keep checking
-			; until it is learnable or we have exhausted the list.
-			While (unbroken)
-				bool foundLearnableSpell = false
-				sp = spell_fifo_peek(currentSpell)
-				if(cannotLearn(sp, currentSpell) && _LEARN_TooDifficultEnabled.GetValue() == 1)
-					MoveSpellToBottom(currentSpell)
-					notify(formatString1(__l("notification_impossible_spell", "{0} is too difficult. Trying other spells first."), sp.GetName()), NOTIFICATION_MOVING_ON)
-					insideCount = insideCount + 1
-					; test to see if we've iterated through the whole list, meaning all spells are too hard.
-					if ((currentSpell+insideCount) >= spell_fifo_get_count())
-						; if we have, then break the loop to prevent an endless loop.
-						unbroken = false
-					endIf
-				else
-					; If we find one that is learnable, learn it and break the loop.
-					unbroken = false
-					foundLearnableSpell = true
-				endIf
-				if (!foundLearnableSpell && ((currentSpell+insideCount) >= spell_fifo_get_count()))
-					; if we didn't find a learnable spell in the entire list,
-					; put on the emergency breaks to prevent outer loop from going again
-					; which would spam failure messages exponentially
-					emergencyBreaks = true
-				elseIf(foundLearnableSpell)
-					tryLearnSpell(sp, currentSpell, false)
-				endIf
-			endWhile
+		while (currentSpell < spellLimit && currentSpell < _LEARN_learningList.getSize()) 
+            ; try to learn
+            tryLearnSpell(currentSpell, false)
+            ; increment counter
 			currentSpell = currentSpell + 1
 		endWhile
     endIf
@@ -1640,12 +956,74 @@ function doLearning()
 
 endFunction
 
+int function pickSchool()
+    ; Choose a spell school to discover from randomly. Chance is weighed towards schools
+    ; the player is more skilled in.
+    int totalSkill = 0
+    int[] schoolSkill = new int[6]
+    float[] schoolPercent = new float[6]
+    ; Calculate the mean skill over all magic schools
+    ;aSchools[1] = SPELL_SCHOOL_ALTERATION
+    ;aSchools[2] = SPELL_SCHOOL_CONJURATION
+    ;aSchools[3] = SPELL_SCHOOL_DESTRUCTION
+    ;aSchools[4] = SPELL_SCHOOL_ILLUSION
+    ;aSchools[5] = SPELL_SCHOOL_RESTORATION
+    int outerCount = 1
+    while (outerCount <= 5)
+        totalSkill += PlayerRef.GetActorValue(aSchools[outerCount]) as int
+        schoolSkill[outerCount] = PlayerRef.GetActorValue(aSchools[outerCount]) as int
+        outerCount += 1
+    EndWhile
+    ; Get percentage of all magickal skill related to each school
+    outerCount = 1
+    schoolPercent[0] = 0
+    while (outerCount <= 5)
+        schoolPercent[outerCount] = (schoolSkill[outerCount] as float/totalSkill as float)
+        outerCount += 1
+    EndWhile
+    ; Successively add previous percentages to distribute results from 0-1
+    outerCount = 5
+    while (outerCount >= 1)
+        float lowerTotal
+        int innerCount
+        innerCount = (outerCount-1)
+        while (innerCount >= 1)
+            lowerTotal += schoolPercent[innerCount]
+            innerCount -= 1
+        endWhile
+        schoolPercent[outerCount] += lowerTotal
+        outerCount -= 1
+    EndWhile
+    float fRand = Utility.RandomFloat(0.0, 1.0)
+    outerCount = 1
+    while (outerCount <= 5)
+        if (fRand < schoolPercent[outerCount])
+            ; Then this is the chosen school.
+            if (outerCount == 1) ; Alteration
+                aInventSpellsPtr = aAlterationLL
+            elseIf (outerCount == 2) ; Conjuration
+                aInventSpellsPtr = aConjurationLL
+            elseIf (outerCount == 3) ; Destruction
+                aInventSpellsPtr = aDestructionLL
+            elseIf (outerCount == 4) ; Illusion
+                aInventSpellsPtr = aIllusionLL
+            elseIf (outerCount == 5) ; Restoration
+                aInventSpellsPtr = aRestorationLL
+            endIf
+            ; return result if we need it for some reason
+            return outerCount
+        endIf
+    endWhile
+    ; Things should not get here. Set and return resto and print an error.
+    aInventSpellsPtr = aRestorationLL
+    notify(__l("notification_error_schoolPick", "[Spell Learning] Error selecting school. Defaulting to Restoration."))
+    return 5
+endFunction
+
 Spell function doDiscovery()
     ; The main "Spell Discovery" function.
-    String sSchool = topSchoolToday()
-    float fSkill = PlayerRef.GetActorValue(sSchool)
-    float baseChance = baseChanceToDiscover(sSchool)
-    
+    float fSkill = getAverageSkill()
+    float baseChance = baseChance(_LEARN_MinChanceDiscover.GetValue(), _LEARN_MaxChanceDiscover.GetValue())
     float fRand = Utility.RandomFloat(0.0, 1.0) 
     if (fRand > baseChance) 
         ; Reset discovery timer
@@ -1664,39 +1042,34 @@ Spell function doDiscovery()
     Else
         llidx = 3
     EndIf
-    LeveledItem ll = aInventSpellsPtr[llidx]
-    int llcount = ll.GetNumForms()
-    int limit = 10
-    int spidx = Utility.RandomInt(0, llcount - 1)
-
-    Book inventedbook = ll.GetNthForm(spidx) as Book
-    Spell inventedsp = inventedbook.getspell()
+    ; Update the Spells "ptr" to pick a school
+    pickSchool()
+    ; === TODO
+    ;;;; Then get a random item from the
+    ;;;LeveledItem ll = aInventSpellsPtr[llidx]
+    ;;;int llcount = ll.GetNumForms()
+    ;;;int limit = 10
+    ;;;int spidx = Utility.RandomInt(0, llcount - 1)
+    ;;;
+    ;;;Book inventedBook = ll.GetNthForm(spidx) as Book
+    ;;;    
+    ;;;while ((alreadyLearned(inventedBook) || _LEARN_learningList.Find(inventedBook) != -1) && limit > 0)
+    ;;;    spidx = (spidx + 1) % llcount
+    ;;;    inventedBook = ll.GetNthForm(spidx) as Book
+    ;;;    limit -=1
+    ;;;EndWhile
     
-    if inventedsp == None
-        notify(__l("notification_spell_invention_bug", "[Spell Learning] Error: A spell tome in your game has no linked spell."), NOTIFICATION_ERROR)
-        ; Reset discovery timer
-        ;LastDiscoverTime = GameDaysPassed.GetValue()
-        return None
-    endif
-    
-    while (inventedsp && (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp)) && limit > 0)
-        spidx = (spidx + 1) % llcount
-        inventedbook = ll.GetNthForm(spidx) as Book
-        inventedsp = inventedbook.getspell()
-        limit -=1
-    EndWhile
-    
-    if (inventedsp && (! (PlayerRef.HasSpell(inventedsp) || spell_fifo_has_ref(inventedsp))))
-        notify(formatString1(__l("notification_new_spell_idea", "An idea for a new spell came to you: {0}!"), inventedsp.GetName()), NOTIFICATION_DISCOVERY)
+    if (! (alreadyLearned(inventedBook) || _LEARN_learningList.Find(inventedBook) != -1))
+        notify(__l("notification_new_spell_idea", "An idea for a new spell is coming to you..."), NOTIFICATION_DISCOVERY)
         ; If spell learning is enabled, add the discovered spell to the list.
         ; If spell learning is disabled, instantly learn the discovered spell.
         if (_LEARN_ResearchSpells.GetValue())
-            spell_fifo_push(inventedsp)
+            _LEARN_learningList.AddForm(inventedBook)
             updateSpellLearningEffect()
         else
-            PlayerRef.AddSpell(inventedsp, false)
+            PlayerRef.EquipItem(inventedBook, false, false)
+            _LEARN_alreadyLearned.AddForm(inventedBook)
         endIf
-        Bookextension.setreadWFB(inventedbook, true)
     EndIf
     
     ; Reset discovery timer
@@ -1739,10 +1112,10 @@ function doReset()
 endFunction
 
 function updateSpellLearningEffect()
-    if ((iCount <= 0) && (PlayerRef.hasSpell(_LEARN_SpellsToLearn)))
+    if (_LEARN_learningList.GetSize() == 0 && (PlayerRef.hasSpell(_LEARN_SpellsToLearn)))
         ; If there are no more spells to learn and the player has the effect, remove it.
         PlayerRef.removeSpell(_LEARN_SpellsToLearn)
-    elseIf ((iCount > 0) && !(PlayerRef.hasSpell(_LEARN_SpellsToLearn)))
+    elseIf (_LEARN_learningList.GetSize() != 0 && !(PlayerRef.hasSpell(_LEARN_SpellsToLearn)))
         ; If there are spells to learn and the player doesn't have the effect, add it silently.
         PlayerRef.addSpell(_LEARN_SpellsToLearn, false)
     endIf
@@ -1760,7 +1133,7 @@ Event OnSleepStop(Bool abInterrupted)
 
     ; If we pass the checks and they are enabled and off cooldown, then do the things.
     ; In the case that anything fails, check to see if we've already sent a notification, and if we have, don't send another.
-    if (_LEARN_LearnOnSleep.GetValue() == 1 && hours_before_next_ok_to_learn() <= 0 && spell_fifo_get_count() != 0)
+    if (_LEARN_LearnOnSleep.GetValue() == 1 && hours_before_next_ok_to_learn() <= 0 && _LEARN_learningList.GetSize() != 0)
         ; This only runs and resets the learning cooldown if there's actually something to learn.
         doLearning()
     elseIf (_LEARN_LearnOnSleep.GetValue() == 1 && hours_before_next_ok_to_learn() > 0)

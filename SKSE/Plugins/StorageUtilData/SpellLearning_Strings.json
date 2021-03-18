@@ -256,7 +256,16 @@
 		"hint_remove_only_unknown" : "When on, tomes for spells you already know will never be removed and won't generate any spell notes. Defaults to off. If you are using the return tomes option, this must be turned on.",
 		"mcm_option_remove_only_unknown" : "Leave Known Spell Tomes Alone",
 		"notification_update_177_changed" : "[Spell Learning] Update has turned back on spell book removal.",
-		"mcm_header_interval_options" : "Cooldown Options"
+		"mcm_header_interval_options" : "Cooldown Options",
+		"notification_spell_not_added_studying_notes_no_skse" : "Already studying that spell. Tome deconstructed into notes.",
+		"notification_spell_not_added_studying_no_skse" : "Already studying that spell.",
+		"notification_spell_not_added_notes_no_skse" : "Already knew that spell. Tome deconstructed into notes.",
+		"notification_spell_not_added_no_skse" : "Already knew that spell.",
+		"notification_spell_added_notes_no_skse" : "Spell added to study list. Tome deconstructed into notes.",
+		"notification_spell_added_no_skse" : "Added spell to study list.",
+		"notification_moving_on_no_skse" : "Not making any progress... trying other spells.",
+		"notification_fail_upwards_no_skse" : "It's finally coming together!",
+		"notification_error_schoolPick" : "[Spell Learning] Error selecting school. Defaulting to Restoration."
 	},
     "int" :{
         "menu_lang_id" : 0

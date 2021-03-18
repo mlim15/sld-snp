@@ -28,25 +28,9 @@ function OnSpellCast(Form akForm)
     if ! akSpell
         Return
     endif
-    
-    MagicEffect eff = akSpell.GetNthEffectMagicEffect(0)
-    String magicSchool = eff.GetAssociatedSkill()
-    if magicSchool == "Alteration"
-        _LEARN_CountAlteration.Mod(1)
-        return
-    elseIf magicSchool == "Conjuration"
-        _LEARN_CountConjuration.Mod(1)
-        return
-    elseIf magicSchool == "Destruction"
-        _LEARN_CountDestruction.Mod(1)
-        return 
-    elseIf magicSchool == "Illusion"
-        _LEARN_CountIllusion.Mod(1)
-        return 
-    elseIf magicSchool == "Restoration"
-        _LEARN_CountRestoration.Mod(1)
-        return 
-    endIf
+    ; Cannot determine spell school without SKSE. Count everything in resto counter.
+    _LEARN_CountRestoration.Mod(1)
+    return 
 endFunction
 
 function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
@@ -55,20 +39,29 @@ function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRef
     if (! akBook)
         Return
     EndIf
-    ; If it's not a book that is flagged to teach a spell, do nothing
-    Spell sp = akBook.GetSpell()
-    if (! sp)
-        Return
-    endif
     ; Don't do anything with quest essential spellbooks.
     ; This seems to be the only example so far, but we'll see. This is because
     ; completing the quest is actually scripted via an OnEquip event for the Power of the Elements
     ; book that teaches the Fire Storm spell. (It also immediately deletes itself and replaces itself
     ; with a non-spell-tome copy that has all of the text in it.)
-    if (akBaseItem.GetName() == "Power of the Elements")
+    ; Power of the elements form IDs
+    ;0009C8C0 -> 641216 decimal
+    ;0009C8C6 -> 641222 decimal
+    ;0009C8C1 -> 641217 decimal
+    ;000F37D0 -> 997328 decimal
+    int formID = akBaseItem.GetFormID()
+    if (formID == 641216 || formID == 641222 || formID == 641217 || formID == 997328)
+        ; Book is "Power of the Elements" and taking it will break the quest. Stop now.
         return
     endIf
-    cs.TryAddSpellBook(akBook, sp, aiItemCount)
+    ; Determine if the book is a spell book by checking the QA chest and Enai's Odin/Apocalypse cheat chests
+    ; Other books are considered unsupported and can be learned with vanilla functionality.
+    if (cs.isSpellBook(akBook))
+        ; If it's a recognized spell book, start processing it with the mod.
+        cs.TryAddSpellBook(akBook, aiItemCount)
+    else
+        return
+    endIf
 EndFunction
 
 event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
@@ -78,11 +71,11 @@ event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
     ; be possible if we still gave them notes onitemadded under this scenario. A check
     ; has been added to the onitemadded to only give the notes
     if ((akBaseObject as Book)) ; if it's a book
-        if ((akBaseObject as Book).GetSpell()) ; and it's a spellbook
+        if (cs.isSpellBook(akBaseObject as Book)) ; and it's a spellbook
             if (cs._LEARN_CollectNotes.GetValue() == 1) ; and settings are right
                 if (cs._LEARN_removedTomes.Find(akBaseObject as Book) != -1); and we haven't already given notes for it
                     cs.takeNotes(akBaseObject as Book) ; then add notes
-                    cs.addTomeToList(akBaseObject as Book); and add to list of tomes we've removed so we don't give notes on subsequent reads
+                    cs.addTomeToRemovedList(akBaseObject as Book); and add to list of tomes we've removed so we don't give notes on subsequent reads
                 endIf
             endIf
         endIf
