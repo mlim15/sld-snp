@@ -265,7 +265,9 @@
 		"notification_spell_added_no_skse" : "Added spell to study list.",
 		"notification_moving_on_no_skse" : "Not making any progress... trying other spells.",
 		"notification_fail_upwards_no_skse" : "It's finally coming together!",
-		"notification_error_schoolPick" : "[Spell Learning] Error selecting school. Defaulting to Restoration."
+		"notification_error_schoolPick" : "[Spell Learning] Error selecting school. Defaulting to Restoration.",
+		"notification_cannot_attune_no_skse" : "You can only attune once per week.",
+		"notification_attune_success_no_skse" : "Successfully attuned."
 	},
     "int" :{
         "menu_lang_id" : 0
