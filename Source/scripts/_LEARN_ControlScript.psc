@@ -529,22 +529,30 @@ int function GetMenuLangId()
 endFunction
 
 ; === Spell list management
+
 bool function forceLearnSpellAt(int index, bool useVanillaNotification)
     Book spellToLearn = _LEARN_learningList.getAt(index) as Book
     if spellToLearn
         if !alreadyLearned(spellToLearn)
-            PlayerRef.EquipItem(spellToLearn, false, false)
+            ; Spawn the book and use the returned objectreference to force
+            ; the player to activate it.
+            ObjectReference spawnedBook = PlayerRef.PlaceAtMe(spellToLearn)
+            spawnedBook.Activate(PlayerRef)
+            ; Add the spell to list of what we've already learned.
             _LEARN_alreadyLearned.addForm(spellToLearn)
             removeTomeFromLists(spellToLearn)
             ; All spell learning in the mod goes through this method so
             ; we can remove the spell learning effect that lets
             ; the player know there are spells to learn here if needed.
             updateSpellLearningEffect()
-            ; Give the book back to the player if we are configured to do that.
+            ; Put a copy of the book back in the player's inventory if we are configured to do that.
             if (_LEARN_ReturnTomes.GetValue() == 1)
                 returnTomeAndPurge(spellToLearn)                
             endIf
             return true
+        else
+            ; An already learned spell was in the spell list... oops?
+            _LEARN_learningList.RemoveAddedForm(spellToLearn)
         endIf
     endIf
     return false
