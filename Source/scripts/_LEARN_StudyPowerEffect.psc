@@ -34,7 +34,7 @@ Event OnEffectStart(Actor Target, Actor Caster)
 	endIf
 
 	; Check other conditions to not play animation or do anything at all.
-	if (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 1 && _LEARN_DiscoverOnStudy.GetValue() == 0 && ControlScript._LEARN_learningList.GetSize() > 0)
+	if (_LEARN_StudyIsRest.GetValue() == 1 && _LEARN_LearnOnStudy.GetValue() == 1 && _LEARN_DiscoverOnStudy.GetValue() == 0 && ControlScript._LEARN_learningList.GetSize() == 0)
 		; If Learning is on, discovery is off, but there's no spells on the list, don't waste the cooldown.
 		ControlScript.notify(__l("notification_study_no_spells", "You don't have any spell ideas to research right now."), ControlScript.NOTIFICATION_FORCE_DISPLAY)
 		return
