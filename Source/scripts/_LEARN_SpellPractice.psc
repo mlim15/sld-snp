@@ -34,6 +34,9 @@ function OnSpellCast(Form akForm)
 endFunction
 
 function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+    ; TODO this can be much easier/cleaner with AddInventoryEventFilter, especially now that we will have a formlist
+    ; ready and populated with all the spells we plan on supporting through the mod.
+    ;
     ; If the added item isn't a book, do nothing
     Book akBook = akBaseItem as Book
     if (! akBook)
@@ -71,7 +74,7 @@ event OnObjectEquipped(Form akBaseObject, ObjectReference akReference)
     ; when the book is consumed for insta-learn functionality. This prevents the player
     ; from duplicating notes by dropping/picking up the book many times, which would
     ; be possible if we still gave them notes onitemadded under this scenario. A check
-    ; has been added to the onitemadded to only give the notes
+    ; has been added to the onitemadded to only give the notes if tomes are also removed.
     if ((akBaseObject as Book)) ; if it's a book
         if (cs.isSpellBook(akBaseObject as Book)) ; and it's a spellbook
             if (cs._LEARN_CollectNotes.GetValue() == 1) ; and settings are right
