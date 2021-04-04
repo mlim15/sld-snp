@@ -74,8 +74,14 @@ Event OnEffectStart(Actor Target, Actor Caster)
 		_LEARN_ConsecutiveDreadmilk.Mod(2)
 	elseIf (fRand > 0.9)
 		; forget the last spell on your list
-		ControlScript.spell_fifo_remove_last()
-		ControlScript.notify(__l("notification_spirit_forgot_spell", "You've forgotten something... but what?"), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
+		int lastIndex = ControlScript._LEARN_learningList.GetSize()
+		if (lastIndex == 0)
+			return
+		else
+			lastIndex -= 1
+			ControlScript._LEARN_learningList.RemoveAddedForm(ControlScript._LEARN_learningList.GetAt(lastIndex))
+			ControlScript.notify(__l("notification_spirit_forgot_spell", "You've forgotten something... but what?"), ControlScript.NOTIFICATION_SPIRIT_TUTOR)
+		endIf
 	elseIf (fRand > 0.8)
 		; lose gold
 		PlayerRef.RemoveItem(Game.getform(0xF), 500)

@@ -62,6 +62,8 @@ ObjectReference WB_Illusion_Chest
 ObjectReference WB_Restoration_Chest
 ObjectReference WB_Destruction_Chest
 ObjectReference WB_Alteration_Chest
+; Spell Learning chest
+ObjectReference property _LEARN_DiscoveryChest auto
 
 GlobalVariable property _LEARN_EnthirSells auto
 _LEARN_enthirChestAlias property enthirChestAlias auto
@@ -137,6 +139,7 @@ int currentVersion; save active version
 FormList property _LEARN_removedTomes auto
 FormList property _LEARN_alreadyLearned auto
 FormList property _LEARN_learningList auto
+FormList property _LEARN_discoveryPossibilities auto
 
 bool property CanUseLocalizationLib = false auto;
 int property LIST_HEAD_SPARE_COUNT = 8 autoReadOnly
@@ -214,14 +217,20 @@ float function takeNotes(Book tome)
 endFunction
 
 bool function isSpellBook(Book toCheck)
-    if (QASpellTomeContainer.GetItemCount(toCheck) != 0)
-    elseIf (WB_Conjuration_Chest.GetItemCount(toCheck) != 0 || WB_Illusion_Chest.GetItemCount(toCheck) != 0 || WB_Restoration_Chest.GetItemCount(toCheck) != 0 || WB_Destruction_Chest.GetItemCount(toCheck) != 0 || WB_Alteration_Chest.GetItemCount(toCheck) != 0)
+    if (_LEARN_DiscoveryChest.GetItemCount(toCheck) > 0)
         return true
-    elseIf (ODN_Conjuration_Chest.GetItemCount(toCheck) != 0 || ODN_Illusion_Chest.GetItemCount(toCheck) != 0 || ODN_Restoration_Chest.GetItemCount(toCheck) != 0 || ODN_Destruction_Chest.GetItemCount(toCheck) != 0 || ODN_Alteration_Chest.GetItemCount(toCheck) != 0)
-        return true
-    else
+    Else
         return false
-    endIf
+    EndIf
+    ;;;if (QASpellTomeContainer.GetItemCount(toCheck) != 0)
+    ;;;    return true
+    ;;;elseIf (WB_Conjuration_Chest.GetItemCount(toCheck) != 0 || WB_Illusion_Chest.GetItemCount(toCheck) != 0 || WB_Restoration_Chest.GetItemCount(toCheck) != 0 || WB_Destruction_Chest.GetItemCount(toCheck) != 0 || WB_Alteration_Chest.GetItemCount(toCheck) != 0)
+    ;;;    return true
+    ;;;elseIf (ODN_Conjuration_Chest.GetItemCount(toCheck) != 0 || ODN_Illusion_Chest.GetItemCount(toCheck) != 0 || ODN_Restoration_Chest.GetItemCount(toCheck) != 0 || ODN_Destruction_Chest.GetItemCount(toCheck) != 0 || ODN_Alteration_Chest.GetItemCount(toCheck) != 0)
+    ;;;    return true
+    ;;;else
+    ;;;    return false
+    ;;;endIf
 endFunction
 
 function addTomeToLearningList(Book newTome)
@@ -442,28 +451,62 @@ function InternalPrepare()
     aSchools[0] = __l("mcm_automatic", "Automatic"); added here for mid-game localization support
     UpgradeVersion()
     ; Populate ObjectReferences with chests containing all spell tomes
-    QASpellTomeContainer = Game.GetFormFromFile(0x0C2CD9, "Skyrim.esm") as ObjectReference
+    QASpellTomeContainer = Game.GetFormFromFile(0x000C2CD9, "Skyrim.esm") as ObjectReference
+    if (QASpellTomeContainer)
+        Debug.Trace("[Spell Learning] Got reference to QA container")
+    else
+        Debug.Trace("[Spell Learning] Cannot reference QA container")
+    endIf
+    if (_LEARN_DiscoveryChest)
+        Debug.Trace("[Spell Learning] DiscoveryChest property populated successfully")
+    else
+        Debug.Trace("[Spell Learning] Failed to populate DiscoveryChest property")
+    endIf
+    QASpellTomeContainer.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+    QASpellTomeContainer.Reset()
     ; Odin
     ; Do one and test existence first before populating rest
-    ODN_Conjuration_Chest = Game.GetFormFromFile(0x0B57A6, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+    ODN_Conjuration_Chest = Game.GetFormFromFile(0x000B57A6, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
     if (ODN_Conjuration_Chest) ; exists
-        ODN_Illusion_Chest = Game.GetFormFromFile(0x23DA83, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
-        ODN_Restoration_Chest = Game.GetFormFromFile(0x2611EE, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
-        ODN_Destruction_Chest = Game.GetFormFromFile(0x26B454, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
-        ODN_Alteration_Chest = Game.GetFormFromFile(0x275687, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        Debug.Trace("[Spell Learning] Got reference to Odin container")
+        ODN_Conjuration_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        ODN_Conjuration_Chest.Reset()
+        ODN_Illusion_Chest = Game.GetFormFromFile(0x0023DA83, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Restoration_Chest = Game.GetFormFromFile(0x002611EE, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Destruction_Chest = Game.GetFormFromFile(0x0026B454, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Alteration_Chest = Game.GetFormFromFile(0x00275687, "Odin - Skyrim Magic Overhaul.esp") as ObjectReference
+        ODN_Illusion_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        ODN_Illusion_Chest.Reset()
+        ODN_Restoration_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        ODN_Restoration_Chest.Reset()
+        ODN_Destruction_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        ODN_Destruction_Chest.Reset()
+        ODN_Alteration_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        ODN_Alteration_Chest.Reset()
     endIf
     ; Apocalypse
-    WB_Conjuration_Chest = Game.GetFormFromFile(0x0B57A6, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+    WB_Conjuration_Chest = Game.GetFormFromFile(0x000B57A6, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
     if (WB_Conjuration_Chest) ; exists
-        WB_Illusion_Chest = Game.GetFormFromFile(0x0B57A8, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
-        WB_Restoration_Chest = Game.GetFormFromFile(0x0B57A9, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
-        WB_Destruction_Chest = Game.GetFormFromFile(0x0B57A7, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
-        WB_Alteration_Chest = Game.GetFormFromFile(0x0A94A1, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        Debug.Trace("[Spell Learning] Got reference to apoc container")
+        WB_Conjuration_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        WB_Conjuration_Chest.Reset()
+        WB_Illusion_Chest = Game.GetFormFromFile(0x000B57A8, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Restoration_Chest = Game.GetFormFromFile(0x000B57A9, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Destruction_Chest = Game.GetFormFromFile(0x000B57A7, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Alteration_Chest = Game.GetFormFromFile(0x000A94A1, "Apocalypse - Magic of Skyrim.esp") as ObjectReference
+        WB_Illusion_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        WB_Illusion_Chest.Reset()
+        WB_Restoration_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        WB_Restoration_Chest.Reset()
+        WB_Destruction_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        WB_Destruction_Chest.Reset()
+        WB_Alteration_Chest.RemoveAllItems(akTransferTo = _LEARN_DiscoveryChest)
+        WB_Alteration_Chest.Reset()
     endIf
     ; Because this function InternalPrepare() is called on every load, we can refresh our LeveledList changes
     ; since they are not persistent in a save when added via script. This function checks
     ; conditions itself, so we don't need to here.
-    SpawnItemsInWorld()
+    SpawnItemsInWorld()    
 endFunction
 
 ; === Localization
@@ -597,7 +640,7 @@ function OnInit()
     aInventSpellsPtr = aRestorationLL
     
     RegisterForSleep()
-    UpgradeVersion()
+    InternalPrepare()
 	
 endFunction
 
@@ -983,16 +1026,16 @@ int function pickSchool()
     EndWhile
     ; Successively add previous percentages to distribute results from 0-1
     outerCount = 5
+    int innerCount = 4
     while (outerCount >= 1)
-        float lowerTotal
-        int innerCount
-        innerCount = (outerCount-1)
+        float lowerTotal = 0
         while (innerCount >= 1)
             lowerTotal += schoolPercent[innerCount]
             innerCount -= 1
         endWhile
-        schoolPercent[outerCount] += lowerTotal
+        schoolPercent[outerCount] = schoolPercent[outerCount] + lowerTotal as float
         outerCount -= 1
+        innerCount = outerCount - 1
     EndWhile
     float fRand = Utility.RandomFloat(0.0, 1.0)
     outerCount = 1
@@ -1016,7 +1059,7 @@ int function pickSchool()
     endWhile
     ; Things should not get here. Set and return resto and print an error.
     aInventSpellsPtr = aRestorationLL
-    notify(__l("notification_error_schoolPick", "[Spell Learning] Error selecting school. Defaulting to Restoration."))
+    notify(__l("notification_error_schoolPick", "[Spell Learning] Error selecting school. Defaulting to Restoration."), NOTIFICATION_ERROR)
     return 5
 endFunction
 
@@ -1046,18 +1089,15 @@ Spell function doDiscovery()
     pickSchool()
     ; === TODO
     ;;;; Then get a random item from the
-    ;;;LeveledItem ll = aInventSpellsPtr[llidx]
-    ;;;int llcount = ll.GetNumForms()
-    ;;;int limit = 10
-    ;;;int spidx = Utility.RandomInt(0, llcount - 1)
-    ;;;
-    ;;;Book inventedBook = ll.GetNthForm(spidx) as Book
-    ;;;    
-    ;;;while ((alreadyLearned(inventedBook) || _LEARN_learningList.Find(inventedBook) != -1) && limit > 0)
-    ;;;    spidx = (spidx + 1) % llcount
-    ;;;    inventedBook = ll.GetNthForm(spidx) as Book
-    ;;;    limit -=1
-    ;;;EndWhile
+    int llcount = _LEARN_discoveryPossibilities.getSize()
+    int spidx = Utility.RandomInt(0, llcount - 1)
+    Book inventedBook = _LEARN_discoveryPossibilities.GetAt(spidx) as Book
+    int limit = 10
+    while ((alreadyLearned(inventedBook) || _LEARN_learningList.Find(inventedBook) != -1) && limit > 0)
+        spidx = (spidx + 1) % llcount
+        inventedBook = _LEARN_discoveryPossibilities.GetAt(spidx) as Book
+        limit -=1
+    EndWhile
     
     if (! (alreadyLearned(inventedBook) || _LEARN_learningList.Find(inventedBook) != -1))
         notify(__l("notification_new_spell_idea", "An idea for a new spell is coming to you..."), NOTIFICATION_DISCOVERY)

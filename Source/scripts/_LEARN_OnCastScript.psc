@@ -21,7 +21,8 @@ endFunction
 event OnPlayerLoadGame()
     _LEARN_ControlScript cs = self.GetOwningQuest() as _LEARN_ControlScript
     Debug.Trace("[Spell Learning] ======== Initializing Spell Learning (Please ignore any warning(s)/error(s) below) ========")
-    cs.CanUseLocalizationLib = (PapyrusUtil.GetScriptVersion() as Int) >= 34;
+    ;cs.CanUseLocalizationLib = (PapyrusUtil.GetScriptVersion() as Int) >= 34;
+    cs.CanUseLocalizationLib = false
     if !cs.CanUseLocalizationLib
         Debug.Trace("[Spell Learning] You need to install PapyrusUtil version >= 3.4 for localization support. Localization support disabled.")
     else

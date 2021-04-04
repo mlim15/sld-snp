@@ -58,8 +58,10 @@ function OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRef
     ; Other books are considered unsupported and can be learned with vanilla functionality.
     if (cs.isSpellBook(akBook))
         ; If it's a recognized spell book, start processing it with the mod.
+        Debug.Trace("[Spell Learning] Processing acquired spell book")
         cs.TryAddSpellBook(akBook, aiItemCount)
     else
+        Debug.Trace("[Spell Learning] Item added was a book but not registered in the mod's chest as a spell book. Doing nothing.")
         return
     endIf
 EndFunction
