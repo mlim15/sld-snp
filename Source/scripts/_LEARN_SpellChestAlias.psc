@@ -1,4 +1,4 @@
-ScriptName _LEARN_SpellChestAlias extends ObjectReference
+ScriptName _LEARN_SpellChestAlias extends Form
 
 ; This script is attached to the mod's chest that stores all spell tomes. 
 ; When the mod is initialized (onUpgrade method in ControlScript) we add all 
@@ -10,6 +10,8 @@ ScriptName _LEARN_SpellChestAlias extends ObjectReference
 FormList property _LEARN_discoveryPossibilities auto
 
 Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+    ; TODO remove this spammy debug message once this issue is ironed out
+    Debug.trace("[Spell Learning] new tome")
     ; If the added tome is not a discovery possibility, add it to the formlist
     ; that stores discoverable tomes.
     if (!akBaseItem as Book)
