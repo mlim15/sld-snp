@@ -10,17 +10,14 @@ ScriptName _LEARN_SpellChestAlias extends ObjectReference
 FormList property _LEARN_discoveryPossibilities auto
 
 Event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
-    Debug.Trace("[Spell Learning] Item added to mod chest")
     ; If the added tome is not a discovery possibility, add it to the formlist
     ; that stores discoverable tomes.
     if (!akBaseItem as Book)
         ; If it's not a book we don't care about it.
         ; This should never happen but whatever.
-        Debug.Trace("[Spell Learning] ...but it's not a book so skipping")
         return
     endIf
     if (_LEARN_discoveryPossibilities.Find(akBaseItem) == -1) 
-        Debug.Trace("[Spell Learning] Added book to formlist")
         _LEARN_discoveryPossibilities.AddForm(akBaseItem)
     endIf
 endEvent
