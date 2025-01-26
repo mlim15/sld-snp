@@ -1066,7 +1066,7 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == collectOID)
         SetInfoText(__l("hint_collectNotes", "Whether or not to deconstruct removed or insta-learned books into notes. Keeping a large collection of spell notes improves the chances of learning and discovery. The number of notes generated depends on your skill in relation to the spell, with the maximum amount generated being equal in value to the base value of the book. Default is disabled."))
     ElseIf (Option == removeOID)
-        SetInfoText(__l("hint_removeBooks", "Whether or not to remove spell books from inventory when added, to prevent vanilla 'insta-learn'. Default is enabled. Only turn this off if you are also disabling the mod's Spell Learning functions above!")) 
+        SetInfoText(__l("hint_removeBooks", "Whether or not to remove spell books from inventory when used, to prevent vanilla 'insta-learn'. Default is enabled. Only turn this off if you are also disabling the mod's Spell Learning functions above!")) 
     ElseIf (Option == forceSchoolOID)
         SetInfoText(__l("hint_preferedSchool", "Set this to the school of magic you want to discover spells from. Default is Automatic, which uses your most cast school from that day."))
     ElseIf (Option == effortScalingOID)
@@ -1134,7 +1134,7 @@ Event OnOptionHighlight(int option)
     ElseIf (Option == returnTomesOID)
         setInfoText(__l("hint_return_tomes", "Whether or not spell tomes are returned to your inventory after you learn their spells. Can only return tomes that were removed while this option was enabled. Defaults to off."))
     ElseIf (Option == removeUnknownOnlyOID)
-        setInfoText(__l("hint_remove_only_unknown", "When on, tomes for spells you already know will never be removed and won't generate any spell notes. Defaults to off.  If you are using the return tomes option, this must be turned on."))
+        setInfoText(__l("hint_remove_only_unknown", "When on, tomes for spells you already know or are studying will never be removed and won't generate any spell notes. Defaults to on. If you are using the return tomes option, this must be turned on."))
     EndIf
 EndEvent
 

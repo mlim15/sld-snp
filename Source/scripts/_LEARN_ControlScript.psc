@@ -281,9 +281,16 @@ endFunction
 function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
     float value = 0
     ; if option to leave known spell tomes alone is on and the player knows the spell,
-    ; do absolutely nothing
-    if ((_LEARN_RemoveUnknownOnly.GetValue()) && (PlayerRef.HasSpell(akBook.GetSpell())))
-        return
+    ; or the spell is already being studied, do absolutely nothing
+    if (_LEARN_RemoveUnknownOnly.GetValue())
+        if (spell_fifo_has_ref(sp))
+            notify(formatString1(__l("notification_spell_not_added_studying", "Already studying {0}."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+            return
+        endIf
+        if (PlayerRef.HasSpell(akBook.GetSpell()))
+            notify(formatString1(__l("notification_spell_not_added", "Already knew {0}."), sp.GetName()), NOTIFICATION_ADD_SPELL_LIST_FAIL)
+            return
+        endIf
     endIf
     ; maybe remove book
     if (_LEARN_RemoveSpellBooks.GetValue())
