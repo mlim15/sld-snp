@@ -345,47 +345,22 @@ endFunction
 
 ; === Version and upgrade management
 int function GetVersion()
-    return 177; v 1.7.7
+    return 200; v 2.0.0
 endFunction
 
 function UpgradeVersion()
     bool displayedUpgradeNotice = false
-    if (currentVersion < 177)
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.7")
+    if (currentVersion < 200)
+        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "2.0.0")
 		if (!displayedUpgradeNotice)
 			; don't display multiple upgrade messages
 			Debug.Notification(msg)
 			displayedUpgradeNotice = true
 		endIf
         Debug.Trace(msg)
-        ; Remove books is now not presented in the menu and is instead tied to "Enable Spell Learning functionality".
-        if (currentversion >= 172 && _LEARN_RemoveSpellBooks.GetValue() == 0)
-            ; if upgrading from an earlier version and disrupting current settings, let them know what we are changing
-            Debug.Notification(__l("notification_update_177_changed", "[Spell Learning] Update has turned back on spell book removal."))
-        endIf
-        ; Enable both options to ensure they are linked as currently designed.
-        _LEARN_RemoveSpellBooks.SetValue(1)
-        _LEARN_ResearchSpells.SetValue(1)
-    endIf
-    if (currentVersion < 176)
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.6")
-		if (!displayedUpgradeNotice)
-			; don't display multiple upgrade messages
-			Debug.Notification(msg)
-			displayedUpgradeNotice = true
-		endIf
-        Debug.Trace(msg)
+        ; First time setup stuff
         updateSpellLearningEffect()
-    endIf
-    if (currentVersion < 175)
-        string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.5")
-		if (!displayedUpgradeNotice)
-			; don't display multiple upgrade messages
-			Debug.Notification(msg)
-			displayedUpgradeNotice = true
-		endIf
-        Debug.Trace(msg)
-        ; Change default notification setting to prepare for better notifications
+        ; Notification settings
         VisibleNotifications = new int[16]
         VisibleNotifications[NOTIFICATION_REMOVE_BOOK] = 0 
         VisibleNotifications[NOTIFICATION_ADD_SPELL_NOTE] = 0
@@ -403,49 +378,7 @@ function UpgradeVersion()
         VisibleNotifications[NOTIFICATION_TOO_SOON] = 1
         VisibleNotifications[NOTIFICATION_ERROR] = 1
         VisibleNotifications[NOTIFICATION_FORCE_DISPLAY] = 1
-    endIf
-    if (currentVersion < 174)
-		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.4")
-		if (!displayedUpgradeNotice)
-			; don't display multiple upgrade messages
-			Debug.Notification(msg)
-			displayedUpgradeNotice = true
-		endIf
-        Debug.Trace(msg)
-        ; When upgrading, keep old default note scaling values
-        ; These were not previously user-configurable so they need to be specified here
-        if (currentVersion == 172)
-            _LEARN_maxNotes.SetValue(10000)
-            _LEARN_maxNotesBonus.SetValue(10)
-        elseif (currentVersion == 173)
-            _LEARN_maxNotes.SetValue(1800)
-            _LEARN_maxNotesBonus.SetValue(20)
-        endIf  
-    endIf
-	if (currentVersion < 173)
-		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.3")
-		if (!displayedUpgradeNotice)
-			; don't display multiple upgrade messages
-			Debug.Notification(msg)
-			displayedUpgradeNotice = true
-		endIf
-		Debug.Trace(msg)
-		; Set up new list of scaling options
-		effortLabels = new String[3]
-		effortLabels[0] = "Tough Start"
-		effortLabels[1] = "Diminishing Returns"
-		effortLabels[2] = "Linear"
-		; If user is upgrading from the last version, disable new options even if they are
-        ; now enabled by default to not disrupt existing functionality for users.
-		; Unfortunately cannot cover older versions because it was 1.7.2 that introduced versioning
-		if (currentVersion == 172)
-			_LEARN_DynamicDifficulty.SetValue(0)
-			_LEARN_IntervalCDREnabled.SetValue(0)
-			_LEARN_AutoNoviceLearningEnabled.SetValue(0)
-			_LEARN_MaxFailsAutoSucceeds.SetValue(0)
-			_LEARN_TooDifficultEnabled.SetValue(0)
-		endIf
-		; Add study power
+        ; Add study power
 		PlayerRef.AddSpell(_LEARN_StudyPower, false)
 		; Fix attunement cooldown
 		if (GameDaysPassed.GetValue() >= 7)
@@ -453,34 +386,27 @@ function UpgradeVersion()
 		else
 			_LEARN_LastSetHome.SetValue(0)
 		endIf
-	endIf
-    if (currentVersion < 172)
-        UpgradeSpellList()
-		string msg = "[Spell Learning] " + formatString1(__l("notification_version_upgrade", "Installed version {0}"), "1.7.2")
-		if (!displayedUpgradeNotice)
-			; don't display multiple upgrade messages
-			Debug.Notification(msg)
-			displayedUpgradeNotice = true
-		endIf
-		Debug.Trace(msg)
+        ; Scaling options
+		effortLabels = new String[3]
+		effortLabels[0] = "Tough Start"
+		effortLabels[1] = "Diminishing Returns"
+		effortLabels[2] = "Linear"
+        ; Spell list setup
+        if aSpells || aSpells.Length > 1
+            int i = 0
+            int newCapacity = CalculateNextCapacity(iCount)
+            _spells = Utility.CreateFormArray(newCapacity)
+            while i < iCount
+                _spells[i] = aSpells[(iHead + i) % iMaxSize]
+                i += 1
+            EndWhile
+            iHead = 0
+            iTail = iCount - 1
+            iMaxSize = newCapacity
+            aSpells = new Spell[1]; assigning None causes casting error
+        endIf
     endIf
     currentVersion = GetVersion()
-endFunction
-
-function UpgradeSpellList()
-    if aSpells || aSpells.Length > 1
-        int i = 0
-        int newCapacity = CalculateNextCapacity(iCount)
-        _spells = Utility.CreateFormArray(newCapacity)
-        while i < iCount
-            _spells[i] = aSpells[(iHead + i) % iMaxSize]
-            i += 1
-        EndWhile
-        iHead = 0
-        iTail = iCount - 1
-        iMaxSize = newCapacity
-        aSpells = new Spell[1]; assigning None causes casting error
-    endIf
 endFunction
 
 function InternalPrepare()
