@@ -146,6 +146,22 @@ int property NOTIFICATION_FORCE_DISPLAY = 15 autoReadOnly
 int[] property VisibleNotifications Auto Hidden
 bool _canSetBookAsRead
 
+; === Spell List helper function
+; Author: NexusIsHere
+int function CalculateNextCapacity(int requestedCapacity, int from = 8, int delta = 64) global
+    int current = from;
+    while (current < 128 && requestedCapacity > current)
+        current *= 2
+    endWhile
+
+    if requestedCapacity > current
+        while requestedCapacity > current
+            current += delta
+        endWhile
+    endIf
+    return current
+endFunction
+
 ; === MCM helper functions
 String[] function getEffortLabels()
 	return effortLabels
@@ -447,7 +463,7 @@ endFunction
 function UpgradeSpellList()
     if aSpells || aSpells.Length > 1
         int i = 0
-        int newCapacity = NihSldUtil.CalculateNextCapacity(iCount)
+        int newCapacity = CalculateNextCapacity(iCount)
         _spells = Utility.CreateFormArray(newCapacity)
         while i < iCount
             _spells[i] = aSpells[(iHead + i) % iMaxSize]
@@ -497,7 +513,7 @@ endFunction
 ; === Spell list management
 function SpellListEnsureCapacity(int capacity)
     if capacity > iMaxSize
-        int newSize = NihSldUtil.CalculateNextCapacity(capacity)
+        int newSize = CalculateNextCapacity(capacity)
         if _spells
             _spells = Utility.ResizeFormArray(_spells, newSize)
         else
@@ -676,7 +692,7 @@ function PurgeSpellList()
 
     ; add shrink functionality
     int requestedCapacity = iCount + (2 * spareHead)
-    int calculatedCapacity = NihSldUtil.CalculateNextCapacity(requestedCapacity)
+    int calculatedCapacity = CalculateNextCapacity(requestedCapacity)
     if iMaxSize > calculatedCapacity
         ;Debug.Trace("[Spell Learning] shrinking from" + iMaxSize + " to " + calculatedCapacity)
         _spells = Utility.ResizeFormArray(_spells, calculatedCapacity)
