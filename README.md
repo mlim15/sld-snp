@@ -36,7 +36,7 @@ Then I found this mod. It was a great balance... but it felt somewhat unpolished
 Requirements
 ------------
 
-The mod requires [SKSE](https://skse.silverlock.org/) to function. For backup and restoration of your spell list, the mod uses [FISS](https://www.nexusmods.com/skyrimspecialedition/mods/13956). You'll also need [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048), which the mod uses for localization support and more.
+The mod requires [SKSE](https://skse.silverlock.org/) to function. It also requires the SKSE plugin "[Don't Eat Spell Tomes](https://www.nexusmods.com/skyrimspecialedition/mods/43095)". The rest of the dependencies are optional. If you want items from the mod (the two new spellbooks or potion items) to spawn in-world, you'll need [SPID](https://www.nexusmods.com/skyrimspecialedition/mods/36869) for loot changes and [CID](https://www.nexusmods.com/skyrimspecialedition/mods/99486) to add items to vendors. If you want to back up and restore your spell list, you will also need [FISS](https://www.nexusmods.com/skyrimspecialedition/mods/13956). For localization support, you'll also need [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048).
 
 Compatibility
 -------------
