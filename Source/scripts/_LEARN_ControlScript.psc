@@ -49,10 +49,6 @@ GlobalVariable property _LEARN_ResearchSpells auto
 GlobalVariable property _LEARN_RemoveUnknownOnly auto
 String[] effortLabels
 
-GlobalVariable property _LEARN_EnthirSells auto
-_LEARN_enthirChestAlias property enthirChestAlias auto
-_LEARN_tolfdirChestAlias property tolfdirChestAlias auto
-
 Keyword property LocTypeTemple auto
 Location property WinterholdCollegeLocation auto
 Keyword property LocTypePlayerHouse auto
@@ -99,11 +95,6 @@ LeveledItem property LitemSpellTomes75Conjuration auto
 LeveledItem property LitemSpellTomes75Destruction auto
 LeveledItem property LitemSpellTomes75Illusion auto
 LeveledItem property LitemSpellTomes75Restoration auto
-LeveledItem property LootWarlockRandom auto
-LeveledItem property LootRandomBanditWizard auto
-LeveledItem property LootForswornRandomWizard auto
-LeveledItem property LootLearningDrugs auto
-LeveledItem property LootWarlockSpellTomes00All15 auto
 
 Float LastLearnTime
 Float LastDiscoverTime
@@ -327,15 +318,6 @@ function TryAddSpellBook(Book akBook, Spell sp, int aiItemCount)
         endIf
     endIf
     
-	; note that setting books as read does not work in SSE,
-	; as the skse extension used in LE has not been ported.
-	; this is unfortunate but it's not a loss in comparison with vanilla,
-	; which doesn't display which books are read in the menu anyway.
-	; sucks for those who got used to that convenience in SkyUI though.
-	bool isRead = akBook.isRead()
-    if (bookExtensionEnabled() && !isRead)
-        BookExtension.SetReadWFB(akBook, true)
-    endIf
 endFunction 
 
 ; === Version and upgrade management
@@ -481,12 +463,7 @@ endFunction
 function InternalPrepare()
 {Maintainence function}
     aSchools[0] = __l("mcm_automatic", "Automatic"); added here for mid-game localization support
-    _canSetBookAsRead = SKSE.GetPluginVersion("BookExtension") != -1
     UpgradeVersion()
-    ; Because this function InternalPrepare() is called on every load, we can refresh our LeveledList changes
-    ; since they are not persistent in a save when added via script. This function checks
-    ; conditions itself, so we don't need to here.
-    SpawnItemsInWorld()
 endFunction
 
 ; === Localization
@@ -929,56 +906,6 @@ function addBookToListIfMissing(Book bookToAdd, LeveledItem list, int level, int
     EndWhile
     ; If we get here, we haven't found the item in the list, so add it.
     list.addform(bookToAdd, level, count)
-endFunction
-
-function SpawnItemsInWorld(); TODO Test.
-    if (_LEARN_SpawnItems.GetValue() == 1)
-        ; Spirit Tutor tome
-        addBookToListIfMissing(_LEARN_SpellTomeSummonSpiritTutor, LitemSpellTomes00Conjuration, 1, 1)
-        ; Attunement tome
-        addBookToListIfMissing(_LEARN_SetHomeSpBook, LitemSpellTomes25Alteration, 1, 1)
-        ; Drugs
-        addLlToListIfMissing(LootLearningDrugs, LootWarlockRandom, 1, 1)
-        addLlToListIfMissing(LootLearningDrugs, LootRandomBanditWizard, 1, 1)
-        addLlToListIfMissing(LootLearningDrugs, LootForswornRandomWizard, 1, 1)
-        ; Add more spell tome spawns to some mage enemies
-        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootWarlockRandom, 1, 1)
-        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootRandomBanditWizard, 1, 1)
-        addLlToListIfMissing(LootWarlockSpellTomes00All15, LootForswornRandomWizard, 1, 1)
-    endIf
-    if (_LEARN_EnthirSells.GetValue() == 1)
-        ; Re-run each alias's on init script. It will run its own checks and
-        ; do what needs to be done
-        enthirChestAlias.OnInit()
-        ; ForceRefIfEmpty()
-        tolfdirChestAlias.OnInit()
-    endIf
-EndFunction
-
-function RemoveItemsFromWorld()
-        ; Remove items from lists. The only clean way of doing this also removes all other
-        ; script-added items from these lists. Players are asked to save and reload after disabling
-        ; SpawnItems to refresh any changes to these lists from other mods. As a result, we should 
-        ; ensure this function is only run when the setting is first disabled, not frequently, 
-        ; as this would disrupt other mod scripts that affect these lists.
-        ; Currently it is set up to ONLY run from MCMConfigQuest after the player has
-        ; clicked the toggle in order to disable the setting.
-        ; Why do it this way when it has problems? Well, RemoveAddedForm doesn't seem to be
-        ; working and isn't documented on the wiki. An alternative to this is to set each 
-        ; item's count to 0, but I have a feeling that will bork the save if players remove the
-        ; mod and reload, so let's not do that.
-        ;
-        ; Spirit Tutor tome
-        LitemSpellTomes00Conjuration.Revert()
-        ; Attunement tome
-        LitemSpellTomes25Alteration.Revert()
-        ; Drugs, spell tomes
-        LootWarlockRandom.Revert()
-        LootRandomBanditWizard.Revert()
-        LootForswornRandomWizard.Revert()
-        ; Remove items from enthir and tolfdir's inventories
-        enthirChestAlias.RemoveItems()
-        tolfdirChestAlias.RemoveItems()
 endFunction
 
 function OnInit()
@@ -1696,7 +1623,6 @@ Spell function doDiscovery()
         else
             PlayerRef.AddSpell(inventedsp, false)
         endIf
-        Bookextension.setreadWFB(inventedbook, true)
     EndIf
     
     ; Reset discovery timer
@@ -1731,11 +1657,6 @@ function doReset()
     _LEARN_CountBonus.SetValue(0.0)
     _LEARN_AlreadyUsedTutor.SetValue(0)
     _LEARN_LastDayStudied.SetValue(0)
-    ; this function checks to see if the proper config setting is enabled so we don't need to here
-    ; the purpose of having this here is if a player turns on the setting mid-play,
-    ; otherwise it wouldn't be refreshed until the next load game.
-    ; checks in the function ensure everything is only added once, so it does no harm.
-    SpawnItemsInWorld() 
 endFunction
 
 function updateSpellLearningEffect()

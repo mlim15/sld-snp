@@ -38,8 +38,6 @@ GlobalVariable property _LEARN_EffortScaling auto
 GlobalVariable property _LEARN_AutoSuccessBypassesLimit auto
 GlobalVariable property _LEARN_TooDifficultEnabled auto
 GlobalVariable property _LEARN_TooDifficultDelta auto
-GlobalVariable property _LEARN_EnthirSells auto
-GlobalVariable property _LEARN_SpawnItems auto
 GlobalVariable property _LEARN_PotionBypass auto
 GlobalVariable property _LEARN_IntervalCDR auto
 GlobalVariable property _LEARN_IntervalCDREnabled auto
@@ -70,8 +68,6 @@ Spell property _LEARN_SpellsToLearn auto
 MagicEffect Property AlchDreadmilkEffect auto
 MagicEffect Property AlchShadowmilkEffect auto
 MagicEffect property _LEARN_ShadowmilkHangover auto
-_LEARN_enthirChestAlias property enthirChestAlias auto
-_LEARN_tolfdirChestAlias property tolfdirChestAlias auto
 
 ;OID is OptionID (for posterity)
 int minChanceStudyOID
@@ -111,8 +107,6 @@ int tutorStatusOID
 int attunementStatusOID
 int studyRequiresNotesOID
 int studyIsRestOID
-int spawnItemsOID
-int enthirSellsOID
 int removeSpellsOID
 int removePowerOID
 int removeStatusEffectsOID
@@ -220,8 +214,6 @@ Event OnConfigClose()
         wasDisabled = True
 		disableModEffects()
 		Utility.wait(2)
-        ;removeModSpells()
-        ControlScript.RemoveItemsFromWorld()
 		disableModEffects() ; You can never be too sure
 		; Then stop the quest. This will de-register all updates on aliases etc and stop script from running on sleep.
 		_LEARN_SpellControlQuest.Stop()
@@ -415,10 +407,6 @@ event OnPageReset(string page)
         studyIsRestOID = AddToggleOption(__l("mcm_option_study_rest", "No Bonus from 'Study'..."), _LEARN_StudyIsRest.GetValue(), NO_CATEGORY_FLAG)
         learnOnStudyOID = AddToggleOption(__l("mcm_option_learn_on_study", "...Instead Learn when Studying"), _LEARN_LearnOnStudy.GetValue(), LEARNING_OR_NO_STUDY_BONUS_FLAG)
         discoverOnStudyOID = AddToggleOption(__l("mcm_option_discover_on_study", "...Instead Discover when Studying"), _LEARN_DiscoverOnStudy.GetValue(), NO_STUDY_BONUS_FLAG)
-        AddEmptyOption()
-        AddHeaderOption(__l("mcm_header_spawn_options", "Spawning Options"), 0)
-        enthirSellsOID = AddToggleOption(__l("mcm_option_enthir_sells", "College Members Sell Mod Items"), _LEARN_EnthirSells.GetValue(), NO_CATEGORY_FLAG)
-        spawnItemsOID = AddToggleOption(__l("mcm_option_spawn_items_in_world", "Spawn Mod Items as Loot"), _LEARN_SpawnItems.GetValue(), NO_CATEGORY_FLAG)
         ; PAGE 4 RIGHT SIDE
 		SetCursorPosition(1) ; Move cursor to top right position
         AddHeaderOption(__l("mcm_header_item_options", "Advanced Item Options"), 0)
@@ -903,16 +891,6 @@ event OnOptionSelect(int option)
 	ElseIf (Option == noviceLearningEnabledOID)
 		SetToggleOptionValue(option, toggleNoviceLearningEnabled(), False)	
 		forcepagereset()
-	ElseIf (Option == spawnItemsOID) ; not implemented.
-        SetToggleOptionValue(option, toggleSpawnItems(), False)
-        ; If after toggling its value is zero, the player has just disabled it.
-        ; Remove the items from the lists in this case.
-        if (_LEARN_SpawnItems.GetValue() == 0)
-            ControlScript.RemoveItemsFromWorld()
-            Debug.MessageBox(__l("mcm_message_removed_items_reload", "Done removing items from lists. Please save and reload. If you don't, any other scripts that have altered these lists won't have their changes registered until you do so."))
-        Else
-            ControlScript.SpawnItemsInWorld()
-        endIf
 	ElseIf (Option == potionBypassOID)
 		SetToggleOptionValue(option, togglePotionBypass(), False)
 	ElseIf (Option == tooDifficultEnabledOID)
@@ -976,10 +954,6 @@ event OnOptionSelect(int option)
         endIf
     ElseIf (Option == discoverOnSleepOID)
         SetToggleOptionValue(option, toggleDiscoverOnSleep(), False)
-    ElseIf (Option == enthirSellsOID)
-        SetToggleOptionValue(option, toggleEnthirSells(), False)
-        enthirChestAlias.OnReset()
-        tolfdirChestAlias.OnReset()
     ElseIf (Option == addToListOID)
         SetToggleOptionValue(option, toggleAddToList(), False)
         if ((_LEARN_ResearchSpells.GetValue()) && !(_LEARN_RemoveSpellBooks.GetValue()))
@@ -1035,7 +1009,6 @@ event OnOptionSelect(int option)
         if (fiss == None)
             Debug.MessageBox(__l("mcm_message_fiss_not_working", "FISS is not working"))
         else
-            ControlScript.SpawnItemsInWorld()
             ; reset spell study list
             while (ControlScript.spell_fifo_pop() != none)
             EndWhile
@@ -1106,10 +1079,6 @@ Event OnOptionHighlight(int option)
         setInfoText(__l("hint_customLocation", "Click to mark the current location as your personal study. It will provide a learning bonus similar to temples, but not as much as the College. Click again to unset. This can also be set with the Attunement spell."))
     ElseIf (Option == studyIntervalOID)
         setInfoText(__l("hint_studyInterval", "How many days must pass between learning and discovery attempts. Default is 0.65."))
-	ElseIf (Option == enthirSellsOID)
-        setInfoText(__l("hint_enthir", "Whether or not Enthir and Tolfdir will keep a stock of items related to this mod. Defaults to yes."))
-	ElseIf (Option == spawnItemsOID)
-        setInfoText(__l("hint_studyInterval", "Whether or not items are added to loot lists, causing them to spawn as loot. Defaults to yes."))
 	ElseIf (Option == tooDifficultDeltaOID)
         setInfoText(__l("hint_tooDifficultDiff", "The difference in skill required to automatically fail learning. Lowering this makes things harder overall. Default is 30 - at or below Destruction 20, you will fail to learn Destruction 50+ spells."))
 	ElseIf (Option == tooDifficultEnabledOID)
@@ -1836,15 +1805,6 @@ bool function toggleTooDifficultEnabled()
     return True
 EndFunction
 
-bool function toggleSpawnItems()
-    if (_LEARN_SpawnItems.GetValue())
-        _LEARN_SpawnItems.SetValue(0)
-        return false
-    endif
-    _LEARN_SpawnItems.SetValue(1)
-    return True
-EndFunction
-
 bool function togglePotionBypass()
     if (_LEARN_PotionBypass.GetValue())
         _LEARN_PotionBypass.SetValue(0)
@@ -1932,15 +1892,6 @@ bool function toggleDiscoverOnSleep()
         return false
     endif
     _LEARN_DiscoverOnSleep.SetValue(1)
-    return True
-EndFunction
-
-bool function toggleEnthirSells()
-    if (_LEARN_EnthirSells.GetValue())
-        _LEARN_EnthirSells.SetValue(0)
-        return false
-    endif
-    _LEARN_EnthirSells.SetValue(1)
     return True
 EndFunction
 
