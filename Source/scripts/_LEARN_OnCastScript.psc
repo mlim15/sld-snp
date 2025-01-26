@@ -37,13 +37,6 @@ endEvent
 
 Event OnSpellTomeRead(Book akBook, Spell akSpell, ObjectReference akContainer)
     _LEARN_ControlScript cs = self.GetOwningQuest() as _LEARN_ControlScript
-    ; Notes functionality
-    if (cs._LEARN_CollectNotes.GetValue() == 1) ; settings are right
-        if (cs._LEARN_removedTomes.Find(akBook) != -1); and we haven't already given notes for it
-            cs.takeNotes(akBook) ; then add notes
-            cs.addTomeToList(akBook); and add to list of tomes we've removed so we don't give notes on subsequent reads
-        endIf
-    endIf
     ; Add book to list and remove from inventory
     cs.TryAddSpellBook(akBook, akSpell, 1)
 EndEvent
